@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Member Portal - Katani Main Stage</title>
+<script src="auth.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
@@ -173,6 +174,42 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 .tx-right .amt{font-size:14px;font-weight:800;color:var(--green);}
 .tx-right .date{font-size:10.5px;color:var(--muted);margin-top:2px;}
 
+/* ---------- Group Details (stats) ---------- */
+.group-stats-card{
+  background:var(--navy);margin:0 0 0;border-radius:16px;display:grid;grid-template-columns:repeat(4,1fr);
+  padding:20px 6px;box-shadow:0 10px 24px rgba(10,20,40,0.28);
+}
+.gs-item{text-align:center;padding:0 4px;position:relative;}
+.gs-item:not(:last-child)::after{content:'';position:absolute;right:0;top:8%;height:84%;width:1px;background:rgba(255,255,255,0.12);}
+.gs-item .gs-icon{width:24px;height:24px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;}
+.gs-item .gs-icon svg{width:20px;height:20px;}
+.gs-item.icon-green svg{color:var(--green);}
+.gs-item.icon-gold svg{color:var(--gold);}
+.gs-item .gs-num{color:#fff;font-size:18px;font-weight:800;}
+.gs-item .gs-label{color:var(--text-light);font-size:9px;font-weight:600;text-transform:uppercase;line-height:1.3;margin-top:2px;letter-spacing:0.3px;}
+
+/* ---------- Profile section ---------- */
+.profile-card{background:#fff;border-radius:14px;box-shadow:0 3px 12px rgba(13,33,64,0.06);overflow:hidden;}
+.profile-row{display:flex;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);}
+.profile-row:last-child{border-bottom:none;}
+.profile-row .pk{font-size:12.5px;color:var(--muted);font-weight:600;}
+.profile-row .pv{font-size:13.5px;color:var(--navy-dark);font-weight:700;text-align:right;}
+.logout-btn{
+  width:100%;margin-top:14px;background:#fdecea;color:var(--red);border:none;border-radius:10px;
+  padding:13px;font-size:13.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:8px;
+}
+.logout-btn svg{width:16px;height:16px;}
+
+/* ---------- Contact section ---------- */
+.contact-card{background:#fff;border-radius:14px;box-shadow:0 3px 12px rgba(13,33,64,0.06);overflow:hidden;}
+.contact-row{display:flex;align-items:center;gap:14px;padding:16px;border-bottom:1px solid var(--border);text-decoration:none;}
+.contact-row:last-child{border-bottom:none;}
+.contact-row .c-icon{width:42px;height:42px;border-radius:12px;background:var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.contact-row .c-icon svg{width:19px;height:19px;color:var(--navy-dark);}
+.contact-row h5{font-size:13.5px;font-weight:700;color:var(--navy-dark);}
+.contact-row p{font-size:12px;color:var(--muted);margin-top:1px;}
+
 /* ---------- Bottom nav ---------- */
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;
@@ -204,6 +241,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 </style>
 </head>
 <body>
+<script>if(!(window.KatiniAuth && KatiniAuth.getSession())){ window.location.href = 'index.html'; }</script>
 
 <div id="app">
 
@@ -248,7 +286,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
     </div>
   </div>
 
-  <div class="id-card" onclick="downloadId()">
+  <div class="id-card" id="idCardAnchor" onclick="downloadId()">
     <div class="id-left">
       <div class="id-row">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -289,6 +327,34 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
         View Payment Plan
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h3>Group Overview</h3>
+    </div>
+    <div class="group-stats-card">
+      <div class="gs-item icon-green">
+        <div class="gs-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="gs-num">642</div>
+        <div class="gs-label">Registered<br>Members</div>
+      </div>
+      <div class="gs-item icon-gold">
+        <div class="gs-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1l-1 6h5"/><path d="M12 12h5l2 5.5"/><path d="M5.5 17.5 9 8h4"/></svg></div>
+        <div class="gs-num">598</div>
+        <div class="gs-label">Active<br>Riders</div>
+      </div>
+      <div class="gs-item icon-green">
+        <div class="gs-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <div class="gs-num">98%</div>
+        <div class="gs-label">Payment<br>Compliance</div>
+      </div>
+      <div class="gs-item icon-gold">
+        <div class="gs-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div>
+        <div class="gs-num">12</div>
+        <div class="gs-label">Years of<br>Unity</div>
+      </div>
     </div>
   </div>
 
@@ -387,42 +453,107 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
     </div>
   </div>
 
+  <div class="section" id="profileSection">
+    <div class="section-head">
+      <h3>My Profile</h3>
+    </div>
+    <div class="profile-card">
+      <div class="profile-row"><span class="pk">Full Name</span><span class="pv" id="pf-name">—</span></div>
+      <div class="profile-row"><span class="pk">Member ID</span><span class="pv" id="pf-memberId">—</span></div>
+      <div class="profile-row"><span class="pk">Email</span><span class="pv" id="pf-email">—</span></div>
+      <div class="profile-row"><span class="pk">Phone</span><span class="pv" id="pf-phone">—</span></div>
+      <div class="profile-row"><span class="pk">Stage / Route</span><span class="pv" id="pf-stage">—</span></div>
+      <div class="profile-row"><span class="pk">Member Since</span><span class="pv" id="pf-since">—</span></div>
+    </div>
+    <button class="logout-btn" onclick="handleLogout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Log Out
+    </button>
+  </div>
+
+  <div class="section" id="contactSection">
+    <div class="section-head">
+      <h3>Contact Us</h3>
+    </div>
+    <div class="contact-card">
+      <a class="contact-row" href="tel:0712345678">
+        <div class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+        <div><h5>Call the Office</h5><p>0712 345 678</p></div>
+      </a>
+      <a class="contact-row" href="mailto:info@katanimainstage.co.ke">
+        <div class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg></div>
+        <div><h5>Email Support</h5><p>info@katanimainstage.co.ke</p></div>
+      </a>
+      <div class="contact-row">
+        <div class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div><h5>Our Location</h5><p>Katani Main Stage, Machakos County</p></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div id="toast"></div>
 
 <nav class="bottom-nav">
-  <button class="nav-item active" onclick="location.href='index.html'">
+  <button class="nav-item" onclick="location.href='reports.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Reports
+  </button>
+  <button class="nav-item" onclick="scrollToSection('idCardAnchor')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="14" x2="17" y2="14"/><line x1="14" y1="17" x2="14" y2="17.01"/><line x1="14" y1="21" x2="17" y2="21"/><line x1="17" y1="17" x2="21" y2="17"/><line x1="21" y1="14" x2="21" y2="14.01"/><line x1="21" y1="21" x2="21" y2="21.01"/></svg>
+    My ID
+  </button>
+  <button class="nav-item" onclick="scrollToSection('profileSection')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </button>
+  <button class="nav-item active" onclick="window.scrollTo({top:0,behavior:'smooth'})">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Home
   </button>
-  <button class="nav-item" onclick="showToast('Payments')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/></svg>
-    Payments
-  </button>
-  <button class="nav-item center" onclick="showToast('My ID')">
-    <div class="nav-center-circle">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="14" x2="17" y2="14"/><line x1="14" y1="17" x2="14" y2="17.01"/><line x1="14" y1="21" x2="17" y2="21"/><line x1="17" y1="17" x2="21" y2="17"/><line x1="21" y1="14" x2="21" y2="14.01"/><line x1="21" y1="21" x2="21" y2="21.01"/></svg>
-    </div>
-    My ID
-  </button>
-  <button class="nav-item" onclick="location.href='notifications.html'">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-    Notices
-  </button>
-  <button class="nav-item" onclick="showToast('Profile')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    Profile
+  <button class="nav-item" onclick="scrollToSection('contactSection')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    Contact
   </button>
 </nav>
 
 <script>
-const memberData = {
-  name: "John Mwangi",
-  memberId: "KMS-001245",
-  memberSince: "15 Jan 2023",
+// Auth guard: only logged-in members (or admins previewing) may view this page.
+const currentUser = KatiniAuth.requireRole(['admin','member']);
+
+const memberData = currentUser ? {
+  name: currentUser.name,
+  memberId: currentUser.memberId,
+  memberSince: currentUser.memberSince || '—',
+  email: currentUser.email,
+  phone: currentUser.phone || '—',
+  stage: currentUser.stage || 'Katani Main Stage',
   status: "active"
+} : {
+  name: "Member", memberId: "—", memberSince: "—", email: "—", phone: "—", stage: "—", status: "active"
 };
+
+if(currentUser){
+  document.getElementById('memberName').textContent = memberData.name;
+  document.getElementById('memberIdNum').textContent = memberData.memberId;
+  document.getElementById('pf-name').textContent = memberData.name;
+  document.getElementById('pf-memberId').textContent = memberData.memberId;
+  document.getElementById('pf-email').textContent = memberData.email;
+  document.getElementById('pf-phone').textContent = memberData.phone;
+  document.getElementById('pf-stage').textContent = memberData.stage;
+  document.getElementById('pf-since').textContent = memberData.memberSince;
+}
+
+function scrollToSection(id){
+  const el = document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function handleLogout(){
+  KatiniAuth.logout();
+  window.location.href = 'index.html';
+}
 
 // Generate QR code encoding the member ID (falls back gracefully if the CDN script fails to load)
 try{

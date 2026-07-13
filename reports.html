@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Reports &amp; Analytics - Katani Main Stage</title>
+<script src="auth.js"></script>
 <style>
 :root{
   --navy:#0d2140;
@@ -212,6 +213,7 @@ header.topbar{background:var(--navy);padding:16px 18px 44px;position:relative;}
 </style>
 </head>
 <body>
+<script>KatiniAuth.requireRole(['admin','member']);</script>
 
 <div id="app">
 

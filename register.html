@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Member Registration - Katani Main Stage</title>
+<script src="auth.js"></script>
 <style>
 :root{
   --navy:#0d2140;
@@ -495,6 +496,50 @@ textarea{resize:none;min-height:64px;}
           </div>
         </div>
       </div>
+
+      <div class="form-card">
+        <div class="form-card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Account Login Details
+        </div>
+
+        <div class="field" id="f-email">
+          <label>Email Address <span class="req">*</span></label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg>
+            <input type="email" id="email" placeholder="you@example.com">
+          </div>
+          <div class="error-text">A valid email address is required</div>
+        </div>
+
+        <div class="field" id="f-password">
+          <label>Create Password <span class="req">*</span></label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="password" placeholder="At least 6 characters">
+          </div>
+          <div class="error-text">Password must be at least 6 characters</div>
+        </div>
+
+        <div class="field" id="f-confirmPassword">
+          <label>Confirm Password <span class="req">*</span></label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="confirmPassword" placeholder="Re-enter your password">
+          </div>
+          <div class="error-text">Passwords do not match</div>
+        </div>
+
+        <div class="secure-note">
+          <div class="s-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div>
+            <h5>You'll use this to log in</h5>
+            <p>Use this email and password to sign in to the Katani Main Stage app after your registration is reviewed.</p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- STEP 4: Review & Submit -->
@@ -609,7 +654,7 @@ textarea{resize:none;min-height:64px;}
     </div>
     <h3>Registration Submitted!</h3>
     <p>Welcome to Katani Main Stage. Your registration has been received and is pending approval by the committee.</p>
-    <button onclick="window.location.href='members-portal.html'">Done</button>
+    <button onclick="KatiniAuth.routeToHome()">Done</button>
   </div>
 </div>
 
@@ -676,10 +721,14 @@ function validateStep(step){
     if(!val('stage')) setErr('f-stage');
   }
   if(step === 3){
-    ['f-kinName','f-kinRelation','f-kinPhone'].forEach(clearErr);
+    ['f-kinName','f-kinRelation','f-kinPhone','f-email','f-password','f-confirmPassword'].forEach(clearErr);
     if(!val('kinName')) setErr('f-kinName');
     if(!val('kinRelation')) setErr('f-kinRelation');
     if(!val('kinPhone')) setErr('f-kinPhone');
+    const emailVal = val('email');
+    if(!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) setErr('f-email');
+    if(!val('password') || val('password').length < 6) setErr('f-password');
+    if(val('confirmPassword') !== val('password') || !val('confirmPassword')) setErr('f-confirmPassword');
   }
   if(step === 4){
     document.getElementById('err-terms').style.display = 'none';
@@ -736,9 +785,22 @@ function populateReview(){
 }
 
 function submitRegistration(){
-  // Placeholder for Firebase Firestore submission.
-  // Example:
-  // await addDoc(collection(db, "members"), { ...formData, status: "pending", createdAt: serverTimestamp() });
+  const result = KatiniAuth.registerMember({
+    name: document.getElementById('fullName').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    password: document.getElementById('password').value,
+    phone: document.getElementById('phone').value.trim(),
+    stage: document.getElementById('stage').value.trim() || 'Katani Main Stage'
+  });
+
+  if(!result.success){
+    goToStep(3);
+    const errBox = document.getElementById('f-email');
+    errBox.classList.add('error');
+    alert(result.message);
+    return;
+  }
+
   document.getElementById('successOverlay').classList.add('show');
 }
 

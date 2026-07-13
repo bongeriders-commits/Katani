@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Admin Dashboard - Katani Main Stage</title>
+<script src="auth.js"></script>
 <style>
 :root{
   --navy:#0d2140;
@@ -169,6 +170,38 @@ header.topbar{
 .act-right .amt.none{color:var(--muted);}
 .act-right .time{font-size:10.5px;color:var(--muted);margin-top:2px;}
 
+/* ---------- Admin Profile Portal ---------- */
+.profile-overlay{
+  position:fixed;inset:0;z-index:500;background:rgba(10,20,40,0.55);
+  opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease;
+  display:flex;align-items:flex-end;
+}
+.profile-overlay.open{opacity:1;visibility:visible;}
+.profile-panel{
+  width:100%;max-width:480px;margin:0 auto;background:var(--gray-bg);border-radius:20px 20px 0 0;
+  padding:22px 20px max(22px, env(safe-area-inset-bottom));max-height:82vh;overflow-y:auto;
+  transform:translateY(20px);transition:transform .25s ease;
+}
+.profile-overlay.open .profile-panel{transform:translateY(0);}
+.profile-panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.profile-panel-head h3{font-size:17px;font-weight:800;color:var(--navy-dark);}
+.profile-close{width:34px;height:34px;border-radius:50%;background:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(13,33,64,0.1);}
+.profile-close svg{width:16px;height:16px;color:var(--navy-dark);}
+.profile-avatar-row{display:flex;align-items:center;gap:14px;background:#fff;border-radius:14px;padding:16px;box-shadow:0 3px 12px rgba(13,33,64,0.06);margin-bottom:14px;}
+.profile-avatar{width:56px;height:56px;border-radius:50%;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0;}
+.profile-avatar-row h4{font-size:15.5px;font-weight:800;color:var(--navy-dark);}
+.profile-avatar-row .role-pill{display:inline-block;margin-top:4px;background:rgba(245,166,35,0.15);color:#b9740f;font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;text-transform:uppercase;}
+.profile-detail-card{background:#fff;border-radius:14px;box-shadow:0 3px 12px rgba(13,33,64,0.06);overflow:hidden;margin-bottom:14px;}
+.pdrow{display:flex;justify-content:space-between;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);}
+.pdrow:last-child{border-bottom:none;}
+.pdrow .pk{font-size:12.5px;color:var(--muted);font-weight:600;}
+.pdrow .pv{font-size:13px;color:var(--navy-dark);font-weight:700;text-align:right;}
+.profile-logout{
+  width:100%;background:#fdecea;color:var(--red);border:none;border-radius:10px;padding:13px;
+  font-size:13.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.profile-logout svg{width:16px;height:16px;}
+
 /* ---------- Bottom nav ---------- */
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--navy);
@@ -193,6 +226,12 @@ header.topbar{
 </style>
 </head>
 <body>
+<script>
+(function(){
+  var s = window.KatiniAuth && KatiniAuth.getSession();
+  if(!s || s.role !== 'admin'){ window.location.href = 'index.html'; }
+})();
+</script>
 
 <div id="app">
 
@@ -220,7 +259,7 @@ header.topbar{
     <div class="welcome-row">
       <div class="welcome-left">
         <p class="wb-label">Welcome back,</p>
-        <h2>Admin <span class="wave">👋</span></h2>
+        <h2><span id="welcomeName">Admin</span> <span class="wave">👋</span></h2>
         <div class="date-row">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           <span id="todayDate">18 May 2025</span>
@@ -422,13 +461,66 @@ header.topbar{
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
     Reports
   </button>
-  <button class="nav-item" onclick="location.href='index.html'">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
-    More
+  <button class="nav-item" onclick="openProfilePanel()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
   </button>
 </nav>
 
+<div class="profile-overlay" id="profileOverlay" onclick="if(event.target===this) closeProfilePanel()">
+  <div class="profile-panel">
+    <div class="profile-panel-head">
+      <h3>Admin Profile</h3>
+      <button class="profile-close" onclick="closeProfilePanel()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="profile-avatar-row">
+      <div class="profile-avatar" id="ap-initials">A</div>
+      <div>
+        <h4 id="ap-name">Group Administrator</h4>
+        <span class="role-pill">Administrator</span>
+      </div>
+    </div>
+    <div class="profile-detail-card">
+      <div class="pdrow"><span class="pk">Email</span><span class="pv" id="ap-email">—</span></div>
+      <div class="pdrow"><span class="pk">Phone</span><span class="pv" id="ap-phone">—</span></div>
+      <div class="pdrow"><span class="pk">Admin ID</span><span class="pv" id="ap-id">—</span></div>
+      <div class="pdrow"><span class="pk">Administrator Since</span><span class="pv" id="ap-since">—</span></div>
+    </div>
+    <button class="profile-logout" onclick="handleAdminLogout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Log Out
+    </button>
+  </div>
+</div>
+
 <script>
+// Auth guard: only administrators may view this dashboard.
+const currentAdmin = KatiniAuth.requireRole(['admin']);
+
+if(currentAdmin){
+  const firstName = currentAdmin.name.split(' ')[0];
+  document.getElementById('welcomeName').textContent = firstName;
+  document.getElementById('ap-name').textContent = currentAdmin.name;
+  document.getElementById('ap-initials').textContent = currentAdmin.name.charAt(0).toUpperCase();
+  document.getElementById('ap-email').textContent = currentAdmin.email;
+  document.getElementById('ap-phone').textContent = currentAdmin.phone || '—';
+  document.getElementById('ap-id').textContent = currentAdmin.memberId || '—';
+  document.getElementById('ap-since').textContent = currentAdmin.memberSince || '—';
+}
+
+function openProfilePanel(){
+  document.getElementById('profileOverlay').classList.add('open');
+}
+function closeProfilePanel(){
+  document.getElementById('profileOverlay').classList.remove('open');
+}
+function handleAdminLogout(){
+  KatiniAuth.logout();
+  window.location.href = 'index.html';
+}
+
 let toastTimer;
 function showToast(msg){
   const toast = document.getElementById('toast');
