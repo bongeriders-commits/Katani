@@ -315,23 +315,23 @@ header.topbar{
     <div class="stat-grid">
       <div class="stat-card">
         <div class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <div class="stat-num">0</div>
+        <div class="stat-num" id="stat-total-members">0</div>
         <div class="stat-label">Total Members</div>
-        <div class="stat-sub">Active: 0</div>
+        <div class="stat-sub" id="stat-active-members">Active: 0</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7 16 12l7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
-        <div class="stat-num">KSh 0</div>
+        <div class="stat-num" id="stat-today-collections">KSh 0</div>
         <div class="stat-label">Today's Collections</div>
-        <button class="stat-link green" onclick="showToast('Opening details...')">View details
+        <button class="stat-link green" onclick="location.href='collections.html'">View details
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
       </div>
       <div class="stat-card">
         <div class="stat-icon navy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-        <div class="stat-num">KSh 0</div>
+        <div class="stat-num" id="stat-month-collections">KSh 0</div>
         <div class="stat-label">This Month Collections</div>
-        <button class="stat-link green" onclick="showToast('Opening report...')">View report
+        <button class="stat-link green" onclick="location.href='collections.html'">View report
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
       </div>
@@ -397,11 +397,11 @@ header.topbar{
           <div class="qa-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg></div>
           <p>Add Member</p>
         </button>
-        <button class="qa-item" onclick="showToast('Opening Record Payment')">
+        <button class="qa-item" onclick="location.href='collections.html'">
           <div class="qa-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7 16 12l7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
           <p>Record Payment</p>
         </button>
-        <button class="qa-item" onclick="showToast('Opening Welfare Contribution')">
+        <button class="qa-item" onclick="location.href='collections.html?type=contribution'">
           <div class="qa-icon navy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
           <p>Welfare Contribution</p>
         </button>
@@ -442,7 +442,7 @@ header.topbar{
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     Members
   </button>
-  <button class="nav-item" onclick="setActiveNav(this,'Collections')">
+  <button class="nav-item" onclick="location.href='collections.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7 16 12l7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
     Collections
   </button>
@@ -473,11 +473,11 @@ header.topbar{
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
         Approve Pending Registrations
       </button>
-      <button class="menu-item" onclick="closeMenu();showToast('Opening Record Payment')">
+      <button class="menu-item" onclick="closeMenu();location.href='collections.html'">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Record Payment / Collections
       </button>
-      <button class="menu-item" onclick="closeMenu();showToast('Opening Welfare Contribution')">
+      <button class="menu-item" onclick="closeMenu();location.href='collections.html?type=contribution'">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         Welfare Contributions
       </button>
@@ -568,6 +568,25 @@ function handleAdminLogout(){
   KatiniAuth.logout();
   window.location.href = 'index.html';
 }
+
+/* -------- Dashboard stats (members + collections) -------- */
+(function loadDashboardStats(){
+  const users = KatiniAuth.getUsers().filter(u => u.role === 'member');
+  const active = users.filter(u => (u.status || 'active') === 'active');
+  document.getElementById('stat-total-members').textContent = users.length;
+  document.getElementById('stat-active-members').textContent = 'Active: ' + active.length;
+
+  const txns = KatiniAuth.getCollections();
+  const todayStr = new Date().toISOString().slice(0,10);
+  const monthStr = todayStr.slice(0,7);
+  let today = 0, month = 0;
+  txns.forEach(t => {
+    if(t.date === todayStr) today += t.amount;
+    if((t.date || '').slice(0,7) === monthStr) month += t.amount;
+  });
+  document.getElementById('stat-today-collections').textContent = 'KSh ' + Math.round(today).toLocaleString('en-KE');
+  document.getElementById('stat-month-collections').textContent = 'KSh ' + Math.round(month).toLocaleString('en-KE');
+})();
 
 let toastTimer;
 function showToast(msg){

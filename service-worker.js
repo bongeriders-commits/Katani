@@ -4,6 +4,7 @@ const APP_SHELL = [
   './register.html',
   './members-portal.html',
   './members-directory.html',
+  './collections.html',
   './admin-dashboard.html',
   './notifications.html',
   './reports.html',

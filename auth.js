@@ -185,6 +185,51 @@
 
   seed();
 
+  // ---- Collections & Payments (member contributions, registration fees, fines, other income) ----
+  var COLLECTIONS_KEY = 'kms_collections';
+
+  function getCollections() {
+    try { return JSON.parse(localStorage.getItem(COLLECTIONS_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function saveCollections(list) { localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(list)); }
+
+  function nextCollectionId() {
+    return 'TXN-' + Date.now().toString(36).toUpperCase().slice(-6) + Math.floor(10 + Math.random() * 89);
+  }
+
+  // type: 'contribution' | 'registration' | 'fine' | 'other'
+  function addCollection(data) {
+    var amount = Number(data.amount);
+    if (!amount || amount <= 0) {
+      return { success: false, message: 'Enter a valid amount greater than zero.' };
+    }
+    var type = data.type || 'other';
+    if (type === 'contribution' && !data.memberId) {
+      return { success: false, message: 'Select the member this contribution is from.' };
+    }
+    if (type !== 'contribution' && !String(data.source || '').trim()) {
+      return { success: false, message: 'Enter a description for this collection.' };
+    }
+    var list = getCollections();
+    var record = {
+      id: nextCollectionId(),
+      type: type,
+      memberId: data.memberId || '',
+      memberName: data.memberName || '',
+      source: data.source || '',
+      amount: amount,
+      method: data.method || 'Cash',
+      reference: data.reference || '',
+      date: data.date || new Date().toISOString().slice(0, 10),
+      note: data.note || '',
+      createdAt: Date.now()
+    };
+    list.unshift(record);
+    saveCollections(list);
+    return { success: true, record: record };
+  }
+
   window.KatiniAuth = {
     seed: seed,
     getUsers: getUsers,
@@ -196,6 +241,8 @@
     getSession: getSession,
     getCurrentUser: getCurrentUser,
     routeToHome: routeToHome,
-    requireRole: requireRole
+    requireRole: requireRole,
+    getCollections: getCollections,
+    addCollection: addCollection
   };
 })(window);

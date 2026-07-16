@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Reports &amp; Analytics - Katani Main Stage</title>
+<title>Collections &amp; Payments - Katani Main Stage</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0d2140">
 <meta name="mobile-web-app-capable" content="yes">
@@ -73,129 +73,91 @@ header.topbar{background:var(--navy);padding:16px 18px 44px;position:relative;}
 .page-head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
 .page-head-left h2{font-size:21px;font-weight:800;color:var(--navy-dark);}
 .page-head-left p{font-size:12.5px;color:var(--muted);margin-top:3px;}
-.btn-export{
+.btn-add{
   background:var(--navy);color:#fff;border:none;border-radius:12px;padding:11px 16px;
   font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:8px;cursor:pointer;
   white-space:nowrap;box-shadow:0 6px 16px rgba(13,33,64,0.25);
 }
-.btn-export svg{width:14px;height:14px;}
+.btn-add svg{width:15px;height:15px;}
 
-/* ---------- Filters ---------- */
-.filters-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-.filter-box{
-  background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;cursor:pointer;
+/* ---------- Search + filter row ---------- */
+.search-row{display:flex;gap:10px;margin-bottom:14px;}
+.search-box{
+  flex:1;display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--border);
+  border-radius:12px;padding:11px 14px;min-width:0;
 }
-.filter-box .f-label{font-size:10.5px;color:var(--muted);font-weight:600;margin-bottom:3px;}
-.filter-box .f-value{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12.5px;font-weight:700;color:var(--navy-dark);}
-.filter-box .f-value .f-left{display:flex;align-items:center;gap:7px;min-width:0;}
-.filter-box .f-value svg.f-icon{width:14px;height:14px;color:var(--green);flex-shrink:0;}
-.filter-box .f-value svg.chev{width:12px;height:12px;color:var(--muted);flex-shrink:0;}
-.filter-box.wide{grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between;padding:11px 14px;margin-bottom:16px;}
-.filter-box.wide .f-value{font-size:12.5px;}
-.filter-box.wide svg.f-icon{width:15px;height:15px;color:var(--navy);}
-
-/* ---------- Stat grid (4 cards) ---------- */
-.stat-grid4{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
-.stat-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:14px;}
-.stat-icon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
-.stat-icon svg{width:17px;height:17px;color:#fff;}
-.stat-icon.green{background:var(--green);}
-.stat-icon.gold{background:var(--gold);}
-.stat-icon.blue{background:var(--blue);}
-.stat-icon.red{background:var(--red);}
-.stat-card .s-label{font-size:11.5px;color:var(--muted);font-weight:600;}
-.stat-card .s-num{font-size:18px;font-weight:800;color:var(--navy-dark);margin:2px 0 4px;}
-.stat-card .s-num.green{color:var(--green);}
-.stat-card .s-num.gold{color:#b9791a;}
-.stat-card .s-sub{font-size:10.5px;color:var(--muted);font-weight:600;}
-.stat-card .s-sub.up{color:var(--green);display:flex;align-items:center;gap:3px;}
-.stat-card .s-sub.up svg{width:11px;height:11px;}
-
-/* ---------- Chart card ---------- */
-.chart-section{margin-bottom:18px;}
-.chart-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
-.chart-head h3{font-size:15px;font-weight:800;color:var(--navy-dark);}
-.legend-row{display:flex;align-items:center;gap:14px;}
-.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:600;}
-.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.legend-dot.solid{background:var(--green);}
-.legend-dot.dashed{background:#b7bec9;}
-.date-select{
-  background:#fff;border:1.5px solid var(--border);border-radius:9px;padding:8px 12px;font-size:12px;
-  font-weight:700;color:var(--navy-dark);display:flex;align-items:center;gap:6px;cursor:pointer;
+.search-box svg{width:16px;height:16px;color:var(--muted);flex-shrink:0;}
+.search-box input{
+  border:none;outline:none;font-size:13px;flex:1;min-width:0;color:var(--navy-dark);background:transparent;
 }
-.date-select svg{width:13px;height:13px;color:var(--muted);}
-.chart-card{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:16px 10px 10px;}
-.chart-svg-wrap{width:100%;overflow:hidden;}
-
-/* ---------- Mini metric grid ---------- */
-.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
-.mini-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:14px;}
-.mini-top{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
-.mini-top svg{width:14px;height:14px;}
-.mini-top svg.green{color:var(--green);}
-.mini-top svg.red{color:var(--red);}
-.mini-top svg.navy{color:var(--navy);}
-.mini-top span{font-size:11px;color:var(--muted);font-weight:600;}
-.mini-num{font-size:17px;font-weight:800;color:var(--navy-dark);}
-.mini-num.green{color:var(--green);}
-.mini-num.red{color:var(--red);}
-.mini-sub{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:3px;}
-
-/* ---------- Two column section: donut + status ---------- */
-.two-col{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:18px;}
-.panel{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:16px;}
-.panel h3{font-size:14.5px;font-weight:800;color:var(--navy-dark);margin-bottom:14px;}
-.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
-.donut-svg-wrap{position:relative;width:180px;height:180px;}
-.donut-svg-wrap svg{display:block;}
-.donut-center-label{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  font-size:11px;color:var(--muted);font-weight:700;text-align:center;line-height:1.3;
+.search-box input::placeholder{color:#9aa3b0;}
+.btn-filter{
+  display:flex;align-items:center;gap:7px;background:#fff;border:1.5px solid var(--border);
+  border-radius:12px;padding:11px 15px;font-size:12.5px;font-weight:700;color:var(--navy-dark);
+  cursor:pointer;white-space:nowrap;
 }
-.donut-center-label .amt{font-size:16px;font-weight:800;color:var(--navy-dark);display:block;}
-.donut-legend{width:100%;display:flex;flex-direction:column;gap:11px;}
-.dl-row{display:flex;align-items:flex-start;gap:9px;}
-.dl-dot{width:10px;height:10px;border-radius:50%;margin-top:3px;flex-shrink:0;}
-.dl-dot.green{background:var(--green);}
-.dl-dot.gold{background:var(--gold);}
-.dl-dot.blue{background:var(--blue);}
-.dl-dot.red{background:var(--red);}
-.dl-text{font-size:12px;color:var(--navy-dark);font-weight:700;}
-.dl-text small{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-top:1px;}
+.btn-filter svg{width:14px;height:14px;color:var(--muted);}
 
-/* ---------- Member status summary ---------- */
-.status-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
-.status-row:last-child{border-bottom:none;}
-.status-ic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.status-ic svg{width:16px;height:16px;color:#fff;}
-.status-ic.green{background:var(--green);}
-.status-ic.gold{background:var(--gold);}
-.status-ic.red{background:var(--red);}
-.status-ic.blue{background:var(--blue);}
-.status-txt{flex:1;font-size:12.5px;color:var(--navy-dark);font-weight:700;}
-.status-val{font-size:13.5px;font-weight:800;color:var(--navy-dark);}
-
-/* ---------- Top collectors table ---------- */
-.collectors-panel{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:6px;}
-.collectors-panel h3{font-size:14.5px;font-weight:800;color:var(--navy-dark);margin-bottom:12px;}
-.col-head-row{display:grid;grid-template-columns:0.5fr 1.4fr 1.2fr;gap:6px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;padding-bottom:8px;border-bottom:1px solid var(--border);}
-.col-row{display:grid;grid-template-columns:0.5fr 1.4fr 1.2fr;gap:6px;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);}
-.col-row:last-child{border-bottom:none;}
-.rank-badge{font-size:15px;}
-.rank-num{font-size:12.5px;font-weight:800;color:var(--muted);}
-.col-name{font-size:12.5px;font-weight:700;color:var(--navy-dark);}
-.col-detail{font-size:11px;color:var(--muted);margin-top:1px;}
-.perf-wrap{display:flex;align-items:center;gap:7px;}
-.perf-bar-bg{flex:1;height:6px;border-radius:4px;background:#eef1f5;overflow:hidden;}
-.perf-bar-fill{height:100%;border-radius:4px;background:var(--green);}
-.perf-bar-fill.gold{background:var(--gold);}
-.perf-pct{font-size:11px;font-weight:800;color:var(--navy-dark);flex-shrink:0;}
-.view-all-link{
-  display:flex;align-items:center;justify-content:center;gap:5px;padding:14px 0 6px;
-  font-size:12.5px;font-weight:700;color:var(--blue);text-decoration:none;cursor:pointer;background:none;border:none;width:100%;
+/* ---------- Filter tabs ---------- */
+.tab-scroll{display:flex;gap:9px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;scrollbar-width:none;}
+.tab-scroll::-webkit-scrollbar{display:none;}
+.tab-pill{
+  display:flex;align-items:center;gap:7px;padding:10px 14px;border-radius:11px;border:1.5px solid var(--border);
+  background:#fff;font-size:12.5px;font-weight:700;color:var(--navy-dark);white-space:nowrap;cursor:pointer;
+  flex-shrink:0;
 }
-.view-all-link svg{width:13px;height:13px;}
+.tab-pill svg{width:14px;height:14px;}
+.tab-pill.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+.tab-pill.active svg{color:#fff;}
+.tab-pill.t-active svg{color:var(--green);}
+.tab-pill.t-inactive svg{color:var(--gold);}
+.tab-pill.t-suspended svg{color:var(--red);}
+
+/* ---------- Member list ---------- */
+.list-head{
+  display:grid;grid-template-columns:1.7fr 1fr 0.4fr;gap:8px;padding:0 4px 10px;
+  font-size:10.5px;font-weight:800;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;
+}
+.member-card{
+  background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:12px 12px;
+  display:flex;align-items:center;gap:12px;margin-bottom:10px;
+}
+.avatar{
+  width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;color:#fff;
+}
+.m-info{flex:1;min-width:0;}
+.m-info h4{font-size:13.5px;font-weight:700;color:var(--navy-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.m-info .m-id{font-size:11px;color:var(--muted);margin-top:1px;}
+.m-info .m-sub{display:flex;gap:12px;margin-top:5px;flex-wrap:wrap;}
+.m-info .m-sub span{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+.m-info .m-sub svg{width:11px;height:11px;}
+.m-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;}
+.status-pill{
+  font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;
+}
+.status-pill.active{background:#e6f4ea;color:var(--green);}
+.status-pill.inactive{background:#fef3e0;color:#b9791a;}
+.status-pill.suspended{background:#fbe8e6;color:var(--red);}
+.more-btn{
+  width:26px;height:26px;border:none;background:none;color:var(--muted);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;
+}
+
+/* ---------- Pagination ---------- */
+.pagination{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  padding:6px 4px 20px;
+}
+.pg-info{font-size:11.5px;color:var(--muted);}
+.pg-controls{display:flex;align-items:center;gap:6px;}
+.pg-btn{
+  width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:#fff;
+  color:var(--navy-dark);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.pg-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+.pg-btn svg{width:14px;height:14px;}
+.pg-dots{color:var(--muted);font-size:12px;padding:0 2px;}
 
 /* ---------- Bottom nav (shared) ---------- */
 .bottom-nav{
@@ -218,11 +180,114 @@ header.topbar{background:var(--navy);padding:16px 18px 44px;position:relative;}
   max-width:400px;text-align:center;
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ---------- Member modal (Add / View) ---------- */
+.member-modal-overlay{
+  position:fixed;inset:0;z-index:700;background:rgba(10,20,40,0.6);
+  opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease;
+  display:flex;align-items:flex-end;
+}
+.member-modal-overlay.open{opacity:1;visibility:visible;}
+.member-modal{
+  width:100%;max-width:480px;margin:0 auto;background:var(--gray-bg);border-radius:20px 20px 0 0;
+  max-height:92vh;overflow-y:auto;transform:translateY(24px);transition:transform .25s ease;
+  padding:20px 18px max(20px, env(safe-area-inset-bottom));
+}
+.member-modal-overlay.open .member-modal{transform:translateY(0);}
+.mm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.mm-head h3{font-size:16.5px;font-weight:800;color:var(--navy-dark);}
+.mm-close{width:34px;height:34px;border-radius:50%;background:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(13,33,64,0.1);flex-shrink:0;}
+.mm-close svg{width:16px;height:16px;color:var(--navy-dark);}
+.mm-section{background:#fff;border-radius:14px;padding:14px;box-shadow:0 3px 12px rgba(13,33,64,0.06);margin-bottom:14px;}
+.mm-section h4{font-size:11.5px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.mm-section h4 svg{width:14px;height:14px;color:var(--gold);}
+.mm-field{margin-bottom:12px;}
+.mm-field:last-child{margin-bottom:0;}
+.mm-field label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:6px;}
+.mm-field input,.mm-field select{
+  width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;
+  color:var(--navy-dark);outline:none;background:#fff;
+}
+.mm-field input:focus,.mm-field select:focus{border-color:var(--navy);}
+.mm-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mm-photo-row{display:flex;align-items:center;gap:14px;}
+.mm-photo-preview{
+  width:64px;height:64px;border-radius:50%;background:var(--gray-bg);border:1.5px dashed var(--border);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;color:var(--muted);
+}
+.mm-photo-preview img{width:100%;height:100%;object-fit:cover;}
+.mm-photo-btn{
+  background:var(--navy);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;
+  font-weight:700;cursor:pointer;
+}
+.mm-save-btn{
+  width:100%;background:var(--navy);color:#fff;border:none;border-radius:12px;padding:14px;
+  font-size:13.5px;font-weight:800;cursor:pointer;margin-top:4px;box-shadow:0 8px 20px rgba(13,33,64,0.3);
+}
+.mm-error{color:var(--red);font-size:11.5px;margin-top:6px;display:none;}
+.mm-error.show{display:block;}
+
+/* View-member detail sheet */
+.vm-photo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:16px;}
+.vm-photo{
+  width:84px;height:84px;border-radius:50%;background:var(--navy);color:var(--gold);font-weight:800;
+  font-size:26px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 4px 14px rgba(13,33,64,0.25);
+}
+.vm-photo img{width:100%;height:100%;object-fit:cover;}
+.vm-photo-wrap h4{margin-top:10px;font-size:15.5px;font-weight:800;color:var(--navy-dark);}
+.vm-photo-wrap p{font-size:12px;color:var(--muted);margin-top:2px;}
+.vm-qr{display:flex;justify-content:center;padding:14px 0 4px;}
+.vm-qr-box{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:10px;}
+.vm-row{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+.vm-row:last-child{border-bottom:none;}
+.vm-row .vk{font-size:12px;color:var(--muted);font-weight:600;}
+.vm-row .vv{font-size:12.5px;color:var(--navy-dark);font-weight:700;text-align:right;}
+
+/* ---------- Stat grid (collections summary) ---------- */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.stat-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:16px;}
+.stat-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+.stat-icon svg{width:18px;height:18px;color:#fff;}
+.stat-icon.green{background:var(--green);}
+.stat-icon.gold{background:var(--gold);}
+.stat-icon.navy{background:var(--navy);}
+.stat-icon.red{background:var(--red);}
+.stat-num{font-size:19px;font-weight:800;color:var(--navy-dark);}
+.stat-label{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.3;}
+
+/* ---------- Type quick-select (Record Payment modal) ---------- */
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
+.type-btn{
+  display:flex;align-items:center;gap:9px;border:1.5px solid var(--border);border-radius:12px;
+  padding:11px;background:#fff;font-size:12px;font-weight:700;color:var(--navy-dark);cursor:pointer;
+}
+.type-btn svg{width:16px;height:16px;color:var(--muted);flex-shrink:0;}
+.type-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+.type-btn.active svg{color:var(--gold);}
+
+/* ---------- Transaction list ---------- */
+.txn-card{
+  background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:12px;
+  display:flex;align-items:center;gap:12px;margin-bottom:10px;
+}
+.txn-icon{width:42px;height:42px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.txn-icon svg{width:19px;height:19px;color:#fff;}
+.txn-icon.contribution{background:var(--green);}
+.txn-icon.registration{background:var(--gold);}
+.txn-icon.fine{background:var(--red);}
+.txn-icon.other{background:var(--purple);}
+.txn-info{flex:1;min-width:0;}
+.txn-info h4{font-size:13.5px;font-weight:700;color:var(--navy-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.txn-info .txn-id{font-size:11px;color:var(--muted);margin-top:1px;}
+.txn-info .txn-sub{display:flex;gap:10px;margin-top:5px;flex-wrap:wrap;}
+.txn-info .txn-sub span{font-size:10.5px;color:var(--muted);font-weight:700;padding:2px 8px;border-radius:20px;background:var(--gray-bg);}
+.txn-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.txn-amount{font-size:14px;font-weight:800;color:var(--navy-dark);white-space:nowrap;}
 </style>
 <link rel="stylesheet" href="desktop.css">
 </head>
 <body>
-<script>KatiniAuth.requireRole(['admin','member']);</script>
+<script>KatiniAuth.requireRole(['admin']);</script>
 
 <div id="app">
 
@@ -236,7 +301,7 @@ header.topbar{background:var(--navy);padding:16px 18px 44px;position:relative;}
       </div>
       <div class="hdr-text">
         <h1>KATANI <span class="accent">MAIN STAGE</span><br>BODA SELF HELP GROUP</h1>
-        <div class="admin-tag">Reports &amp; Analytics</div>
+        <div class="admin-tag">Collections &amp; Payments</div>
       </div>
       <button class="icon-btn" onclick="location.href='notifications.html'" aria-label="Notifications">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -249,203 +314,185 @@ header.topbar{background:var(--navy);padding:16px 18px 44px;position:relative;}
 
     <div class="page-head-row">
       <div class="page-head-left">
-        <h2>Reports Overview</h2>
-        <p>Track collections, members and activities.</p>
+        <h2>Collections &amp; Payments</h2>
+        <p>Record and track every shilling collected.</p>
       </div>
-      <button class="btn-export" onclick="showToast('Preparing export...')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Export Report
+      <button class="btn-add" onclick="openRecordPayment()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Record Payment
       </button>
     </div>
 
-    <div class="filters-grid">
-      <div class="filter-box" onclick="showToast('Change report type')">
-        <div class="f-label">Report Type</div>
-        <div class="f-value">
-          <div class="f-left">
-            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            <span>Collections Report</span>
-          </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-        </div>
-      </div>
-      <div class="filter-box" onclick="showToast('Change date range')">
-        <div class="f-label">Date Range</div>
-        <div class="f-value">
-          <div class="f-left"><span>This Month</span></div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-        </div>
-      </div>
-      <div class="filter-box wide" onclick="showToast('Open calendar')">
-        <div class="f-value">
-          <div class="f-left">
-            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <span>01 May &ndash; 18 May 2025</span>
-          </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-        </div>
-      </div>
-    </div>
-
-    <div class="stat-grid4">
+    <div class="stat-grid">
       <div class="stat-card">
-        <div class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
-        <div class="s-label">Total Collections</div>
-        <div class="s-num green" id="rp-total-collections">KSh 0</div>
-<div class="s-sub" id="rp-total-sub">&mdash;</div>
+        <div class="stat-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7 16 12l7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
+        <div class="stat-num" id="stat-today">KSh 0</div>
+        <div class="stat-label">Today's Collections</div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><circle cx="12" cy="14" r="3"/><path d="M17 7 15 3H9L7 7"/></svg></div>
-        <div class="s-label">Today's Collections</div>
-        <div class="s-num gold" id="rp-today-collections">KSh 0</div>
-<div class="s-sub">&mdash;</div>
+        <div class="stat-icon navy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+        <div class="stat-num" id="stat-month">KSh 0</div>
+        <div class="stat-label">This Month</div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <div class="s-label">Total Members</div>
-        <div class="s-num" id="rp-total-members">0</div>
-        <div class="s-sub" id="rp-active-members">Active: 0</div>
+        <div class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="stat-num" id="stat-contrib">KSh 0</div>
+        <div class="stat-label">Member Contributions</div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.29 3.86-8.18 14.14A1.5 1.5 0 0 0 3.4 20h17.2a1.5 1.5 0 0 0 1.29-2L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-        <div class="s-label">Pending Payments</div>
-        <div class="s-num">0</div>
-        <div class="s-sub">Total KSh 0</div>
+        <div class="stat-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></div>
+        <div class="stat-num" id="stat-fines">KSh 0</div>
+        <div class="stat-label">Fines Collected</div>
       </div>
     </div>
 
-    <div class="chart-section">
-      <div class="chart-head">
-        <h3>Collections Trend</h3>
-      </div>
-      <div class="chart-head" style="margin-top:-8px;">
-        <div class="legend-row">
-          <span class="legend-item"><span class="legend-dot solid"></span>This Month</span>
-          <span class="legend-item"><span class="legend-dot dashed"></span>Last Month</span>
-        </div>
-        <button class="date-select" onclick="showToast('Change chart view')">
-          Daily View
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-        </button>
-      </div>
-      <div class="chart-card">
-        <div class="chart-svg-wrap" id="trendChartWrap"></div>
+    <div class="search-row">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by name, reference or description..." oninput="filterTxns()">
       </div>
     </div>
 
-    <div class="mini-grid">
-      <div class="mini-card">
-        <div class="mini-top">
-          <svg class="navy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>Average Daily Collection</span>
-        </div>
-        <div class="mini-num green">KSh 0</div>
-        <div class="mini-sub">Per day</div>
-      </div>
-      <div class="mini-card">
-        <div class="mini-top">
-          <svg class="green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          <span>Highest Collection</span>
-        </div>
-        <div class="mini-num green">KSh 0</div>
-        <div class="mini-sub">&mdash;</div>
-      </div>
-      <div class="mini-card">
-        <div class="mini-top">
-          <svg class="red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-          <span>Lowest Collection</span>
-        </div>
-        <div class="mini-num red">KSh 0</div>
-        <div class="mini-sub">&mdash;</div>
-      </div>
-      <div class="mini-card">
-        <div class="mini-top">
-          <svg class="navy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="15" x2="14" y2="15"/></svg>
-          <span>Total Transactions</span>
-        </div>
-        <div class="mini-num">0</div>
-        <div class="mini-sub">This Month</div>
-      </div>
+    <div class="tab-scroll">
+      <button class="tab-pill active" data-type="all" onclick="setTab(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7 16 12l7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        All
+      </button>
+      <button class="tab-pill" data-type="contribution" onclick="setTab(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Member Collections
+      </button>
+      <button class="tab-pill" data-type="registration" onclick="setTab(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Registration Fees
+      </button>
+      <button class="tab-pill" data-type="fine" onclick="setTab(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+        Fines
+      </button>
+      <button class="tab-pill" data-type="other" onclick="setTab(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Other
+      </button>
     </div>
 
-    <div class="two-col">
-      <div class="panel">
-        <h3>Collection Breakdown</h3>
-        <div class="donut-wrap">
-          <div class="donut-svg-wrap">
-            <svg viewBox="0 0 180 180" width="180" height="180">
-              <g transform="rotate(-90 90 90)">
-                <circle cx="90" cy="90" r="70" fill="none" stroke="#eef1f5" stroke-width="26"/>
-                <circle cx="90" cy="90" r="70" fill="none" stroke="#2e7d32" stroke-width="26"
-                  stroke-dasharray="316.23 123.59" stroke-dashoffset="0" stroke-linecap="butt"/>
-                <circle cx="90" cy="90" r="70" fill="none" stroke="#f5a623" stroke-width="26"
-                  stroke-dasharray="84.89 354.94" stroke-dashoffset="-316.23" stroke-linecap="butt"/>
-                <circle cx="90" cy="90" r="70" fill="none" stroke="#1565c0" stroke-width="26"
-                  stroke-dasharray="26.39 413.43" stroke-dashoffset="-401.12" stroke-linecap="butt"/>
-                <circle cx="90" cy="90" r="70" fill="none" stroke="#c0392b" stroke-width="26"
-                  stroke-dasharray="12.32 427.51" stroke-dashoffset="-427.51" stroke-linecap="butt"/>
-              </g>
-            </svg>
-            <div class="donut-center-label">
-              <span class="amt" id="rp-donut-total">KSh<br>0</span>
-              Total
-            </div>
-          </div>
-          <div class="donut-legend">
-            <div class="dl-row">
-              <span class="dl-dot green"></span>
-              <div class="dl-text">Member Contributions<small id="rp-donut-contribution">KSh 0</small></div>
-            </div>
-            <div class="dl-row">
-              <span class="dl-dot gold"></span>
-              <div class="dl-text">Registration Fees<small id="rp-donut-registration">KSh 0</small></div>
-            </div>
-            <div class="dl-row">
-              <span class="dl-dot blue"></span>
-              <div class="dl-text">Fines<small id="rp-donut-fine">KSh 0</small></div>
-            </div>
-            <div class="dl-row">
-              <span class="dl-dot red"></span>
-              <div class="dl-text">Other Income<small id="rp-donut-other">KSh 0</small></div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div id="txnList"></div>
 
-      <div class="panel">
-        <h3>Member Status Summary</h3>
-        <div class="status-row">
-          <div class="status-ic green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></div>
-          <div class="status-txt">Active Members</div>
-          <div class="status-val">0</div>
-        </div>
-        <div class="status-row">
-          <div class="status-ic gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-          <div class="status-txt">Inactive Members</div>
-          <div class="status-val">0</div>
-        </div>
-        <div class="status-row">
-          <div class="status-ic red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
-          <div class="status-txt">Suspended Members</div>
-          <div class="status-val">0</div>
-        </div>
-        <div class="status-row">
-          <div class="status-ic blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-          <div class="status-txt">New This Month</div>
-          <div class="status-val">0</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="collectors-panel">
-      <h3>Top Collectors This Month</h3>
-      <div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No collection data yet.</div>
+    <div class="pagination">
+      <div class="pg-info" id="pgInfo">Showing 0 of 0 records</div>
     </div>
 
   </div>
 </div>
 
 <div id="toast"></div>
+
+<!-- Record Payment modal -->
+<div class="member-modal-overlay" id="recordPaymentOverlay" onclick="if(event.target===this) closeRecordPayment()">
+  <div class="member-modal">
+    <div class="mm-head">
+      <h3>Record Payment / Collection</h3>
+      <button class="mm-close" onclick="closeRecordPayment()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="mm-section">
+      <h4>Collection Type</h4>
+      <div class="type-grid">
+        <button type="button" class="type-btn active" data-type="contribution" onclick="setCollectionType(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Member Contribution
+        </button>
+        <button type="button" class="type-btn" data-type="registration" onclick="setCollectionType(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Stage Registration Fee
+        </button>
+        <button type="button" class="type-btn" data-type="fine" onclick="setCollectionType(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+          Fine / Penalty
+        </button>
+        <button type="button" class="type-btn" data-type="other" onclick="setCollectionType(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Other Income
+        </button>
+      </div>
+    </div>
+
+    <div class="mm-section" id="rp-member-section">
+      <h4>Member</h4>
+      <div class="mm-field">
+        <label>Select Member *</label>
+        <select id="rp-member"></select>
+      </div>
+    </div>
+
+    <div class="mm-section" id="rp-source-section" style="display:none;">
+      <h4>Description</h4>
+      <div class="mm-field">
+        <label id="rp-source-label">Description *</label>
+        <input type="text" id="rp-source" placeholder="e.g. New member registration - Jane Wanjiru">
+      </div>
+    </div>
+
+    <div class="mm-section">
+      <h4>Payment Details</h4>
+      <div class="mm-row2">
+        <div class="mm-field">
+          <label>Amount (KSh) *</label>
+          <input type="number" id="rp-amount" placeholder="0" min="1">
+        </div>
+        <div class="mm-field">
+          <label>Payment Method</label>
+          <select id="rp-method">
+            <option value="Cash">Cash</option>
+            <option value="M-Pesa">M-Pesa</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+          </select>
+        </div>
+      </div>
+      <div class="mm-row2">
+        <div class="mm-field">
+          <label>M-Pesa / Bank Reference</label>
+          <input type="text" id="rp-reference" placeholder="Optional">
+        </div>
+        <div class="mm-field">
+          <label>Date</label>
+          <input type="date" id="rp-date">
+        </div>
+      </div>
+      <div class="mm-field">
+        <label>Note</label>
+        <input type="text" id="rp-note" placeholder="Optional">
+      </div>
+      <div class="mm-error" id="rp-error"></div>
+    </div>
+
+    <button class="mm-save-btn" onclick="saveCollection()">Save Record</button>
+  </div>
+</div>
+
+<!-- View Transaction modal -->
+<div class="member-modal-overlay" id="viewTxnOverlay" onclick="if(event.target===this) closeViewTxn()">
+  <div class="member-modal">
+    <div class="mm-head">
+      <h3>Transaction Details</h3>
+      <button class="mm-close" onclick="closeViewTxn()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="mm-section">
+      <div class="vm-row"><span class="vk">Reference</span><span class="vv" id="vt-id">—</span></div>
+      <div class="vm-row"><span class="vk">Type</span><span class="vv" id="vt-type">—</span></div>
+      <div class="vm-row"><span class="vk">From</span><span class="vv" id="vt-from">—</span></div>
+      <div class="vm-row"><span class="vk">Amount</span><span class="vv" id="vt-amount">—</span></div>
+      <div class="vm-row"><span class="vk">Method</span><span class="vv" id="vt-method">—</span></div>
+      <div class="vm-row"><span class="vk">M-Pesa / Bank Ref</span><span class="vv" id="vt-reference">—</span></div>
+      <div class="vm-row"><span class="vk">Date</span><span class="vv" id="vt-date">—</span></div>
+      <div class="vm-row"><span class="vk">Note</span><span class="vv" id="vt-note">—</span></div>
+    </div>
+  </div>
+</div>
 
 <nav class="bottom-nav">
   <button class="nav-item" onclick="location.href='admin-dashboard.html'">
@@ -456,11 +503,11 @@ header.topbar{background:var(--navy);padding:16px 18px 44px;position:relative;}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     Members
   </button>
-  <button class="nav-item" onclick="setActiveNav(this,'Collections')">
+  <button class="nav-item active" onclick="setActiveNav(this,'Collections')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7 16 12l7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
     Collections
   </button>
-  <button class="nav-item active" onclick="setActiveNav(this,'Reports')">
+  <button class="nav-item" onclick="location.href='reports.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
     Reports
   </button>
@@ -482,112 +529,235 @@ function showToast(msg){
 function setActiveNav(el,label){
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   el.classList.add('active');
-  showToast(label);
 }
 
-/* -------- Real collections & member stats -------- */
-(function(){
-  function formatKsh(n){
-    return 'KSh ' + Math.round(n).toLocaleString('en-KE');
-  }
+/* -------- Type labels/icons -------- */
+const TYPE_LABELS = {
+  contribution: 'Member Collection',
+  registration: 'Registration Fee',
+  fine: 'Fine / Penalty',
+  other: 'Other Income'
+};
+const TYPE_ICONS = {
+  contribution: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  registration: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  fine: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>',
+  other: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+};
 
+function formatKsh(n){
+  return 'KSh ' + Math.round(n).toLocaleString('en-KE');
+}
+
+/* -------- Data (backed by KatiniAuth / localStorage) -------- */
+let txns = [];
+
+function loadTxns(){
+  txns = KatiniAuth.getCollections();
+}
+
+function renderSummary(){
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0,10);
+  const monthStr = todayStr.slice(0,7);
+
+  let today = 0, month = 0, contrib = 0, fines = 0;
+  txns.forEach(t => {
+    if(t.date === todayStr) today += t.amount;
+    if((t.date || '').slice(0,7) === monthStr) month += t.amount;
+    if(t.type === 'contribution') contrib += t.amount;
+    if(t.type === 'fine') fines += t.amount;
+  });
+
+  document.getElementById('stat-today').textContent = formatKsh(today);
+  document.getElementById('stat-month').textContent = formatKsh(month);
+  document.getElementById('stat-contrib').textContent = formatKsh(contrib);
+  document.getElementById('stat-fines').textContent = formatKsh(fines);
+}
+
+function renderTxns(list){
+  const wrap = document.getElementById('txnList');
+  if(list.length === 0){
+    wrap.innerHTML = '<div style="text-align:center;padding:40px 10px;color:var(--muted, #8c96a5);font-size:13px;">No collections recorded yet.</div>';
+    return;
+  }
+  wrap.innerHTML = list.map(t => {
+    const primary = t.type === 'contribution' ? (t.memberName || 'Member') : (t.source || TYPE_LABELS[t.type]);
+    return `
+    <div class="txn-card" onclick="openViewTxn('${t.id}')">
+      <div class="txn-icon ${t.type}">${TYPE_ICONS[t.type] || TYPE_ICONS.other}</div>
+      <div class="txn-info">
+        <h4>${primary}</h4>
+        <div class="txn-id">Ref: ${t.id}</div>
+        <div class="txn-sub">
+          <span>${TYPE_LABELS[t.type] || 'Other'}</span>
+          <span>${t.method}</span>
+          <span>${t.date}</span>
+        </div>
+      </div>
+      <div class="txn-right">
+        <span class="txn-amount">${formatKsh(t.amount)}</span>
+      </div>
+    </div>
+  `;
+  }).join('');
+}
+
+function setTab(el){
+  document.querySelectorAll('.tab-pill').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  filterTxns();
+}
+
+function filterTxns(){
+  const type = document.querySelector('.tab-pill.active').dataset.type;
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  let list = txns;
+  if(type !== 'all'){
+    list = list.filter(t => t.type === type);
+  }
+  if(q){
+    list = list.filter(t =>
+      (t.memberName || '').toLowerCase().includes(q) ||
+      (t.source || '').toLowerCase().includes(q) ||
+      (t.reference || '').toLowerCase().includes(q) ||
+      t.id.toLowerCase().includes(q)
+    );
+  }
+  renderTxns(list);
+  document.getElementById('pgInfo').textContent = `Showing ${list.length} of ${txns.length} records`;
+}
+
+function refreshCollections(){
+  loadTxns();
+  renderSummary();
+  filterTxns();
+}
+
+/* -------- Record Payment modal -------- */
+function loadMemberOptions(){
   const users = KatiniAuth.getUsers().filter(u => u.role === 'member');
-  const active = users.filter(u => (u.status || 'active') === 'active');
-  document.getElementById('rp-total-members').textContent = users.length;
-  document.getElementById('rp-active-members').textContent = 'Active: ' + active.length;
+  const sel = document.getElementById('rp-member');
+  sel.innerHTML = users.length
+    ? users.map(u => `<option value="${u.memberId}" data-name="${u.name}">${u.name} (${u.memberId})</option>`).join('')
+    : '<option value="">No members registered yet</option>';
+}
 
-  const txns = KatiniAuth.getCollections();
-  const todayStr = new Date().toISOString().slice(0,10);
+function openRecordPayment(){
+  loadMemberOptions();
+  document.getElementById('rp-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('recordPaymentOverlay').classList.add('open');
+}
+function closeRecordPayment(){
+  document.getElementById('recordPaymentOverlay').classList.remove('open');
+  resetRecordPaymentForm();
+}
+function resetRecordPaymentForm(){
+  document.getElementById('rp-amount').value = '';
+  document.getElementById('rp-method').value = 'Cash';
+  document.getElementById('rp-reference').value = '';
+  document.getElementById('rp-note').value = '';
+  document.getElementById('rp-source').value = '';
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.type-btn[data-type="contribution"]').classList.add('active');
+  document.getElementById('rp-member-section').style.display = 'block';
+  document.getElementById('rp-source-section').style.display = 'none';
+  const err = document.getElementById('rp-error');
+  err.classList.remove('show');
+  err.textContent = '';
+}
 
-  const totalAll = txns.reduce((s,t) => s + t.amount, 0);
-  const totalToday = txns.filter(t => t.date === todayStr).reduce((s,t) => s + t.amount, 0);
+const SOURCE_PLACEHOLDERS = {
+  registration: 'e.g. New member registration - Jane Wanjiru',
+  fine: 'e.g. Late return fine - bike KMEA 123A',
+  other: 'e.g. Donation, merchandise sale'
+};
+const SOURCE_LABELS = {
+  registration: 'Registration description *',
+  fine: 'Fine description *',
+  other: 'Description *'
+};
 
-  document.getElementById('rp-total-collections').textContent = formatKsh(totalAll);
-  document.getElementById('rp-total-sub').textContent = txns.length + ' record' + (txns.length === 1 ? '' : 's');
-  document.getElementById('rp-today-collections').textContent = formatKsh(totalToday);
-
-  const byType = { contribution: 0, registration: 0, fine: 0, other: 0 };
-  txns.forEach(t => { byType[t.type] = (byType[t.type] || 0) + t.amount; });
-  document.getElementById('rp-donut-contribution').textContent = formatKsh(byType.contribution);
-  document.getElementById('rp-donut-registration').textContent = formatKsh(byType.registration);
-  document.getElementById('rp-donut-fine').textContent = formatKsh(byType.fine);
-  document.getElementById('rp-donut-other').textContent = formatKsh(byType.other);
-  document.getElementById('rp-donut-total').innerHTML = 'KSh<br>' + Math.round(totalAll).toLocaleString('en-KE');
-
-  const byDate = {};
-  txns.forEach(t => { byDate[t.date] = (byDate[t.date] || 0) + t.amount; });
-  const dailyTotals = Object.values(byDate);
-  const daysWithCollections = dailyTotals.length || 1;
-  const avgDaily = dailyTotals.reduce((s,v) => s + v, 0) / daysWithCollections;
-  const highest = dailyTotals.length ? Math.max(...dailyTotals) : 0;
-  const lowest = dailyTotals.length ? Math.min(...dailyTotals) : 0;
-
-  const miniNums = document.querySelectorAll('.mini-grid .mini-num');
-  if(miniNums[0]) miniNums[0].textContent = formatKsh(avgDaily);
-  if(miniNums[1]) miniNums[1].textContent = formatKsh(highest);
-  if(miniNums[2]) miniNums[2].textContent = formatKsh(lowest);
-  if(miniNums[3]) miniNums[3].textContent = txns.length;
-})();
-
-/* -------- Collections Trend chart (two series, pure SVG) -------- */
-(function(){
-  const thisMonth = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-  const lastMonth  = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-  const labels = ['1 May','','','','5 May','','','','','9 May','','','','13 May','','','','18 May'];
-  const w = 420, h = 200, padL = 34, padR = 6, padT = 10, padB = 26;
-  const maxY = 120;
-  const plotW = w - padL - padR;
-  const plotH = h - padT - padB;
-  const xStep = plotW / (thisMonth.length - 1);
-
-  function toPoints(data){
-    return data.map((v,i) => {
-      const x = padL + i * xStep;
-      const y = padT + plotH - (v / maxY) * plotH;
-      return [x,y];
-    });
+function setCollectionType(el){
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const type = el.dataset.type;
+  if(type === 'contribution'){
+    document.getElementById('rp-member-section').style.display = 'block';
+    document.getElementById('rp-source-section').style.display = 'none';
+  } else {
+    document.getElementById('rp-member-section').style.display = 'none';
+    document.getElementById('rp-source-section').style.display = 'block';
+    document.getElementById('rp-source-label').textContent = SOURCE_LABELS[type];
+    document.getElementById('rp-source').placeholder = SOURCE_PLACEHOLDERS[type];
   }
-  function toPath(points){
-    return points.map((p,i) => (i===0? 'M':'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+}
+
+function saveCollection(){
+  const type = document.querySelector('.type-btn.active').dataset.type;
+  const amount = document.getElementById('rp-amount').value;
+  const err = document.getElementById('rp-error');
+
+  const payload = {
+    type,
+    amount,
+    method: document.getElementById('rp-method').value,
+    reference: document.getElementById('rp-reference').value.trim(),
+    date: document.getElementById('rp-date').value,
+    note: document.getElementById('rp-note').value.trim()
+  };
+
+  if(type === 'contribution'){
+    const sel = document.getElementById('rp-member');
+    const opt = sel.options[sel.selectedIndex];
+    if(!opt || !opt.value){
+      err.textContent = 'Select the member this contribution is from.';
+      err.classList.add('show');
+      return;
+    }
+    payload.memberId = opt.value;
+    payload.memberName = opt.dataset.name;
+  } else {
+    payload.source = document.getElementById('rp-source').value.trim();
   }
 
-  const pThis = toPoints(thisMonth);
-  const pLast = toPoints(lastMonth);
-  const lineThis = toPath(pThis);
-  const lineLast = toPath(pLast);
-  const areaThis = lineThis + ' L' + pThis[pThis.length-1][0].toFixed(1) + ',' + (padT+plotH) + ' L' + pThis[0][0].toFixed(1) + ',' + (padT+plotH) + ' Z';
+  const result = KatiniAuth.addCollection(payload);
+  if(!result.success){
+    err.textContent = result.message;
+    err.classList.add('show');
+    return;
+  }
 
-  const gridLines = [0,20,40,60,80,100,120].map(v => {
-    const y = padT + plotH - (v/maxY)*plotH;
-    return '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (w-padR) + '" y2="' + y.toFixed(1) + '" stroke="#eef1f5" stroke-width="1"/>' +
-           '<text x="2" y="' + (y+4).toFixed(1) + '" font-size="9" fill="#9aa3b0" font-weight="600">' + (v===0? '0': v+'K') + '</text>';
-  }).join('');
+  closeRecordPayment();
+  refreshCollections();
+  showToast('Payment recorded successfully');
+}
 
-  const dotsThis = pThis.map(p => '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3" fill="#2e7d32"/>').join('');
-  const dotsLast = pLast.map(p => '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="2.5" fill="#b7bec9"/>').join('');
+/* -------- View Transaction modal -------- */
+function openViewTxn(id){
+  const t = txns.find(x => x.id === id);
+  if(!t) return;
+  document.getElementById('vt-id').textContent = t.id;
+  document.getElementById('vt-type').textContent = TYPE_LABELS[t.type] || 'Other';
+  document.getElementById('vt-from').textContent = t.type === 'contribution' ? (t.memberName || '—') : (t.source || '—');
+  document.getElementById('vt-amount').textContent = formatKsh(t.amount);
+  document.getElementById('vt-method').textContent = t.method || '—';
+  document.getElementById('vt-reference').textContent = t.reference || '—';
+  document.getElementById('vt-date').textContent = t.date || '—';
+  document.getElementById('vt-note').textContent = t.note || '—';
+  document.getElementById('viewTxnOverlay').classList.add('open');
+}
+function closeViewTxn(){
+  document.getElementById('viewTxnOverlay').classList.remove('open');
+}
 
-  const xLabels = labels.map((lab,i) => {
-    if(!lab) return '';
-    const x = padL + i*xStep;
-    return '<text x="' + x.toFixed(1) + '" y="' + (h-6) + '" font-size="9" fill="#9aa3b0" font-weight="600" text-anchor="middle">' + lab + '</text>';
-  }).join('');
-
-  const svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">' +
-    '<defs><linearGradient id="areaGradThis" x1="0" y1="0" x2="0" y2="1">' +
-    '<stop offset="0%" stop-color="#2e7d32" stop-opacity="0.30"/>' +
-    '<stop offset="100%" stop-color="#2e7d32" stop-opacity="0"/>' +
-    '</linearGradient></defs>' +
-    gridLines +
-    '<path d="' + areaThis + '" fill="url(#areaGradThis)"/>' +
-    '<path d="' + lineLast + '" fill="none" stroke="#b7bec9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4"/>' +
-    dotsLast +
-    '<path d="' + lineThis + '" fill="none" stroke="#2e7d32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
-    dotsThis +
-    xLabels +
-    '</svg>';
-
-  document.getElementById('trendChartWrap').innerHTML = svg;
-})();
+refreshCollections();
+if(new URLSearchParams(window.location.search).get('type')){
+  const t = new URLSearchParams(window.location.search).get('type');
+  openRecordPayment();
+  const btn = document.querySelector(`.type-btn[data-type="${t}"]`);
+  if(btn) setCollectionType(btn);
+}
 </script>
 <script>
 if ('serviceWorker' in navigator) {
