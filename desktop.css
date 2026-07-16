@@ -1,0 +1,58 @@
+/* ---------- Desktop / large-screen responsiveness ----------
+   Mobile layout (the default, unchanged) still applies below 701px.
+   Above that, the app card stretches fluidly to fill more of the
+   screen instead of sitting as a fixed 480px column. */
+
+@media (min-width: 701px) {
+  body {
+    display: flex;
+    justify-content: center;
+  }
+
+  #app {
+    max-width: min(94vw, 1180px) !important;
+    width: min(94vw, 1180px);
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.45);
+  }
+
+  .bottom-nav {
+    max-width: min(94vw, 1180px) !important;
+  }
+
+  /* Give fixed-column card grids more breathing room, and let the
+     2-column ones expand to make better use of the wider canvas. */
+  .stat-grid,
+  .gate-why-grid,
+  .filters-grid,
+  .stat-grid4,
+  .mini-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+
+  .two-col {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .qa-grid {
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 14px !important;
+  }
+
+  header.topbar,
+  .main-card,
+  .section {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+}
+
+@media (min-width: 1000px) {
+  #app {
+    max-width: min(90vw, 1320px) !important;
+    width: min(90vw, 1320px);
+  }
+
+  .bottom-nav {
+    max-width: min(90vw, 1320px) !important;
+  }
+}

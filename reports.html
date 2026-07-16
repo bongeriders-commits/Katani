@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Reports &amp; Analytics - Katani Main Stage</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d2140">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Katani Stage">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <script src="auth.js"></script>
 <style>
 :root{
@@ -211,6 +219,7 @@ header.topbar{background:var(--navy);padding:16px 18px 44px;position:relative;}
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
+<link rel="stylesheet" href="desktop.css">
 </head>
 <body>
 <script>KatiniAuth.requireRole(['admin','member']);</script>
@@ -535,6 +544,13 @@ function setActiveNav(el,label){
 
   document.getElementById('trendChartWrap').innerHTML = svg;
 })();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>

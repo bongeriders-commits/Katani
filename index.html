@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Katani Main Stage - Boda Self Help Group</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d2140">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Katani Stage">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <script src="auth.js"></script>
 <style>
 :root{
@@ -360,6 +368,7 @@ footer.app-footer{
   body{background:var(--gray-bg);}
 }
 </style>
+<link rel="stylesheet" href="desktop.css">
 </head>
 <body>
 
@@ -467,6 +476,7 @@ footer.app-footer{
     <li><a href="admin-dashboard.html">Admin Dashboard</a></li>
     <li><a href="#news">News &amp; Announcements</a></li>
     <li><a href="#contact">Contact</a></li>
+    <li id="installMenuItem" style="display:none;"><a href="#" onclick="triggerInstall();return false;">Install App</a></li>
   </ul>
 </nav>
 
@@ -695,9 +705,34 @@ function closeDrawer(){
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawerOverlay').classList.remove('open');
 }
+
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const item = document.getElementById('installMenuItem');
+  if (item) item.style.display = 'block';
+});
+function triggerInstall(){
+  closeDrawer();
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.finally(() => { deferredInstallPrompt = null; });
+}
+window.addEventListener('appinstalled', () => {
+  const item = document.getElementById('installMenuItem');
+  if (item) item.style.display = 'none';
+});
 function setActive(el){
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   el.classList.add('active');
+}
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
 }
 </script>
 </body>
