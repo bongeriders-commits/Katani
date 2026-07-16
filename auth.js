@@ -56,13 +56,74 @@
       password: data.password,
       role: isAdminEmail(email) ? 'admin' : 'member',
       phone: data.phone || '',
+      altPhone: data.altPhone || '',
       memberId: nextMemberId(),
       memberSince: data.memberSince || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      stage: data.stage || 'Katani Main Stage'
+      stage: data.stage || 'Katani Main Stage',
+      status: data.status || 'active',
+      dob: data.dob || '',
+      gender: data.gender || '',
+      nationalId: data.nationalId || '',
+      residence: data.address || data.residence || '',
+      photo: data.photo || '',
+      motorcycle: {
+        plate: (data.motorcycle && data.motorcycle.plate) || data.plate || '',
+        model: (data.motorcycle && data.motorcycle.model) || data.bikeModel || '',
+        color: (data.motorcycle && data.motorcycle.color) || data.bikeColor || '',
+        chassis: (data.motorcycle && data.motorcycle.chassis) || data.chassisNo || ''
+      },
+      nextOfKin: {
+        name: (data.nextOfKin && data.nextOfKin.name) || data.kinName || '',
+        relationship: (data.nextOfKin && data.nextOfKin.relationship) || data.kinRelation || '',
+        phone: (data.nextOfKin && data.nextOfKin.phone) || data.kinPhone || ''
+      }
     };
     users.push(user);
     saveUsers(users);
     setSession(user);
+    return { success: true, user: user };
+  }
+
+  // ---- Admin-added member (does NOT log the admin in as the new member) ----
+  function addMember(data) {
+    var users = getUsers();
+    var email = String(data.email || '').trim().toLowerCase();
+    if (!email) {
+      return { success: false, message: 'Email is required.' };
+    }
+    if (users.some(function (u) { return u.email.toLowerCase() === email; })) {
+      return { success: false, message: 'A member with this email already exists.' };
+    }
+    var user = {
+      name: data.name || 'New Member',
+      email: email,
+      password: data.password || Math.random().toString(36).slice(-8),
+      role: isAdminEmail(email) ? 'admin' : 'member',
+      phone: data.phone || '',
+      altPhone: data.altPhone || '',
+      memberId: nextMemberId(),
+      memberSince: data.memberSince || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      stage: data.stage || 'Katani Main Stage',
+      status: data.status || 'active',
+      dob: data.dob || '',
+      gender: data.gender || '',
+      nationalId: data.nationalId || '',
+      residence: data.residence || '',
+      photo: data.photo || '',
+      motorcycle: {
+        plate: (data.motorcycle && data.motorcycle.plate) || '',
+        model: (data.motorcycle && data.motorcycle.model) || '',
+        color: (data.motorcycle && data.motorcycle.color) || '',
+        chassis: (data.motorcycle && data.motorcycle.chassis) || ''
+      },
+      nextOfKin: {
+        name: (data.nextOfKin && data.nextOfKin.name) || '',
+        relationship: (data.nextOfKin && data.nextOfKin.relationship) || '',
+        phone: (data.nextOfKin && data.nextOfKin.phone) || ''
+      }
+    };
+    users.push(user);
+    saveUsers(users);
     return { success: true, user: user };
   }
 
@@ -129,6 +190,7 @@
     getUsers: getUsers,
     isAdminEmail: isAdminEmail,
     registerMember: registerMember,
+    addMember: addMember,
     login: login,
     logout: logout,
     getSession: getSession,

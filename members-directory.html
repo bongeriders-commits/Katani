@@ -13,6 +13,7 @@
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <script src="auth.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --navy:#0d2140;
@@ -180,6 +181,68 @@ header.topbar{background:var(--navy);padding:16px 18px 44px;position:relative;}
   max-width:400px;text-align:center;
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ---------- Member modal (Add / View) ---------- */
+.member-modal-overlay{
+  position:fixed;inset:0;z-index:700;background:rgba(10,20,40,0.6);
+  opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease;
+  display:flex;align-items:flex-end;
+}
+.member-modal-overlay.open{opacity:1;visibility:visible;}
+.member-modal{
+  width:100%;max-width:480px;margin:0 auto;background:var(--gray-bg);border-radius:20px 20px 0 0;
+  max-height:92vh;overflow-y:auto;transform:translateY(24px);transition:transform .25s ease;
+  padding:20px 18px max(20px, env(safe-area-inset-bottom));
+}
+.member-modal-overlay.open .member-modal{transform:translateY(0);}
+.mm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.mm-head h3{font-size:16.5px;font-weight:800;color:var(--navy-dark);}
+.mm-close{width:34px;height:34px;border-radius:50%;background:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(13,33,64,0.1);flex-shrink:0;}
+.mm-close svg{width:16px;height:16px;color:var(--navy-dark);}
+.mm-section{background:#fff;border-radius:14px;padding:14px;box-shadow:0 3px 12px rgba(13,33,64,0.06);margin-bottom:14px;}
+.mm-section h4{font-size:11.5px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.mm-section h4 svg{width:14px;height:14px;color:var(--gold);}
+.mm-field{margin-bottom:12px;}
+.mm-field:last-child{margin-bottom:0;}
+.mm-field label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:6px;}
+.mm-field input,.mm-field select{
+  width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;
+  color:var(--navy-dark);outline:none;background:#fff;
+}
+.mm-field input:focus,.mm-field select:focus{border-color:var(--navy);}
+.mm-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mm-photo-row{display:flex;align-items:center;gap:14px;}
+.mm-photo-preview{
+  width:64px;height:64px;border-radius:50%;background:var(--gray-bg);border:1.5px dashed var(--border);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;color:var(--muted);
+}
+.mm-photo-preview img{width:100%;height:100%;object-fit:cover;}
+.mm-photo-btn{
+  background:var(--navy);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;
+  font-weight:700;cursor:pointer;
+}
+.mm-save-btn{
+  width:100%;background:var(--navy);color:#fff;border:none;border-radius:12px;padding:14px;
+  font-size:13.5px;font-weight:800;cursor:pointer;margin-top:4px;box-shadow:0 8px 20px rgba(13,33,64,0.3);
+}
+.mm-error{color:var(--red);font-size:11.5px;margin-top:6px;display:none;}
+.mm-error.show{display:block;}
+
+/* View-member detail sheet */
+.vm-photo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:16px;}
+.vm-photo{
+  width:84px;height:84px;border-radius:50%;background:var(--navy);color:var(--gold);font-weight:800;
+  font-size:26px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 4px 14px rgba(13,33,64,0.25);
+}
+.vm-photo img{width:100%;height:100%;object-fit:cover;}
+.vm-photo-wrap h4{margin-top:10px;font-size:15.5px;font-weight:800;color:var(--navy-dark);}
+.vm-photo-wrap p{font-size:12px;color:var(--muted);margin-top:2px;}
+.vm-qr{display:flex;justify-content:center;padding:14px 0 4px;}
+.vm-qr-box{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:10px;}
+.vm-row{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+.vm-row:last-child{border-bottom:none;}
+.vm-row .vk{font-size:12px;color:var(--muted);font-weight:600;}
+.vm-row .vv{font-size:12.5px;color:var(--navy-dark);font-weight:700;text-align:right;}
 </style>
 <link rel="stylesheet" href="desktop.css">
 </head>
@@ -214,7 +277,7 @@ header.topbar{background:var(--navy);padding:16px 18px 44px;position:relative;}
         <h2>Members Directory</h2>
         <p>Search and manage all registered members.</p>
       </div>
-      <button class="btn-add" onclick="showToast('Opening Add Member form')">
+      <button class="btn-add" onclick="openAddMember()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
         Add Member
       </button>
@@ -280,6 +343,174 @@ header.topbar{background:var(--navy);padding:16px 18px 44px;position:relative;}
 
 <div id="toast"></div>
 
+<!-- Add Member modal -->
+<div class="member-modal-overlay" id="addMemberOverlay" onclick="if(event.target===this) closeAddMember()">
+  <div class="member-modal">
+    <div class="mm-head">
+      <h3>Add New Member</h3>
+      <button class="mm-close" onclick="closeAddMember()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="mm-section">
+      <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Personal Details</h4>
+      <div class="mm-field">
+        <label>Full Name *</label>
+        <input type="text" id="nm-name" placeholder="e.g. Peter Kamau">
+      </div>
+      <div class="mm-row2">
+        <div class="mm-field">
+          <label>Phone Number *</label>
+          <input type="tel" id="nm-phone" placeholder="07XX XXX XXX">
+        </div>
+        <div class="mm-field">
+          <label>Email *</label>
+          <input type="email" id="nm-email" placeholder="you@example.com">
+        </div>
+      </div>
+      <div class="mm-row2">
+        <div class="mm-field">
+          <label>National ID No.</label>
+          <input type="text" id="nm-nationalId" placeholder="e.g. 30011234">
+        </div>
+        <div class="mm-field">
+          <label>Gender</label>
+          <select id="nm-gender">
+            <option value="">Select</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+      <div class="mm-row2">
+        <div class="mm-field">
+          <label>Date of Birth</label>
+          <input type="date" id="nm-dob">
+        </div>
+        <div class="mm-field">
+          <label>Residence / Location</label>
+          <input type="text" id="nm-residence" placeholder="e.g. Katani, Machakos">
+        </div>
+      </div>
+      <div class="mm-field">
+        <label>Temporary Password *</label>
+        <input type="text" id="nm-password" placeholder="Shared with the member to log in">
+      </div>
+      <div class="mm-error" id="nm-error"></div>
+    </div>
+
+    <div class="mm-section">
+      <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1l-1 6h5"/><path d="M12 12h5l2 5.5"/><path d="M5.5 17.5 9 8h4"/></svg>Motorcycle Details</h4>
+      <div class="mm-row2">
+        <div class="mm-field">
+          <label>Number Plate</label>
+          <input type="text" id="nm-plate" placeholder="e.g. KMEA 123A" style="text-transform:uppercase;">
+        </div>
+        <div class="mm-field">
+          <label>Make / Model</label>
+          <input type="text" id="nm-bikeModel" placeholder="e.g. Bajaj Boxer">
+        </div>
+      </div>
+      <div class="mm-row2">
+        <div class="mm-field">
+          <label>Color</label>
+          <input type="text" id="nm-bikeColor" placeholder="e.g. Red">
+        </div>
+        <div class="mm-field">
+          <label>Engine / Chassis No.</label>
+          <input type="text" id="nm-chassisNo" placeholder="Optional">
+        </div>
+      </div>
+    </div>
+
+    <div class="mm-section">
+      <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Next of Kin</h4>
+      <div class="mm-field">
+        <label>Full Name</label>
+        <input type="text" id="nm-kinName" placeholder="Next of kin's full name">
+      </div>
+      <div class="mm-row2">
+        <div class="mm-field">
+          <label>Relationship</label>
+          <select id="nm-kinRelation">
+            <option value="">Select</option>
+            <option value="Spouse">Spouse</option>
+            <option value="Parent">Parent</option>
+            <option value="Sibling">Sibling</option>
+            <option value="Child">Child</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="mm-field">
+          <label>Phone Number</label>
+          <input type="tel" id="nm-kinPhone" placeholder="07XX XXX XXX">
+        </div>
+      </div>
+    </div>
+
+    <div class="mm-section">
+      <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Passport Photo</h4>
+      <div class="mm-photo-row">
+        <div class="mm-photo-preview" id="nm-photoPreview">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <div>
+          <button type="button" class="mm-photo-btn" onclick="document.getElementById('nm-photoInput').click()">Upload Photo</button>
+          <input type="file" id="nm-photoInput" accept="image/png, image/jpeg" style="display:none;">
+        </div>
+      </div>
+    </div>
+
+    <button class="mm-save-btn" onclick="saveNewMember()">Save Member</button>
+  </div>
+</div>
+
+<!-- View Member detail modal -->
+<div class="member-modal-overlay" id="viewMemberOverlay" onclick="if(event.target===this) closeViewMember()">
+  <div class="member-modal">
+    <div class="mm-head">
+      <h3>Member Profile</h3>
+      <button class="mm-close" onclick="closeViewMember()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="vm-photo-wrap">
+      <div class="vm-photo" id="vm-photo">?</div>
+      <h4 id="vm-name">—</h4>
+      <p id="vm-id">—</p>
+    </div>
+    <div class="vm-qr"><div class="vm-qr-box" id="vm-qrcode"></div></div>
+
+    <div class="mm-section">
+      <h4>Personal Details</h4>
+      <div class="vm-row"><span class="vk">Phone</span><span class="vv" id="vm-phone">—</span></div>
+      <div class="vm-row"><span class="vk">Email</span><span class="vv" id="vm-email">—</span></div>
+      <div class="vm-row"><span class="vk">National ID</span><span class="vv" id="vm-nationalId">—</span></div>
+      <div class="vm-row"><span class="vk">Gender</span><span class="vv" id="vm-gender">—</span></div>
+      <div class="vm-row"><span class="vk">Date of Birth</span><span class="vv" id="vm-dob">—</span></div>
+      <div class="vm-row"><span class="vk">Residence</span><span class="vv" id="vm-residence">—</span></div>
+      <div class="vm-row"><span class="vk">Member Since</span><span class="vv" id="vm-since">—</span></div>
+    </div>
+
+    <div class="mm-section">
+      <h4>Motorcycle Details</h4>
+      <div class="vm-row"><span class="vk">Number Plate</span><span class="vv" id="vm-plate">—</span></div>
+      <div class="vm-row"><span class="vk">Make / Model</span><span class="vv" id="vm-bikeModel">—</span></div>
+      <div class="vm-row"><span class="vk">Color</span><span class="vv" id="vm-bikeColor">—</span></div>
+      <div class="vm-row"><span class="vk">Chassis No.</span><span class="vv" id="vm-chassisNo">—</span></div>
+    </div>
+
+    <div class="mm-section">
+      <h4>Next of Kin</h4>
+      <div class="vm-row"><span class="vk">Full Name</span><span class="vv" id="vm-kinName">—</span></div>
+      <div class="vm-row"><span class="vk">Relationship</span><span class="vv" id="vm-kinRelation">—</span></div>
+      <div class="vm-row"><span class="vk">Phone</span><span class="vv" id="vm-kinPhone">—</span></div>
+    </div>
+  </div>
+</div>
+
 <nav class="bottom-nav">
   <button class="nav-item" onclick="location.href='admin-dashboard.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -318,8 +549,8 @@ function setActiveNav(el,label){
   showToast(label);
 }
 
-/* -------- Member data -------- */
-const members = [];
+/* -------- Member data (backed by KatiniAuth / localStorage) -------- */
+let members = [];
 
 const avatarColors = ['#2e7d32','#0d2140','#f5a623','#1565c0','#6a3fc0','#c0392b'];
 
@@ -331,6 +562,20 @@ function statusLabel(s){
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+function loadMembers(){
+  const users = KatiniAuth.getUsers();
+  members = users
+    .filter(u => u.role === 'member')
+    .map(u => ({
+      id: u.memberId,
+      name: u.name,
+      phone: u.phone || '—',
+      bike: (u.motorcycle && u.motorcycle.plate) || '—',
+      status: u.status || 'active',
+      photo: u.photo || ''
+    }));
+}
+
 function renderMembers(list){
   const wrap = document.getElementById('memberList');
   if(list.length === 0){
@@ -339,7 +584,7 @@ function renderMembers(list){
   }
   wrap.innerHTML = list.map((m,i) => `
     <div class="member-card">
-      <div class="avatar" style="background:${avatarColors[i % avatarColors.length]}">${initials(m.name)}</div>
+      <div class="avatar" style="background:${avatarColors[i % avatarColors.length]}">${m.photo ? `<img src="${m.photo}" alt="${m.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : initials(m.name)}</div>
       <div class="m-info">
         <h4>${m.name}</h4>
         <div class="m-id">ID: ${m.id}</div>
@@ -350,7 +595,7 @@ function renderMembers(list){
       </div>
       <div class="m-right">
         <span class="status-pill ${m.status}">${statusLabel(m.status)}</span>
-        <button class="more-btn" onclick="showToast('${m.name} options')">&#8942;</button>
+        <button class="more-btn" onclick="openViewMember('${m.id}')">&#8942;</button>
       </div>
     </div>
   `).join('');
@@ -380,7 +625,151 @@ function filterMembers(){
   document.getElementById('pgInfo').textContent = `Showing ${list.length} of ${members.length} members`;
 }
 
-renderMembers(members);
+function refreshDirectory(){
+  loadMembers();
+  filterMembers();
+}
+
+/* -------- Add Member modal -------- */
+let nmPhotoDataUrl = '';
+
+function openAddMember(){
+  document.getElementById('addMemberOverlay').classList.add('open');
+}
+function closeAddMember(){
+  document.getElementById('addMemberOverlay').classList.remove('open');
+  resetAddMemberForm();
+}
+function resetAddMemberForm(){
+  ['nm-name','nm-phone','nm-email','nm-nationalId','nm-dob','nm-residence','nm-password',
+   'nm-plate','nm-bikeModel','nm-bikeColor','nm-chassisNo','nm-kinName','nm-kinPhone'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('nm-gender').value = '';
+  document.getElementById('nm-kinRelation').value = '';
+  document.getElementById('nm-photoInput').value = '';
+  document.getElementById('nm-photoPreview').innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  nmPhotoDataUrl = '';
+  const err = document.getElementById('nm-error');
+  err.classList.remove('show');
+  err.textContent = '';
+}
+
+document.getElementById('nm-photoInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 2 * 1024 * 1024){
+    showToast('Photo must be smaller than 2MB');
+    e.target.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    nmPhotoDataUrl = ev.target.result;
+    document.getElementById('nm-photoPreview').innerHTML = `<img src="${nmPhotoDataUrl}" alt="Preview">`;
+  };
+  reader.readAsDataURL(file);
+});
+
+function saveNewMember(){
+  const name = document.getElementById('nm-name').value.trim();
+  const phone = document.getElementById('nm-phone').value.trim();
+  const email = document.getElementById('nm-email').value.trim();
+  const password = document.getElementById('nm-password').value.trim();
+  const err = document.getElementById('nm-error');
+
+  if(!name || !phone || !email || !password){
+    err.textContent = 'Full name, phone, email and a temporary password are required.';
+    err.classList.add('show');
+    return;
+  }
+
+  const result = KatiniAuth.addMember({
+    name, phone, email, password,
+    nationalId: document.getElementById('nm-nationalId').value.trim(),
+    gender: document.getElementById('nm-gender').value,
+    dob: document.getElementById('nm-dob').value,
+    residence: document.getElementById('nm-residence').value.trim(),
+    photo: nmPhotoDataUrl,
+    motorcycle: {
+      plate: document.getElementById('nm-plate').value.trim().toUpperCase(),
+      model: document.getElementById('nm-bikeModel').value.trim(),
+      color: document.getElementById('nm-bikeColor').value.trim(),
+      chassis: document.getElementById('nm-chassisNo').value.trim()
+    },
+    nextOfKin: {
+      name: document.getElementById('nm-kinName').value.trim(),
+      relationship: document.getElementById('nm-kinRelation').value,
+      phone: document.getElementById('nm-kinPhone').value.trim()
+    }
+  });
+
+  if(!result.success){
+    err.textContent = result.message;
+    err.classList.add('show');
+    return;
+  }
+
+  closeAddMember();
+  refreshDirectory();
+  showToast(`${name} was added successfully`);
+}
+
+/* -------- View Member modal -------- */
+function openViewMember(memberId){
+  const users = KatiniAuth.getUsers();
+  const u = users.find(x => x.memberId === memberId);
+  if(!u){ showToast('Member not found'); return; }
+
+  document.getElementById('vm-name').textContent = u.name;
+  document.getElementById('vm-id').textContent = 'ID: ' + u.memberId;
+  document.getElementById('vm-photo').innerHTML = u.photo ? `<img src="${u.photo}" alt="${u.name}">` : initials(u.name);
+  document.getElementById('vm-phone').textContent = u.phone || '—';
+  document.getElementById('vm-email').textContent = u.email || '—';
+  document.getElementById('vm-nationalId').textContent = u.nationalId || '—';
+  document.getElementById('vm-gender').textContent = u.gender || '—';
+  document.getElementById('vm-dob').textContent = u.dob || '—';
+  document.getElementById('vm-residence').textContent = u.residence || '—';
+  document.getElementById('vm-since').textContent = u.memberSince || '—';
+
+  const mc = u.motorcycle || {};
+  document.getElementById('vm-plate').textContent = mc.plate || '—';
+  document.getElementById('vm-bikeModel').textContent = mc.model || '—';
+  document.getElementById('vm-bikeColor').textContent = mc.color || '—';
+  document.getElementById('vm-chassisNo').textContent = mc.chassis || '—';
+
+  const kin = u.nextOfKin || {};
+  document.getElementById('vm-kinName').textContent = kin.name || '—';
+  document.getElementById('vm-kinRelation').textContent = kin.relationship || '—';
+  document.getElementById('vm-kinPhone').textContent = kin.phone || '—';
+
+  const qrBox = document.getElementById('vm-qrcode');
+  qrBox.innerHTML = '';
+  try{
+    if(window.QRCode){
+      new QRCode(qrBox, {
+        text: u.memberId,
+        width: 96,
+        height: 96,
+        colorDark: "#0d2140",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+  }catch(e){
+    qrBox.innerHTML = '<div style="font-size:9px;text-align:center;color:#0d2140;padding:8px;">QR unavailable offline</div>';
+  }
+
+  document.getElementById('viewMemberOverlay').classList.add('open');
+}
+function closeViewMember(){
+  document.getElementById('viewMemberOverlay').classList.remove('open');
+}
+
+refreshDirectory();
+if(new URLSearchParams(window.location.search).get('add') === '1'){
+  openAddMember();
+}
 </script>
 <script>
 if ('serviceWorker' in navigator) {

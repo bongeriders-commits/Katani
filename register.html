@@ -794,12 +794,29 @@ function populateReview(){
 }
 
 function submitRegistration(){
+  const relSel = document.getElementById('kinRelation');
+  const kinRelationText = relSel.options[relSel.selectedIndex] ? relSel.options[relSel.selectedIndex].text : '';
+
   const result = KatiniAuth.registerMember({
     name: document.getElementById('fullName').value.trim(),
     email: document.getElementById('email').value.trim(),
     password: document.getElementById('password').value,
     phone: document.getElementById('phone').value.trim(),
-    stage: document.getElementById('stage').value.trim() || 'Katani Main Stage'
+    altPhone: document.getElementById('altPhone').value.trim(),
+    stage: document.getElementById('stage').value.trim() || 'Katani Main Stage',
+    dob: document.getElementById('dob').value,
+    gender: document.getElementById('gender').value,
+    address: document.getElementById('address').value.trim(),
+    photo: photoDataUrl || '',
+    motorcycle: {
+      plate: document.getElementById('plate').value.trim().toUpperCase(),
+      model: document.getElementById('bikeModel').value.trim()
+    },
+    nextOfKin: {
+      name: document.getElementById('kinName').value.trim(),
+      relationship: kinRelationText,
+      phone: document.getElementById('kinPhone').value.trim()
+    }
   });
 
   if(!result.success){

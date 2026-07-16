@@ -234,6 +234,40 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 .menu-item:active{background:rgba(255,255,255,0.07);}
 .menu-item svg{width:18px;height:18px;flex-shrink:0;color:var(--gold);}
 
+/* ---------- My Profile popup ---------- */
+.myp-overlay{
+  position:fixed;inset:0;z-index:650;background:rgba(10,20,40,0.6);
+  opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease;
+  display:flex;align-items:flex-end;
+}
+.myp-overlay.open{opacity:1;visibility:visible;}
+.myp-panel{
+  width:100%;max-width:480px;margin:0 auto;background:var(--gray-bg);border-radius:20px 20px 0 0;
+  max-height:90vh;overflow-y:auto;transform:translateY(24px);transition:transform .25s ease;
+  padding:20px 18px max(20px, env(safe-area-inset-bottom));
+}
+.myp-overlay.open .myp-panel{transform:translateY(0);}
+.myp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.myp-head h3{font-size:16.5px;font-weight:800;color:var(--navy-dark);}
+.myp-close{width:34px;height:34px;border-radius:50%;background:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(13,33,64,0.1);flex-shrink:0;}
+.myp-close svg{width:16px;height:16px;color:var(--navy-dark);}
+.myp-photo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:14px;}
+.myp-photo{
+  width:84px;height:84px;border-radius:50%;background:var(--navy);color:var(--gold);font-weight:800;
+  font-size:26px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 4px 14px rgba(13,33,64,0.25);
+}
+.myp-photo img{width:100%;height:100%;object-fit:cover;}
+.myp-photo-wrap h4{margin-top:10px;font-size:15.5px;font-weight:800;color:var(--navy-dark);}
+.myp-photo-wrap p{font-size:12px;color:var(--muted);margin-top:2px;}
+.myp-qr{display:flex;justify-content:center;padding:6px 0 14px;}
+.myp-qr-box{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:10px;}
+.myp-section{background:#fff;border-radius:14px;box-shadow:0 3px 12px rgba(13,33,64,0.06);overflow:hidden;margin-bottom:14px;}
+.myp-section h5{font-size:11.5px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.4px;padding:13px 16px 0;}
+.myp-row{display:flex;justify-content:space-between;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);}
+.myp-row:last-child{border-bottom:none;}
+.myp-row .pk{font-size:12px;color:var(--muted);font-weight:600;}
+.myp-row .pv{font-size:12.5px;color:var(--navy-dark);font-weight:700;text-align:right;}
+
 /* ---------- Contact section ---------- */
 .contact-card{background:#fff;border-radius:14px;box-shadow:0 3px 12px rgba(13,33,64,0.06);overflow:hidden;}
 .contact-row{display:flex;align-items:center;gap:14px;padding:16px;border-bottom:1px solid var(--border);text-decoration:none;}
@@ -517,7 +551,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="14" x2="17" y2="14"/><line x1="14" y1="17" x2="14" y2="17.01"/><line x1="14" y1="21" x2="17" y2="21"/><line x1="17" y1="17" x2="21" y2="17"/><line x1="21" y1="14" x2="21" y2="14.01"/><line x1="21" y1="21" x2="21" y2="21.01"/></svg>
     My ID
   </button>
-  <button class="nav-item" onclick="scrollToSection('profileSection')">
+  <button class="nav-item" onclick="openMyProfile()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     Profile
   </button>
@@ -540,7 +574,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
       </button>
     </div>
     <div class="menu-list">
-      <button class="menu-item" onclick="closeMenu();scrollToSection('profileSection')">
+      <button class="menu-item" onclick="closeMenu();openMyProfile()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         My Profile
       </button>
@@ -584,6 +618,50 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
   </div>
 </div>
 
+<div class="myp-overlay" id="myProfileOverlay" onclick="if(event.target===this) closeMyProfile()">
+  <div class="myp-panel">
+    <div class="myp-head">
+      <h3>My Profile</h3>
+      <button class="myp-close" onclick="closeMyProfile()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="myp-photo-wrap">
+      <div class="myp-photo" id="myp-photo">?</div>
+      <h4 id="myp-name">—</h4>
+      <p id="myp-id">—</p>
+    </div>
+    <div class="myp-qr"><div class="myp-qr-box" id="myp-qrcode"></div></div>
+
+    <div class="myp-section">
+      <h5>Personal Details</h5>
+      <div class="myp-row"><span class="pk">Phone</span><span class="pv" id="myp-phone">—</span></div>
+      <div class="myp-row"><span class="pk">Email</span><span class="pv" id="myp-email">—</span></div>
+      <div class="myp-row"><span class="pk">National ID</span><span class="pv" id="myp-nationalId">—</span></div>
+      <div class="myp-row"><span class="pk">Gender</span><span class="pv" id="myp-gender">—</span></div>
+      <div class="myp-row"><span class="pk">Date of Birth</span><span class="pv" id="myp-dob">—</span></div>
+      <div class="myp-row"><span class="pk">Residence</span><span class="pv" id="myp-residence">—</span></div>
+      <div class="myp-row"><span class="pk">Stage / Route</span><span class="pv" id="myp-stage">—</span></div>
+      <div class="myp-row"><span class="pk">Member Since</span><span class="pv" id="myp-since">—</span></div>
+    </div>
+
+    <div class="myp-section">
+      <h5>Motorcycle Details</h5>
+      <div class="myp-row"><span class="pk">Number Plate</span><span class="pv" id="myp-plate">—</span></div>
+      <div class="myp-row"><span class="pk">Make / Model</span><span class="pv" id="myp-bikeModel">—</span></div>
+      <div class="myp-row"><span class="pk">Color</span><span class="pv" id="myp-bikeColor">—</span></div>
+      <div class="myp-row"><span class="pk">Chassis No.</span><span class="pv" id="myp-chassisNo">—</span></div>
+    </div>
+
+    <div class="myp-section">
+      <h5>Next of Kin</h5>
+      <div class="myp-row"><span class="pk">Full Name</span><span class="pv" id="myp-kinName">—</span></div>
+      <div class="myp-row"><span class="pk">Relationship</span><span class="pv" id="myp-kinRelation">—</span></div>
+      <div class="myp-row"><span class="pk">Phone</span><span class="pv" id="myp-kinPhone">—</span></div>
+    </div>
+  </div>
+</div>
+
 <script>
 // Auth guard: only logged-in members (or admins previewing) may view this page.
 const currentUser = KatiniAuth.requireRole(['admin','member']);
@@ -595,9 +673,17 @@ const memberData = currentUser ? {
   email: currentUser.email,
   phone: currentUser.phone || '—',
   stage: currentUser.stage || 'Katani Main Stage',
-  status: "active"
+  status: "active",
+  photo: currentUser.photo || '',
+  nationalId: currentUser.nationalId || '—',
+  gender: currentUser.gender || '—',
+  dob: currentUser.dob || '—',
+  residence: currentUser.residence || '—',
+  motorcycle: currentUser.motorcycle || {},
+  nextOfKin: currentUser.nextOfKin || {}
 } : {
-  name: "Member", memberId: "—", memberSince: "—", email: "—", phone: "—", stage: "—", status: "active"
+  name: "Member", memberId: "—", memberSince: "—", email: "—", phone: "—", stage: "—", status: "active",
+  photo: '', nationalId: '—', gender: '—', dob: '—', residence: '—', motorcycle: {}, nextOfKin: {}
 };
 
 if(currentUser){
@@ -620,6 +706,56 @@ function openMenu(){
 }
 function closeMenu(){
   document.getElementById('menuOverlay').classList.remove('open');
+}
+
+function openMyProfile(){
+  document.getElementById('myp-photo').innerHTML = memberData.photo ? `<img src="${memberData.photo}" alt="${memberData.name}">` : initials(memberData.name);
+  document.getElementById('myp-name').textContent = memberData.name;
+  document.getElementById('myp-id').textContent = 'ID: ' + memberData.memberId;
+  document.getElementById('myp-phone').textContent = memberData.phone;
+  document.getElementById('myp-email').textContent = memberData.email;
+  document.getElementById('myp-nationalId').textContent = memberData.nationalId;
+  document.getElementById('myp-gender').textContent = memberData.gender;
+  document.getElementById('myp-dob').textContent = memberData.dob;
+  document.getElementById('myp-residence').textContent = memberData.residence;
+  document.getElementById('myp-stage').textContent = memberData.stage;
+  document.getElementById('myp-since').textContent = memberData.memberSince;
+
+  const mc = memberData.motorcycle || {};
+  document.getElementById('myp-plate').textContent = mc.plate || '—';
+  document.getElementById('myp-bikeModel').textContent = mc.model || '—';
+  document.getElementById('myp-bikeColor').textContent = mc.color || '—';
+  document.getElementById('myp-chassisNo').textContent = mc.chassis || '—';
+
+  const kin = memberData.nextOfKin || {};
+  document.getElementById('myp-kinName').textContent = kin.name || '—';
+  document.getElementById('myp-kinRelation').textContent = kin.relationship || '—';
+  document.getElementById('myp-kinPhone').textContent = kin.phone || '—';
+
+  const qrBox = document.getElementById('myp-qrcode');
+  qrBox.innerHTML = '';
+  try{
+    if(window.QRCode){
+      new QRCode(qrBox, {
+        text: memberData.memberId,
+        width: 96,
+        height: 96,
+        colorDark: "#0d2140",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+  }catch(e){
+    qrBox.innerHTML = '<div style="font-size:9px;text-align:center;color:#0d2140;padding:8px;">QR unavailable offline</div>';
+  }
+
+  document.getElementById('myProfileOverlay').classList.add('open');
+}
+function closeMyProfile(){
+  document.getElementById('myProfileOverlay').classList.remove('open');
+}
+function initials(name){
+  return name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
 }
 
 function handleLogout(){
