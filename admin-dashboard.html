@@ -202,6 +202,31 @@ header.topbar{
 }
 .profile-logout svg{width:16px;height:16px;}
 
+/* ---------- Hamburger Menu ---------- */
+.menu-overlay{
+  position:fixed;inset:0;z-index:600;background:rgba(10,20,40,0.55);
+  opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease;
+}
+.menu-overlay.open{opacity:1;visibility:visible;}
+.menu-panel{
+  position:fixed;top:0;left:0;bottom:0;width:82%;max-width:320px;background:var(--navy);
+  box-shadow:4px 0 24px rgba(0,0,0,0.35);transform:translateX(-100%);transition:transform .28s ease;
+  display:flex;flex-direction:column;padding:max(18px, env(safe-area-inset-top)) 0 max(18px, env(safe-area-inset-bottom));
+  overflow-y:auto;
+}
+.menu-overlay.open .menu-panel{transform:translateX(0);}
+.menu-head{display:flex;align-items:center;justify-content:space-between;padding:0 18px 16px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:6px;}
+.menu-head h3{color:#fff;font-size:15.5px;font-weight:800;}
+.menu-close{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.08);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.menu-close svg{width:15px;height:15px;color:#fff;}
+.menu-list{display:flex;flex-direction:column;padding:8px 10px;gap:2px;}
+.menu-item{
+  display:flex;align-items:center;gap:12px;background:none;border:none;color:var(--text-light);
+  padding:12px 10px;border-radius:10px;font-size:13.5px;font-weight:600;text-align:left;cursor:pointer;width:100%;
+}
+.menu-item:active{background:rgba(255,255,255,0.07);}
+.menu-item svg{width:18px;height:18px;flex-shrink:0;color:var(--gold);}
+
 /* ---------- Bottom nav ---------- */
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--navy);
@@ -237,7 +262,7 @@ header.topbar{
 
   <header class="topbar">
     <div class="hdr-row">
-      <button class="icon-btn" onclick="location.href='index.html'" aria-label="Menu">
+      <button class="icon-btn" onclick="openMenu()" aria-label="Menu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <div class="logo-wrap">
@@ -249,7 +274,7 @@ header.topbar{
       </div>
       <button class="icon-btn" onclick="location.href='notifications.html'" aria-label="Notifications">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        <span class="badge">8</span>
+        <span class="badge">0</span>
       </button>
     </div>
   </header>
@@ -270,10 +295,8 @@ header.topbar{
     <div class="total-balance-card">
       <div class="tb-left">
         <div class="tb-label">Total Balance (All Collections)</div>
-        <div class="tb-amount">KSh 356,780</div>
-        <div class="tb-trend">This Month
-          <span class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>12.4%</span>
-        </div>
+        <div class="tb-amount">KSh 0</div>
+        <div class="tb-trend">This Month</div>
       </div>
       <div class="tb-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
@@ -283,13 +306,13 @@ header.topbar{
     <div class="stat-grid">
       <div class="stat-card">
         <div class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <div class="stat-num">642</div>
+        <div class="stat-num">0</div>
         <div class="stat-label">Total Members</div>
-        <div class="stat-sub">Active: 598</div>
+        <div class="stat-sub">Active: 0</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7 16 12l7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
-        <div class="stat-num">KSh 18,450</div>
+        <div class="stat-num">KSh 0</div>
         <div class="stat-label">Today's Collections</div>
         <button class="stat-link green" onclick="showToast('Opening details...')">View details
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
@@ -297,7 +320,7 @@ header.topbar{
       </div>
       <div class="stat-card">
         <div class="stat-icon navy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-        <div class="stat-num">KSh 356,780</div>
+        <div class="stat-num">KSh 0</div>
         <div class="stat-label">This Month Collections</div>
         <button class="stat-link green" onclick="showToast('Opening report...')">View report
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
@@ -305,7 +328,7 @@ header.topbar{
       </div>
       <div class="stat-card">
         <div class="stat-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.29 3.86-8.18 14.14A1.5 1.5 0 0 0 3.4 20h17.2a1.5 1.5 0 0 0 1.29-2L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-        <div class="stat-num">24</div>
+        <div class="stat-num">0</div>
         <div class="stat-label">Pending Payments</div>
         <button class="stat-link red" onclick="showToast('Opening pending list...')">View all
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
@@ -334,24 +357,24 @@ header.topbar{
             <div class="sum-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
             <span>Paid Members</span>
           </div>
-          <div class="sum-num">598</div>
-          <div class="sum-pct">93%</div>
+          <div class="sum-num">0</div>
+          <div class="sum-pct">&mdash;</div>
         </div>
         <div class="sum-card">
           <div class="sum-top">
             <div class="sum-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
             <span>Pending Members</span>
           </div>
-          <div class="sum-num">24</div>
-          <div class="sum-pct">4%</div>
+          <div class="sum-num">0</div>
+          <div class="sum-pct">&mdash;</div>
         </div>
         <div class="sum-card">
           <div class="sum-top">
             <div class="sum-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.29 3.86-8.18 14.14A1.5 1.5 0 0 0 3.4 20h17.2a1.5 1.5 0 0 0 1.29-2L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
             <span>Defaulters</span>
           </div>
-          <div class="sum-num">20</div>
-          <div class="sum-pct">3%</div>
+          <div class="sum-num">0</div>
+          <div class="sum-pct">&mdash;</div>
         </div>
       </div>
     </div>
@@ -392,50 +415,7 @@ header.topbar{
         </button>
       </div>
       <div class="act-card">
-        <div class="act-row">
-          <div class="act-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
-          <div class="act-body">
-            <h5>Payment Recorded</h5>
-            <p>Daily Collection - John Mwangi</p>
-          </div>
-          <div class="act-right">
-            <div class="amt green">KSh 100</div>
-            <div class="time">08:45 AM</div>
-          </div>
-        </div>
-        <div class="act-row">
-          <div class="act-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg></div>
-          <div class="act-body">
-            <h5>New Member</h5>
-            <p>Samuel Kamau Registered</p>
-          </div>
-          <div class="act-right">
-            <div class="amt none">&mdash;</div>
-            <div class="time">08:20 AM</div>
-          </div>
-        </div>
-        <div class="act-row">
-          <div class="act-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
-          <div class="act-body">
-            <h5>Welfare Contribution</h5>
-            <p>Welfare by Mary Njeri</p>
-          </div>
-          <div class="act-right">
-            <div class="amt green">KSh 50</div>
-            <div class="time">07:55 AM</div>
-          </div>
-        </div>
-        <div class="act-row">
-          <div class="act-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.29 3.86-8.18 14.14A1.5 1.5 0 0 0 3.4 20h17.2a1.5 1.5 0 0 0 1.29-2L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-          <div class="act-body">
-            <h5>Payment Overdue</h5>
-            <p>Member: James Kariuki</p>
-          </div>
-          <div class="act-right">
-            <div class="amt red">KSh 250</div>
-            <div class="time">06:30 AM</div>
-          </div>
-        </div>
+        <div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No recent activity.</div>
       </div>
     </div>
 
@@ -466,6 +446,59 @@ header.topbar{
     Profile
   </button>
 </nav>
+
+<div class="menu-overlay" id="menuOverlay" onclick="if(event.target===this) closeMenu()">
+  <div class="menu-panel">
+    <div class="menu-head">
+      <h3>Admin Menu</h3>
+      <button class="menu-close" onclick="closeMenu()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="menu-list">
+      <button class="menu-item" onclick="closeMenu();location.href='members-directory.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Manage Members
+      </button>
+      <button class="menu-item" onclick="closeMenu();showToast('Opening pending registrations...')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+        Approve Pending Registrations
+      </button>
+      <button class="menu-item" onclick="closeMenu();showToast('Opening Record Payment')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Record Payment / Collections
+      </button>
+      <button class="menu-item" onclick="closeMenu();showToast('Opening Welfare Contribution')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        Welfare Contributions
+      </button>
+      <button class="menu-item" onclick="closeMenu();showToast('Opening Loans & Fines...')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+        Loans &amp; Fines Management
+      </button>
+      <button class="menu-item" onclick="closeMenu();showToast('Opening Send Announcement')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+        Send Announcement
+      </button>
+      <button class="menu-item" onclick="closeMenu();location.href='reports.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Reports &amp; Exports
+      </button>
+      <button class="menu-item" onclick="closeMenu();showToast('Opening Meeting Minutes...')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Meeting Minutes / Records
+      </button>
+      <button class="menu-item" onclick="closeMenu();showToast('Opening Group Settings...')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Group Settings
+      </button>
+      <button class="menu-item" onclick="closeMenu();showToast('Preparing data export...')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Backup / Data Export
+      </button>
+    </div>
+  </div>
+</div>
 
 <div class="profile-overlay" id="profileOverlay" onclick="if(event.target===this) closeProfilePanel()">
   <div class="profile-panel">
@@ -516,6 +549,12 @@ function openProfilePanel(){
 function closeProfilePanel(){
   document.getElementById('profileOverlay').classList.remove('open');
 }
+function openMenu(){
+  document.getElementById('menuOverlay').classList.add('open');
+}
+function closeMenu(){
+  document.getElementById('menuOverlay').classList.remove('open');
+}
 function handleAdminLogout(){
   KatiniAuth.logout();
   window.location.href = 'index.html';
@@ -537,7 +576,7 @@ function setActiveNav(el,label){
 
 /* -------- Collections Overview chart (pure SVG, no dependencies) -------- */
 (function(){
-  const data = [2,10,18,24,30,36,42,48,58,54,68,72,70,80,76,92,100,108];
+  const data = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
   const labels = ['1 May','','','','5 May','','','','','10 May','','','','','15 May','','','18 May'];
   const w = 420, h = 190, padL = 34, padR = 6, padT = 10, padB = 26;
   const maxY = 120;

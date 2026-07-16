@@ -227,50 +227,7 @@ function setActiveNav(el,label){
 }
 
 /* -------- Notification data -------- */
-const notifications = [
-  {
-    id:1, category:'payments', unread:true,
-    icon:'wallet', color:'green', badge:'check',
-    title:'Payment Received',
-    body:"Your daily collection of KSh 100 has been received successfully.",
-    time:'Today, 8:45 AM'
-  },
-  {
-    id:2, category:'announcements', unread:true,
-    icon:'megaphone', color:'navy',
-    title:'General Meeting',
-    body:'All members are invited to attend the meeting on Sunday at Katani Stage.',
-    time:'Today, 7:00 AM'
-  },
-  {
-    id:3, category:'announcements', unread:false,
-    icon:'heart', color:'gold',
-    title:'Welfare Contribution',
-    body:'Please contribute KSh 200 for a member in need before Friday.',
-    time:'Yesterday, 6:30 PM'
-  },
-  {
-    id:4, category:'payments', unread:false,
-    icon:'warning', color:'red',
-    title:'Payment Reminder',
-    body:'Your monthly contribution is due in 2 days.',
-    time:'Yesterday, 9:15 AM'
-  },
-  {
-    id:5, category:'system', unread:false,
-    icon:'userplus', color:'green',
-    title:'New Member Approved',
-    body:'John Mwangi has officially joined Katani Main Stage.',
-    time:'2 Days Ago, 4:20 PM'
-  },
-  {
-    id:6, category:'system', unread:false,
-    icon:'document', color:'navy',
-    title:'Monthly Report Available',
-    body:'The May 2025 report is now available. Tap to view and download.',
-    time:'2 Days Ago, 10:05 AM'
-  }
-];
+const notifications = [];
 
 const icons = {
   wallet:'<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>',

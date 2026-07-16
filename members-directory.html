@@ -225,11 +225,11 @@ header.topbar{background:var(--navy);padding:16px 18px 44px;position:relative;}
     <div class="tab-scroll">
       <button class="tab-pill active" data-status="all" onclick="setTab(this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        All Members (642)
+        All Members
       </button>
       <button class="tab-pill t-active" data-status="active" onclick="setTab(this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg>
-        Active (598)
+        Active
       </button>
       <button class="tab-pill t-inactive" data-status="inactive" onclick="setTab(this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -250,7 +250,7 @@ header.topbar{background:var(--navy);padding:16px 18px 44px;position:relative;}
     <div id="memberList"></div>
 
     <div class="pagination">
-      <div class="pg-info" id="pgInfo">Showing 1 to 10 of 642 members</div>
+      <div class="pg-info" id="pgInfo">Showing 0 of 0 members</div>
       <div class="pg-controls">
         <button class="pg-btn" onclick="showToast('Previous page')" aria-label="Previous">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
@@ -310,18 +310,7 @@ function setActiveNav(el,label){
 }
 
 /* -------- Member data -------- */
-const members = [
-  {name:'John Mwangi',   id:'KMS-001245', bike:'KMCG 123A', phone:'0712 345 678', status:'active'},
-  {name:'Peter Kariuki', id:'KMS-001246', bike:'KMCG 456B', phone:'0723 456 789', status:'active'},
-  {name:'Samuel Kamau',  id:'KMS-001247', bike:'KMDP 789C', phone:'0701 234 567', status:'active'},
-  {name:'James Wanjau',  id:'KMS-001248', bike:'KMCG 321D', phone:'0728 765 432', status:'inactive'},
-  {name:'David Ndegwa',  id:'KMS-001249', bike:'KMDP 654E', phone:'0790 123 456', status:'active'},
-  {name:'Eric Mutua',    id:'KMS-001250', bike:'KMCG 987F', phone:'0715 678 901', status:'suspended'},
-  {name:'Joseph Gitau',  id:'KMS-001251', bike:'KMDP 147G', phone:'0734 567 890', status:'active'},
-  {name:'Mike Otieno',   id:'KMS-001252', bike:'KMCG 258H', phone:'0720 345 678', status:'active'},
-  {name:'Brian Omondi',  id:'KMS-001253', bike:'KMDP 369J', phone:'0719 876 543', status:'inactive'},
-  {name:'Kelvin Okoth',  id:'KMS-001254', bike:'KMCG 741K', phone:'0786 234 567', status:'active'}
-];
+const members = [];
 
 const avatarColors = ['#2e7d32','#0d2140','#f5a623','#1565c0','#6a3fc0','#c0392b'];
 
@@ -335,6 +324,10 @@ function statusLabel(s){
 
 function renderMembers(list){
   const wrap = document.getElementById('memberList');
+  if(list.length === 0){
+    wrap.innerHTML = '<div style="text-align:center;padding:40px 10px;color:var(--muted, #8c96a5);font-size:13px;">No members yet.</div>';
+    return;
+  }
   wrap.innerHTML = list.map((m,i) => `
     <div class="member-card">
       <div class="avatar" style="background:${avatarColors[i % avatarColors.length]}">${initials(m.name)}</div>
@@ -375,9 +368,7 @@ function filterMembers(){
     );
   }
   renderMembers(list);
-  document.getElementById('pgInfo').textContent = status === 'all' && !q
-    ? 'Showing 1 to 10 of 642 members'
-    : `Showing ${list.length} of ${list.length} members`;
+  document.getElementById('pgInfo').textContent = `Showing ${list.length} of ${members.length} members`;
 }
 
 renderMembers(members);

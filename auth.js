@@ -22,28 +22,7 @@
 
   function seed() {
     if (!localStorage.getItem(USERS_KEY)) {
-      var users = [
-        {
-          name: 'Group Administrator',
-          email: 'admin@katanimainstage.co.ke',
-          password: 'Admin@123',
-          role: 'admin',
-          phone: '0712 345 678',
-          memberId: 'KMS-ADMIN-01',
-          memberSince: '01 Jan 2013'
-        },
-        {
-          name: 'John Mwangi',
-          email: 'john.mwangi@katanimainstage.co.ke',
-          password: 'Member@123',
-          role: 'member',
-          phone: '0722 111 222',
-          memberId: 'KMS-001245',
-          memberSince: '15 Jan 2023',
-          stage: 'Katani Main Stage'
-        }
-      ];
-      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+      localStorage.setItem(USERS_KEY, JSON.stringify([]));
     }
   }
 
