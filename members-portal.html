@@ -41,9 +41,9 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 .hero{
   position:relative;overflow:hidden;padding:16px 20px 0;
   background:
-    linear-gradient(180deg, rgba(10,24,48,0.55) 0%, rgba(10,24,48,0.35) 40%, rgba(10,24,48,0.9) 100%),
-    radial-gradient(ellipse 500px 260px at 78% 55%, #f5a623 0%, #d9701f 28%, transparent 65%),
-    linear-gradient(200deg,#1b2c46 0%,#111c30 55%,#0a1428 100%);
+    linear-gradient(180deg, rgba(10,24,48,0.6) 0%, rgba(10,24,48,0.4) 40%, rgba(10,24,48,0.92) 100%),
+    url('hero-bg.jpg');
+  background-size:cover;background-position:center;
   min-height:340px;
 }
 .hero::before{
@@ -52,7 +52,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
   pointer-events:none;
 }
 .hero-rider{
-  position:absolute;right:6%;bottom:6px;width:180px;opacity:0.9;
+  display:none;
 }
 .hero-rider svg{width:100%;height:auto;display:block;}
 

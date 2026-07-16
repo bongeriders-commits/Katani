@@ -79,7 +79,10 @@ body{
 }
 #loginGate.show{opacity:1;visibility:visible;}
 .gate-header{
-  background:linear-gradient(160deg,var(--navy) 0%, var(--navy-dark) 100%);
+  background:
+    linear-gradient(160deg, rgba(13,33,64,0.72) 0%, rgba(13,33,64,0.9) 100%),
+    url('hero-bg.jpg');
+  background-size:cover;background-position:center;
   padding:34px 22px 30px;text-align:center;color:#fff;
 }
 .gate-logo{
@@ -182,7 +185,7 @@ header.topbar .icon-btn svg{width:24px;height:24px;}
   position:relative;
   background:
     linear-gradient(180deg, rgba(13,33,64,0.55) 0%, rgba(13,33,64,0.75) 55%, rgba(13,33,64,0.92) 100%),
-    linear-gradient(135deg,#2b3a55 0%,#1a2740 50%,#111c30 100%);
+    url('hero-bg.jpg');
   background-size:cover;background-position:center;
   padding:28px 20px 90px;
   overflow:hidden;
