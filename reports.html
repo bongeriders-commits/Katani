@@ -10,9 +10,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Katani Stage">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <script src="auth.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --navy:#0d2140;
@@ -85,6 +87,20 @@ header.topbar{
   white-space:nowrap;box-shadow:0 6px 16px rgba(13,33,64,0.25);
 }
 .btn-export svg{width:14px;height:14px;}
+.export-wrap{position:relative;}
+.export-menu{
+  position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1.5px solid var(--border);
+  border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,0.14);min-width:170px;z-index:60;
+  overflow:hidden;display:none;
+}
+.export-menu.show{display:block;}
+.export-menu button{
+  display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;padding:12px 14px;
+  font-size:12.5px;font-weight:700;color:var(--navy-dark);cursor:pointer;text-align:left;
+}
+.export-menu button:not(:last-child){border-bottom:1px solid var(--border);}
+.export-menu button:hover{background:var(--gray-bg);}
+.export-menu svg{width:15px;height:15px;color:var(--muted);flex-shrink:0;}
 
 /* ---------- Filters ---------- */
 .filters-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
@@ -224,6 +240,30 @@ header.topbar{
   max-width:400px;text-align:center;
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ---------- Install app bar (PWA) ---------- */
+.install-bar{
+  position:fixed;left:50%;bottom:-140px;transform:translateX(-50%);width:100%;max-width:480px;
+  background:var(--navy,#0d2140);color:#fff;z-index:500;padding:14px 16px;
+  box-shadow:0 -6px 24px rgba(0,0,0,0.3);display:flex;align-items:center;gap:12px;
+  transition:bottom .35s ease;border-radius:16px 16px 0 0;
+}
+.install-bar.show{bottom:0;}
+.install-bar-icon{
+  width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.1);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+.install-bar-icon img{width:100%;height:100%;object-fit:cover;}
+.install-bar-text{flex:1;min-width:0;}
+.install-bar-text strong{display:block;font-size:13px;font-weight:800;}
+.install-bar-text span{display:block;font-size:11px;color:var(--text-light,#c9d3e0);margin-top:2px;line-height:1.35;}
+.install-bar-btn{
+  background:var(--gold,#f5a623);color:var(--navy-dark,#0a1830);border:none;border-radius:10px;
+  padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;
+}
+.install-bar-close{
+  background:none;border:none;color:#c9d3e0;font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;
+}
 </style>
 <link rel="stylesheet" href="desktop.css">
 </head>
@@ -258,10 +298,22 @@ header.topbar{
         <h2>Reports Overview</h2>
         <p>Track collections, members and activities.</p>
       </div>
-      <button class="btn-export" onclick="showToast('Preparing export...')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Export Report
-      </button>
+      <div class="export-wrap">
+        <button class="btn-export" onclick="toggleExportMenu(event)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Report
+        </button>
+        <div class="export-menu" id="exportMenu">
+          <button onclick="exportReportPDF()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Export as PDF
+          </button>
+          <button onclick="exportReportExcel()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
+            Export as Excel
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="filters-grid">
@@ -286,7 +338,7 @@ header.topbar{
         <div class="f-value">
           <div class="f-left">
             <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <span>01 May &ndash; 18 May 2025</span>
+            <span id="rp-filter-range">01 May &ndash; 18 May 2025</span>
           </div>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </div>
@@ -315,8 +367,8 @@ header.topbar{
       <div class="stat-card">
         <div class="stat-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.29 3.86-8.18 14.14A1.5 1.5 0 0 0 3.4 20h17.2a1.5 1.5 0 0 0 1.29-2L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
         <div class="s-label">Pending Payments</div>
-        <div class="s-num">0</div>
-        <div class="s-sub">Total KSh 0</div>
+        <div class="s-num" id="rp-pending-count">0</div>
+        <div class="s-sub" id="rp-pending-sub">&mdash;</div>
       </div>
     </div>
 
@@ -329,8 +381,8 @@ header.topbar{
           <span class="legend-item"><span class="legend-dot solid"></span>This Month</span>
           <span class="legend-item"><span class="legend-dot dashed"></span>Last Month</span>
         </div>
-        <button class="date-select" onclick="showToast('Change chart view')">
-          Daily View
+        <button class="date-select" id="trendRangeBtn" onclick="cycleTrendRange()">
+          <span id="trendRangeLabel">Last 18 days</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </button>
       </div>
@@ -378,18 +430,10 @@ header.topbar{
       <div class="panel">
         <h3>Collection Breakdown</h3>
         <div class="donut-wrap">
-          <div class="donut-svg-wrap">
+          <div class="donut-svg-wrap" id="donutWrap">
             <svg viewBox="0 0 180 180" width="180" height="180">
-              <g transform="rotate(-90 90 90)">
+              <g transform="rotate(-90 90 90)" id="donutArcs">
                 <circle cx="90" cy="90" r="70" fill="none" stroke="#eef1f5" stroke-width="26"/>
-                <circle cx="90" cy="90" r="70" fill="none" stroke="#2e7d32" stroke-width="26"
-                  stroke-dasharray="316.23 123.59" stroke-dashoffset="0" stroke-linecap="butt"/>
-                <circle cx="90" cy="90" r="70" fill="none" stroke="#f5a623" stroke-width="26"
-                  stroke-dasharray="84.89 354.94" stroke-dashoffset="-316.23" stroke-linecap="butt"/>
-                <circle cx="90" cy="90" r="70" fill="none" stroke="#1565c0" stroke-width="26"
-                  stroke-dasharray="26.39 413.43" stroke-dashoffset="-401.12" stroke-linecap="butt"/>
-                <circle cx="90" cy="90" r="70" fill="none" stroke="#c0392b" stroke-width="26"
-                  stroke-dasharray="12.32 427.51" stroke-dashoffset="-427.51" stroke-linecap="butt"/>
               </g>
             </svg>
             <div class="donut-center-label">
@@ -423,29 +467,31 @@ header.topbar{
         <div class="status-row">
           <div class="status-ic green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></div>
           <div class="status-txt">Active Members</div>
-          <div class="status-val">0</div>
+          <div class="status-val" id="ms-active">0</div>
         </div>
         <div class="status-row">
           <div class="status-ic gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
           <div class="status-txt">Inactive Members</div>
-          <div class="status-val">0</div>
+          <div class="status-val" id="ms-inactive">0</div>
         </div>
         <div class="status-row">
           <div class="status-ic red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
           <div class="status-txt">Suspended Members</div>
-          <div class="status-val">0</div>
+          <div class="status-val" id="ms-suspended">0</div>
         </div>
         <div class="status-row">
           <div class="status-ic blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
           <div class="status-txt">New This Month</div>
-          <div class="status-val">0</div>
+          <div class="status-val" id="ms-new">0</div>
         </div>
       </div>
     </div>
 
     <div class="collectors-panel">
       <h3>Top Collectors This Month</h3>
-      <div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No collection data yet.</div>
+      <div id="collectorsBody">
+        <div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No collection data yet.</div>
+      </div>
     </div>
 
   </div>
@@ -492,18 +538,20 @@ function setActiveNav(el,label){
 }
 
 /* -------- Real collections & member stats -------- */
-(function(){
-  function formatKsh(n){
-    return 'KSh ' + Math.round(n).toLocaleString('en-KE');
-  }
+function formatKsh(n){
+  return 'KSh ' + Math.round(n || 0).toLocaleString('en-KE');
+}
 
+function renderSummaryStats(){
   const users = KatiniAuth.getUsers().filter(u => u.role === 'member');
   const active = users.filter(u => (u.status || 'active') === 'active');
   document.getElementById('rp-total-members').textContent = users.length;
   document.getElementById('rp-active-members').textContent = 'Active: ' + active.length;
 
   const txns = KatiniAuth.getCollections();
-  const todayStr = new Date().toISOString().slice(0,10);
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0,10);
+  const monthStr = todayStr.slice(0,7);
 
   const totalAll = txns.reduce((s,t) => s + t.amount, 0);
   const totalToday = txns.filter(t => t.date === todayStr).reduce((s,t) => s + t.amount, 0);
@@ -512,6 +560,18 @@ function setActiveNav(el,label){
   document.getElementById('rp-total-sub').textContent = txns.length + ' record' + (txns.length === 1 ? '' : 's');
   document.getElementById('rp-today-collections').textContent = formatKsh(totalToday);
 
+  // Real date range: 1st of this month -> today
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const opts = { day: '2-digit', month: 'short' };
+  document.getElementById('rp-filter-range').textContent =
+    monthStart.toLocaleDateString('en-GB', opts) + ' \u2013 ' + now.toLocaleDateString('en-GB', opts) + ' ' + now.getFullYear();
+
+  // Pending payments (real, from KatiniAuth.getPaymentSummary)
+  const summary = KatiniAuth.getPaymentSummary(now);
+  document.getElementById('rp-pending-count').textContent = summary.pending.length + summary.defaulters.length;
+  document.getElementById('rp-pending-sub').textContent = summary.defaulters.length + ' defaulter' + (summary.defaulters.length === 1 ? '' : 's');
+
+  // Collection breakdown donut (real proportions)
   const byType = { contribution: 0, registration: 0, fine: 0, other: 0 };
   txns.forEach(t => { byType[t.type] = (byType[t.type] || 0) + t.amount; });
   document.getElementById('rp-donut-contribution').textContent = formatKsh(byType.contribution);
@@ -519,6 +579,22 @@ function setActiveNav(el,label){
   document.getElementById('rp-donut-fine').textContent = formatKsh(byType.fine);
   document.getElementById('rp-donut-other').textContent = formatKsh(byType.other);
   document.getElementById('rp-donut-total').innerHTML = 'KSh<br>' + Math.round(totalAll).toLocaleString('en-KE');
+  renderDonut(byType, totalAll);
+
+  // Member status summary (real)
+  const inactive = users.filter(u => (u.status || 'active') === 'inactive');
+  const suspended = users.filter(u => (u.status || 'active') === 'suspended');
+  const newThisMonth = users.filter(u => {
+    const d = new Date(u.memberSince);
+    return !isNaN(d.getTime()) && d.toISOString().slice(0,7) === monthStr;
+  });
+  document.getElementById('ms-active').textContent = active.length;
+  document.getElementById('ms-inactive').textContent = inactive.length;
+  document.getElementById('ms-suspended').textContent = suspended.length;
+  document.getElementById('ms-new').textContent = newThisMonth.length;
+
+  // Top collectors leaderboard (real)
+  renderTopCollectors(monthStr);
 
   const byDate = {};
   txns.forEach(t => { byDate[t.date] = (byDate[t.date] || 0) + t.amount; });
@@ -533,18 +609,87 @@ function setActiveNav(el,label){
   if(miniNums[1]) miniNums[1].textContent = formatKsh(highest);
   if(miniNums[2]) miniNums[2].textContent = formatKsh(lowest);
   if(miniNums[3]) miniNums[3].textContent = txns.length;
-})();
+}
 
-/* -------- Collections Trend chart (two series, pure SVG) -------- */
-(function(){
-  const thisMonth = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-  const lastMonth  = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-  const labels = ['1 May','','','','5 May','','','','','9 May','','','','13 May','','','','18 May'];
+function renderDonut(byType, total){
+  const colors = { contribution: '#2e7d32', registration: '#f5a623', fine: '#1565c0', other: '#c0392b' };
+  const order = ['contribution','registration','fine','other'];
+  const r = 70, circumference = 2 * Math.PI * r;
+  let offset = 0;
+  let arcs = '';
+  if(total > 0){
+    order.forEach(key => {
+      const val = byType[key] || 0;
+      if(val <= 0) return;
+      const len = (val / total) * circumference;
+      arcs += '<circle cx="90" cy="90" r="' + r + '" fill="none" stroke="' + colors[key] + '" stroke-width="26" ' +
+        'stroke-dasharray="' + len.toFixed(2) + ' ' + (circumference - len).toFixed(2) + '" ' +
+        'stroke-dashoffset="-' + offset.toFixed(2) + '" stroke-linecap="butt"/>';
+      offset += len;
+    });
+  }
+  document.getElementById('donutArcs').innerHTML =
+    '<circle cx="90" cy="90" r="' + r + '" fill="none" stroke="#eef1f5" stroke-width="26"/>' + arcs;
+}
+
+function renderTopCollectors(monthStr){
+  const top = KatiniAuth.getTopCollectors(5, monthStr);
+  const body = document.getElementById('collectorsBody');
+  if(!top.length){
+    body.innerHTML = '<div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No collection data yet.</div>';
+    return;
+  }
+  const maxTotal = top[0].total || 1;
+  const medals = ['\ud83e\udd47','\ud83e\udd48','\ud83e\udd49'];
+  let html = '<div class="col-head-row"><span>Rank</span><span>Member</span><span>Amount</span></div>';
+  top.forEach((c, i) => {
+    const pct = Math.round((c.total / maxTotal) * 100);
+    const rankCell = i < 3 ? '<span class="rank-badge">' + medals[i] + '</span>' : '<span class="rank-num">#' + (i+1) + '</span>';
+    html += '<div class="col-row">' +
+      rankCell +
+      '<div><div class="col-name">' + escapeHtml(c.memberName) + '</div>' +
+        '<div class="col-detail">' + c.count + ' payment' + (c.count === 1 ? '' : 's') + '</div></div>' +
+      '<div class="perf-wrap"><div class="perf-bar-bg"><div class="perf-bar-fill' + (i===0?'':' gold') + '" style="width:' + pct + '%"></div></div>' +
+        '<span class="perf-pct">' + formatKsh(c.total) + '</span></div>' +
+      '</div>';
+  });
+  body.innerHTML = html;
+}
+
+function escapeHtml(s){
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+renderSummaryStats();
+
+/* -------- Collections Trend chart (two series, real data, choosable range) -------- */
+const TREND_RANGE_OPTIONS = [18, 7, 30];
+let trendRangeIdx = 0;
+
+function cycleTrendRange(){
+  trendRangeIdx = (trendRangeIdx + 1) % TREND_RANGE_OPTIONS.length;
+  renderTrendChart();
+}
+
+function renderTrendChart(){
+  const days = TREND_RANGE_OPTIONS[trendRangeIdx];
+  document.getElementById('trendRangeLabel').textContent = 'Last ' + days + ' days';
+
+  const today = new Date();
+  const thisPeriod = KatiniAuth.getDailyTotals(days, today);
+  const priorEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() - days);
+  const lastPeriod = KatiniAuth.getDailyTotals(days, priorEnd);
+
+  const thisMonth = thisPeriod.values;
+  const lastMonth = lastPeriod.values;
+  const labels = thisPeriod.labels;
+
   const w = 420, h = 200, padL = 34, padR = 6, padT = 10, padB = 26;
-  const maxY = 120;
+  const maxVal = Math.max(...thisMonth, ...lastMonth, 1);
+  const maxY = niceCeilTrend(maxVal);
   const plotW = w - padL - padR;
   const plotH = h - padT - padB;
-  const xStep = plotW / (thisMonth.length - 1);
+  const xStep = plotW / (thisMonth.length - 1 || 1);
 
   function toPoints(data){
     return data.map((v,i) => {
@@ -563,17 +708,19 @@ function setActiveNav(el,label){
   const lineLast = toPath(pLast);
   const areaThis = lineThis + ' L' + pThis[pThis.length-1][0].toFixed(1) + ',' + (padT+plotH) + ' L' + pThis[0][0].toFixed(1) + ',' + (padT+plotH) + ' Z';
 
-  const gridLines = [0,20,40,60,80,100,120].map(v => {
+  const steps = 5;
+  const gridLines = Array.from({length: steps+1}, (_,i) => Math.round(maxY * i / steps)).map(v => {
     const y = padT + plotH - (v/maxY)*plotH;
     return '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (w-padR) + '" y2="' + y.toFixed(1) + '" stroke="#eef1f5" stroke-width="1"/>' +
-           '<text x="2" y="' + (y+4).toFixed(1) + '" font-size="9" fill="#9aa3b0" font-weight="600">' + (v===0? '0': v+'K') + '</text>';
+           '<text x="2" y="' + (y+4).toFixed(1) + '" font-size="9" fill="#9aa3b0" font-weight="600">' + formatAxisValTrend(v) + '</text>';
   }).join('');
 
   const dotsThis = pThis.map(p => '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3" fill="#2e7d32"/>').join('');
   const dotsLast = pLast.map(p => '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="2.5" fill="#b7bec9"/>').join('');
 
+  const labelEvery = Math.max(1, Math.ceil(labels.length / 6));
   const xLabels = labels.map((lab,i) => {
-    if(!lab) return '';
+    if(i % labelEvery !== 0 && i !== labels.length - 1) return '';
     const x = padL + i*xStep;
     return '<text x="' + x.toFixed(1) + '" y="' + (h-6) + '" font-size="9" fill="#9aa3b0" font-weight="600" text-anchor="middle">' + lab + '</text>';
   }).join('');
@@ -593,7 +740,162 @@ function setActiveNav(el,label){
     '</svg>';
 
   document.getElementById('trendChartWrap').innerHTML = svg;
-})();
+}
+
+function niceCeilTrend(v){
+  if(v <= 0) return 1;
+  const mag = Math.pow(10, Math.floor(Math.log10(v)));
+  return Math.ceil(v / mag) * mag;
+}
+function formatAxisValTrend(v){
+  if(v >= 1000) return Math.round(v/1000) + 'K';
+  return String(v);
+}
+
+renderTrendChart();
+
+/* -------- Export menu + real PDF / Excel report generation -------- */
+function toggleExportMenu(e){
+  e.stopPropagation();
+  document.getElementById('exportMenu').classList.toggle('show');
+}
+document.addEventListener('click', () => document.getElementById('exportMenu').classList.remove('show'));
+
+function gatherReportData(){
+  const users = KatiniAuth.getUsers().filter(u => u.role === 'member');
+  const txns = KatiniAuth.getCollections();
+  const now = new Date();
+  const summary = KatiniAuth.getPaymentSummary(now);
+  const byType = { contribution: 0, registration: 0, fine: 0, other: 0 };
+  txns.forEach(t => { byType[t.type] = (byType[t.type] || 0) + t.amount; });
+  const totalAll = txns.reduce((s,t) => s + t.amount, 0);
+  const topCollectors = KatiniAuth.getTopCollectors(10, now.toISOString().slice(0,7));
+  return { users, txns, now, summary, byType, totalAll, topCollectors };
+}
+
+function exportReportPDF(){
+  document.getElementById('exportMenu').classList.remove('show');
+  if(typeof window.jspdf === 'undefined'){ showToast('PDF library failed to load'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const data = gatherReportData();
+  const dateStr = data.now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  let y = 18;
+  doc.setFontSize(16); doc.setFont(undefined, 'bold');
+  doc.text('Katani Main Stage Boda Self Help Group', 14, y);
+  y += 7;
+  doc.setFontSize(11); doc.setFont(undefined, 'normal');
+  doc.text('Collections & Membership Report \u2014 generated ' + dateStr, 14, y);
+  y += 10;
+
+  doc.setFontSize(12); doc.setFont(undefined, 'bold');
+  doc.text('Summary', 14, y); y += 6;
+  doc.setFontSize(10); doc.setFont(undefined, 'normal');
+  const lines = [
+    'Total Collections (all time): ' + formatKsh(data.totalAll),
+    'Total Members: ' + data.users.length,
+    'Paid this month: ' + data.summary.paid.length,
+    'Pending this month: ' + data.summary.pending.length,
+    'Defaulters: ' + data.summary.defaulters.length
+  ];
+  lines.forEach(l => { doc.text(l, 14, y); y += 6; });
+  y += 4;
+
+  doc.setFontSize(12); doc.setFont(undefined, 'bold');
+  doc.text('Collection Breakdown', 14, y); y += 6;
+  doc.setFontSize(10); doc.setFont(undefined, 'normal');
+  ['contribution','registration','fine','other'].forEach(k => {
+    doc.text(k.charAt(0).toUpperCase() + k.slice(1) + ': ' + formatKsh(data.byType[k]), 14, y); y += 6;
+  });
+  y += 4;
+
+  doc.setFontSize(12); doc.setFont(undefined, 'bold');
+  doc.text('Top Collectors This Month', 14, y); y += 6;
+  doc.setFontSize(10); doc.setFont(undefined, 'normal');
+  if(data.topCollectors.length){
+    data.topCollectors.forEach((c, i) => {
+      if(y > 275){ doc.addPage(); y = 18; }
+      doc.text((i+1) + '. ' + c.memberName + ' \u2014 ' + formatKsh(c.total) + ' (' + c.count + ' payments)', 14, y);
+      y += 6;
+    });
+  } else {
+    doc.text('No collection data yet.', 14, y); y += 6;
+  }
+  y += 4;
+
+  if(data.txns.length){
+    doc.setFontSize(12); doc.setFont(undefined, 'bold');
+    doc.text('Recent Transactions', 14, y); y += 6;
+    doc.setFontSize(9); doc.setFont(undefined, 'normal');
+    data.txns.slice(0, 40).forEach(t => {
+      if(y > 280){ doc.addPage(); y = 18; }
+      const label = t.type === 'contribution' ? (t.memberName || 'Member') : (t.source || t.type);
+      doc.text(t.date + '  ' + label + '  ' + formatKsh(t.amount) + '  ' + t.method, 14, y);
+      y += 5.5;
+    });
+  }
+
+  doc.save('katani-main-stage-report-' + data.now.toISOString().slice(0,10) + '.pdf');
+  showToast('PDF report downloaded');
+}
+
+function exportReportExcel(){
+  document.getElementById('exportMenu').classList.remove('show');
+  if(typeof window.XLSX === 'undefined'){ showToast('Excel library failed to load'); return; }
+  const data = gatherReportData();
+  const wb = XLSX.utils.book_new();
+
+  const summarySheet = XLSX.utils.aoa_to_sheet([
+    ['Katani Main Stage Boda Self Help Group \u2014 Report'],
+    ['Generated', data.now.toLocaleString('en-GB')],
+    [],
+    ['Metric', 'Value'],
+    ['Total Collections (all time)', data.totalAll],
+    ['Total Members', data.users.length],
+    ['Paid this month', data.summary.paid.length],
+    ['Pending this month', data.summary.pending.length],
+    ['Defaulters', data.summary.defaulters.length],
+    [],
+    ['Collection Type', 'Amount'],
+    ['Member Contributions', data.byType.contribution],
+    ['Registration Fees', data.byType.registration],
+    ['Fines', data.byType.fine],
+    ['Other Income', data.byType.other]
+  ]);
+  XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
+
+  const txnRows = data.txns.map(t => ({
+    Date: t.date,
+    Type: t.type,
+    Member: t.type === 'contribution' ? t.memberName : (t.source || ''),
+    Amount: t.amount,
+    Method: t.method,
+    Reference: t.reference || '',
+    Note: t.note || ''
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(txnRows), 'Collections');
+
+  const collectorRows = data.topCollectors.map((c, i) => ({
+    Rank: i + 1,
+    Member: c.memberName,
+    'Total Paid': c.total,
+    Payments: c.count
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(collectorRows), 'Top Collectors');
+
+  const memberRows = data.users.map(u => ({
+    'Member ID': u.memberId,
+    Name: u.name,
+    Phone: u.phone,
+    Status: u.status || 'active',
+    'Member Since': u.memberSince
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(memberRows), 'Members');
+
+  XLSX.writeFile(wb, 'katani-main-stage-report-' + data.now.toISOString().slice(0,10) + '.xlsx');
+  showToast('Excel report downloaded');
+}
 </script>
 <script>
 if ('serviceWorker' in navigator) {
@@ -601,6 +903,59 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js').catch(() => {});
   });
 }
+</script>
+<div class="install-bar" id="installBar">
+  <div class="install-bar-icon"><img src="icon-192.png" alt=""></div>
+  <div class="install-bar-text">
+    <strong>Install Katani Main Stage</strong>
+    <span id="installBarMsg">Add it to your home screen for one-tap, offline-ready access.</span>
+  </div>
+  <button class="install-bar-btn" id="installBarBtn" onclick="triggerInstall()">Install</button>
+  <button class="install-bar-close" onclick="dismissInstallBar()" aria-label="Dismiss">&times;</button>
+</div>
+<script>
+/* ---------- Install app prompt (PWA) ---------- */
+(function(){
+  const bar = document.getElementById('installBar');
+  const btn = document.getElementById('installBarBtn');
+  const msg = document.getElementById('installBarMsg');
+  let deferredPrompt = null;
+
+  function isStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  function isIos(){
+    return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  }
+
+  if(!isStandalone() && !sessionStorage.getItem('kms_install_dismissed')){
+    if(isIos()){
+      msg.textContent = 'Tap Share, then "Add to Home Screen" to install.';
+      btn.style.display = 'none';
+      bar.classList.add('show');
+    } else {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        bar.classList.add('show');
+      });
+    }
+  }
+
+  window.triggerInstall = function(){
+    if(!deferredPrompt) return;
+    bar.classList.remove('show');
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.finally(() => { deferredPrompt = null; });
+  };
+  window.dismissInstallBar = function(){
+    bar.classList.remove('show');
+    sessionStorage.setItem('kms_install_dismissed', '1');
+  };
+  window.addEventListener('appinstalled', () => {
+    bar.classList.remove('show');
+  });
+})();
 </script>
 </body>
 </html>

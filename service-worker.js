@@ -1,4 +1,4 @@
-const CACHE_NAME = 'katani-main-stage-v1';
+const CACHE_NAME = 'katani-main-stage-v2';
 const APP_SHELL = [
   './index.html',
   './register.html',
@@ -11,8 +11,11 @@ const APP_SHELL = [
   './auth.js',
   './desktop.css',
   './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  './hero-bg.jpg',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-512-maskable.png',
+  './apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (event) => {

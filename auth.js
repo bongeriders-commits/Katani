@@ -230,6 +230,93 @@
     return { success: true, record: record };
   }
 
+  // ---- Shared analytics helpers (payment status, leaderboard, trends) ----
+
+  function ymd(d) { return d.toISOString().slice(0, 10); }
+  function monthOf(dateStr) { return (dateStr || '').slice(0, 7); }
+
+  // Best-effort parse of memberSince (stored as a locale date string like "16 Jul 2026").
+  function parseMemberSince(str) {
+    if (!str) return null;
+    var d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Classifies each active member as paid / pending / defaulter for the given
+  // reference date's calendar month, based on 'contribution' collections:
+  //   paid      - has a contribution recorded this month
+  //   pending   - no contribution yet this month, but paid last month
+  //               (or joined this month, so not yet due)
+  //   defaulter - no contribution this month AND none last month either
+  function getPaymentSummary(refDate) {
+    refDate = refDate || new Date();
+    var thisMonth = monthOf(ymd(refDate));
+    var lastMonthDate = new Date(refDate.getFullYear(), refDate.getMonth() - 1, 1);
+    var lastMonth = monthOf(ymd(lastMonthDate));
+
+    var users = getUsers().filter(function (u) { return u.role === 'member' && (u.status || 'active') === 'active'; });
+    var txns = getCollections().filter(function (t) { return t.type === 'contribution'; });
+
+    var paidThisMonth = {}, paidLastMonth = {};
+    txns.forEach(function (t) {
+      var m = monthOf(t.date);
+      if (m === thisMonth && t.memberId) paidThisMonth[t.memberId] = true;
+      if (m === lastMonth && t.memberId) paidLastMonth[t.memberId] = true;
+    });
+
+    var paid = [], pending = [], defaulters = [];
+    users.forEach(function (u) {
+      var joined = parseMemberSince(u.memberSince);
+      var joinedThisMonth = joined && monthOf(ymd(joined)) === thisMonth;
+      if (paidThisMonth[u.memberId]) paid.push(u);
+      else if (paidLastMonth[u.memberId] || joinedThisMonth) pending.push(u);
+      else defaulters.push(u);
+    });
+
+    return { total: users.length, paid: paid, pending: pending, defaulters: defaulters, month: thisMonth };
+  }
+
+  // Top contributors within a given month (defaults to current month).
+  function getTopCollectors(limit, monthStr) {
+    limit = limit || 5;
+    monthStr = monthStr || monthOf(ymd(new Date()));
+    var users = getUsers();
+    var byId = {};
+    users.forEach(function (u) { byId[u.memberId] = u; });
+
+    var totals = {};
+    getCollections().forEach(function (t) {
+      if (t.type !== 'contribution' || monthOf(t.date) !== monthStr || !t.memberId) return;
+      if (!totals[t.memberId]) totals[t.memberId] = { memberId: t.memberId, memberName: t.memberName || (byId[t.memberId] && byId[t.memberId].name) || 'Member', total: 0, count: 0 };
+      totals[t.memberId].total += t.amount;
+      totals[t.memberId].count += 1;
+    });
+
+    var list = Object.keys(totals).map(function (k) { return totals[k]; });
+    list.sort(function (a, b) { return b.total - a.total; });
+    return list.slice(0, limit);
+  }
+
+  // Daily collection totals for the last `days` days ending today (inclusive).
+  // Returns { labels: ['16 Jul', ...], values: [1200, 0, ...], dates: ['2026-07-01', ...] }
+  function getDailyTotals(days, endDate) {
+    days = days || 18;
+    endDate = endDate || new Date();
+    var txns = getCollections();
+    var byDate = {};
+    txns.forEach(function (t) { byDate[t.date] = (byDate[t.date] || 0) + t.amount; });
+
+    var labels = [], values = [], dates = [];
+    for (var i = days - 1; i >= 0; i--) {
+      var d = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate() - i);
+      var key = ymd(d);
+      dates.push(key);
+      values.push(byDate[key] || 0);
+      labels.push(d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }));
+    }
+    return { labels: labels, values: values, dates: dates };
+  }
+
   window.KatiniAuth = {
     seed: seed,
     getUsers: getUsers,
@@ -243,6 +330,9 @@
     routeToHome: routeToHome,
     requireRole: requireRole,
     getCollections: getCollections,
-    addCollection: addCollection
+    addCollection: addCollection,
+    getPaymentSummary: getPaymentSummary,
+    getTopCollectors: getTopCollectors,
+    getDailyTotals: getDailyTotals
   };
 })(window);

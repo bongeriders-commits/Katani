@@ -10,8 +10,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Katani Stage">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <script src="auth.js"></script>
 <style>
 :root{
@@ -260,6 +260,30 @@ header.topbar{
   max-width:400px;text-align:center;
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ---------- Install app bar (PWA) ---------- */
+.install-bar{
+  position:fixed;left:50%;bottom:-140px;transform:translateX(-50%);width:100%;max-width:480px;
+  background:var(--navy,#0d2140);color:#fff;z-index:500;padding:14px 16px;
+  box-shadow:0 -6px 24px rgba(0,0,0,0.3);display:flex;align-items:center;gap:12px;
+  transition:bottom .35s ease;border-radius:16px 16px 0 0;
+}
+.install-bar.show{bottom:0;}
+.install-bar-icon{
+  width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.1);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+.install-bar-icon img{width:100%;height:100%;object-fit:cover;}
+.install-bar-text{flex:1;min-width:0;}
+.install-bar-text strong{display:block;font-size:13px;font-weight:800;}
+.install-bar-text span{display:block;font-size:11px;color:var(--text-light,#c9d3e0);margin-top:2px;line-height:1.35;}
+.install-bar-btn{
+  background:var(--gold,#f5a623);color:var(--navy-dark,#0a1830);border:none;border-radius:10px;
+  padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;
+}
+.install-bar-close{
+  background:none;border:none;color:#c9d3e0;font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;
+}
 </style>
 <link rel="stylesheet" href="desktop.css">
 </head>
@@ -308,8 +332,8 @@ header.topbar{
     <div class="total-balance-card">
       <div class="tb-left">
         <div class="tb-label">Total Balance (All Collections)</div>
-        <div class="tb-amount">KSh 0</div>
-        <div class="tb-trend">This Month</div>
+        <div class="tb-amount" id="stat-total-balance">KSh 0</div>
+        <div class="tb-trend" id="stat-balance-trend">This Month</div>
       </div>
       <div class="tb-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
@@ -341,9 +365,9 @@ header.topbar{
       </div>
       <div class="stat-card">
         <div class="stat-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.29 3.86-8.18 14.14A1.5 1.5 0 0 0 3.4 20h17.2a1.5 1.5 0 0 0 1.29-2L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-        <div class="stat-num">0</div>
+        <div class="stat-num" id="stat-pending-count">0</div>
         <div class="stat-label">Pending Payments</div>
-        <button class="stat-link red" onclick="showToast('Opening pending list...')">View all
+        <button class="stat-link red" onclick="location.href='reports.html'">View all
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
       </div>
@@ -355,8 +379,8 @@ header.topbar{
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           Collections Overview
         </h3>
-        <button class="date-select" onclick="showToast('Change date range')">
-          1 &ndash; 18 May 2025
+        <button class="date-select" id="overviewRangeBtn" onclick="cycleOverviewRange()">
+          <span id="overviewRangeLabel">Last 18 days</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </button>
       </div>
@@ -370,24 +394,24 @@ header.topbar{
             <div class="sum-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
             <span>Paid Members</span>
           </div>
-          <div class="sum-num">0</div>
-          <div class="sum-pct">&mdash;</div>
+          <div class="sum-num" id="sum-paid-num">0</div>
+          <div class="sum-pct" id="sum-paid-pct">&mdash;</div>
         </div>
         <div class="sum-card">
           <div class="sum-top">
             <div class="sum-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
             <span>Pending Members</span>
           </div>
-          <div class="sum-num">0</div>
-          <div class="sum-pct">&mdash;</div>
+          <div class="sum-num" id="sum-pending-num">0</div>
+          <div class="sum-pct" id="sum-pending-pct">&mdash;</div>
         </div>
         <div class="sum-card">
           <div class="sum-top">
             <div class="sum-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.29 3.86-8.18 14.14A1.5 1.5 0 0 0 3.4 20h17.2a1.5 1.5 0 0 0 1.29-2L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
             <span>Defaulters</span>
           </div>
-          <div class="sum-num">0</div>
-          <div class="sum-pct">&mdash;</div>
+          <div class="sum-num" id="sum-default-num">0</div>
+          <div class="sum-pct" id="sum-default-pct">&mdash;</div>
         </div>
       </div>
     </div>
@@ -574,23 +598,57 @@ function handleAdminLogout(){
 }
 
 /* -------- Dashboard stats (members + collections) -------- */
-(function loadDashboardStats(){
+function formatKsh(n){
+  return 'KSh ' + Math.round(n || 0).toLocaleString('en-KE');
+}
+
+function loadDashboardStats(){
   const users = KatiniAuth.getUsers().filter(u => u.role === 'member');
   const active = users.filter(u => (u.status || 'active') === 'active');
   document.getElementById('stat-total-members').textContent = users.length;
   document.getElementById('stat-active-members').textContent = 'Active: ' + active.length;
 
   const txns = KatiniAuth.getCollections();
-  const todayStr = new Date().toISOString().slice(0,10);
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0,10);
   const monthStr = todayStr.slice(0,7);
-  let today = 0, month = 0;
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthStr = lastMonthDate.toISOString().slice(0,7);
+
+  let today = 0, month = 0, lastMonth = 0, allTime = 0;
   txns.forEach(t => {
+    allTime += t.amount;
     if(t.date === todayStr) today += t.amount;
     if((t.date || '').slice(0,7) === monthStr) month += t.amount;
+    if((t.date || '').slice(0,7) === lastMonthStr) lastMonth += t.amount;
   });
-  document.getElementById('stat-today-collections').textContent = 'KSh ' + Math.round(today).toLocaleString('en-KE');
-  document.getElementById('stat-month-collections').textContent = 'KSh ' + Math.round(month).toLocaleString('en-KE');
-})();
+  document.getElementById('stat-today-collections').textContent = formatKsh(today);
+  document.getElementById('stat-month-collections').textContent = formatKsh(month);
+  document.getElementById('stat-total-balance').textContent = formatKsh(allTime);
+
+  const trendEl = document.getElementById('stat-balance-trend');
+  if(lastMonth > 0){
+    const pct = Math.round(((month - lastMonth) / lastMonth) * 100);
+    trendEl.textContent = (pct >= 0 ? '+' : '') + pct + '% vs last month';
+  } else if (month > 0) {
+    trendEl.textContent = 'This Month: ' + formatKsh(month);
+  } else {
+    trendEl.textContent = 'This Month';
+  }
+
+  // Paid / Pending / Defaulters (from real contribution records)
+  const summary = KatiniAuth.getPaymentSummary(now);
+  document.getElementById('stat-pending-count').textContent = summary.pending.length + summary.defaulters.length;
+
+  const pct = n => summary.total ? Math.round((n / summary.total) * 100) + '% of members' : '\u2014';
+  document.getElementById('sum-paid-num').textContent = summary.paid.length;
+  document.getElementById('sum-paid-pct').textContent = pct(summary.paid.length);
+  document.getElementById('sum-pending-num').textContent = summary.pending.length;
+  document.getElementById('sum-pending-pct').textContent = pct(summary.pending.length);
+  document.getElementById('sum-default-num').textContent = summary.defaulters.length;
+  document.getElementById('sum-default-pct').textContent = pct(summary.defaulters.length);
+}
+loadDashboardStats();
 
 let toastTimer;
 function showToast(msg){
@@ -606,17 +664,30 @@ function setActiveNav(el,label){
   showToast(label);
 }
 
-/* -------- Collections Overview chart (pure SVG, no dependencies) -------- */
-(function(){
-  const data = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-  const labels = ['1 May','','','','5 May','','','','','10 May','','','','','15 May','','','18 May'];
+/* -------- Collections Overview chart (pure SVG, real data) -------- */
+const OVERVIEW_RANGE_OPTIONS = [18, 7, 30];
+let overviewRangeIdx = 0;
+
+function cycleOverviewRange(){
+  overviewRangeIdx = (overviewRangeIdx + 1) % OVERVIEW_RANGE_OPTIONS.length;
+  renderOverviewChart();
+}
+
+function renderOverviewChart(){
+  const days = OVERVIEW_RANGE_OPTIONS[overviewRangeIdx];
+  const { labels, values, dates } = KatiniAuth.getDailyTotals(days);
+
+  document.getElementById('overviewRangeLabel').textContent =
+    days === 18 ? formatDateRangeLabel(dates) : 'Last ' + days + ' days';
+
   const w = 420, h = 190, padL = 34, padR = 6, padT = 10, padB = 26;
-  const maxY = 120;
+  const maxVal = Math.max(...values, 1);
+  const maxY = niceCeil(maxVal);
   const plotW = w - padL - padR;
   const plotH = h - padT - padB;
 
-  const xStep = plotW / (data.length - 1);
-  const points = data.map((v,i) => {
+  const xStep = plotW / (values.length - 1 || 1);
+  const points = values.map((v,i) => {
     const x = padL + i * xStep;
     const y = padT + plotH - (v / maxY) * plotH;
     return [x,y];
@@ -625,16 +696,18 @@ function setActiveNav(el,label){
   const linePath = points.map((p,i) => (i===0? 'M':'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
   const areaPath = linePath + ' L' + points[points.length-1][0].toFixed(1) + ',' + (padT+plotH) + ' L' + points[0][0].toFixed(1) + ',' + (padT+plotH) + ' Z';
 
-  const gridLines = [0,30,60,90,120].map(v => {
+  const steps = 4;
+  const gridLines = Array.from({length: steps+1}, (_,i) => Math.round(maxY * i / steps)).map(v => {
     const y = padT + plotH - (v/maxY)*plotH;
     return '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (w-padR) + '" y2="' + y.toFixed(1) + '" stroke="#eef1f5" stroke-width="1"/>' +
-           '<text x="4" y="' + (y+4).toFixed(1) + '" font-size="9.5" fill="#9aa3b0" font-weight="600">' + (v===0? '0': v+'K') + '</text>';
+           '<text x="4" y="' + (y+4).toFixed(1) + '" font-size="9.5" fill="#9aa3b0" font-weight="600">' + formatAxisVal(v) + '</text>';
   }).join('');
 
   const dots = points.map(p => '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3" fill="#2e7d32"/>').join('');
 
+  const labelEvery = Math.max(1, Math.ceil(labels.length / 6));
   const xLabels = labels.map((lab,i) => {
-    if(!lab) return '';
+    if(i % labelEvery !== 0 && i !== labels.length - 1) return '';
     const x = padL + i*xStep;
     return '<text x="' + x.toFixed(1) + '" y="' + (h-6) + '" font-size="9.5" fill="#9aa3b0" font-weight="600" text-anchor="middle">' + lab + '</text>';
   }).join('');
@@ -652,7 +725,26 @@ function setActiveNav(el,label){
     '</svg>';
 
   document.getElementById('chartWrap').innerHTML = svg;
-})();
+}
+
+function niceCeil(v){
+  if(v <= 0) return 1;
+  const mag = Math.pow(10, Math.floor(Math.log10(v)));
+  return Math.ceil(v / mag) * mag;
+}
+function formatAxisVal(v){
+  if(v >= 1000) return Math.round(v/1000) + 'K';
+  return String(v);
+}
+function formatDateRangeLabel(dates){
+  if(!dates.length) return '\u2014';
+  const first = new Date(dates[0]);
+  const last = new Date(dates[dates.length-1]);
+  const opts = { day: '2-digit', month: 'short' };
+  return first.toLocaleDateString('en-GB', opts) + ' \u2013 ' + last.toLocaleDateString('en-GB', opts) + ' ' + last.getFullYear();
+}
+
+renderOverviewChart();
 </script>
 <script>
 if ('serviceWorker' in navigator) {
@@ -660,6 +752,59 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js').catch(() => {});
   });
 }
+</script>
+<div class="install-bar" id="installBar">
+  <div class="install-bar-icon"><img src="icon-192.png" alt=""></div>
+  <div class="install-bar-text">
+    <strong>Install Katani Main Stage</strong>
+    <span id="installBarMsg">Add it to your home screen for one-tap, offline-ready access.</span>
+  </div>
+  <button class="install-bar-btn" id="installBarBtn" onclick="triggerInstall()">Install</button>
+  <button class="install-bar-close" onclick="dismissInstallBar()" aria-label="Dismiss">&times;</button>
+</div>
+<script>
+/* ---------- Install app prompt (PWA) ---------- */
+(function(){
+  const bar = document.getElementById('installBar');
+  const btn = document.getElementById('installBarBtn');
+  const msg = document.getElementById('installBarMsg');
+  let deferredPrompt = null;
+
+  function isStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  function isIos(){
+    return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  }
+
+  if(!isStandalone() && !sessionStorage.getItem('kms_install_dismissed')){
+    if(isIos()){
+      msg.textContent = 'Tap Share, then "Add to Home Screen" to install.';
+      btn.style.display = 'none';
+      bar.classList.add('show');
+    } else {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        bar.classList.add('show');
+      });
+    }
+  }
+
+  window.triggerInstall = function(){
+    if(!deferredPrompt) return;
+    bar.classList.remove('show');
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.finally(() => { deferredPrompt = null; });
+  };
+  window.dismissInstallBar = function(){
+    bar.classList.remove('show');
+    sessionStorage.setItem('kms_install_dismissed', '1');
+  };
+  window.addEventListener('appinstalled', () => {
+    bar.classList.remove('show');
+  });
+})();
 </script>
 </body>
 </html>
