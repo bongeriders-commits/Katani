@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Reports &amp; Analytics - Katani Main Stage</title>
+<title>Welfare Contributions - Katani Main Stage</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0d2140">
 <meta name="mobile-web-app-capable" content="yes">
@@ -13,8 +13,6 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <script src="auth.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --navy:#0d2140;
@@ -81,143 +79,91 @@ header.topbar{
 .page-head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
 .page-head-left h2{font-size:21px;font-weight:800;color:var(--navy-dark);}
 .page-head-left p{font-size:12.5px;color:var(--muted);margin-top:3px;}
-.btn-export{
+.btn-add{
   background:var(--navy);color:#fff;border:none;border-radius:12px;padding:11px 16px;
   font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:8px;cursor:pointer;
   white-space:nowrap;box-shadow:0 6px 16px rgba(13,33,64,0.25);
 }
-.btn-export svg{width:14px;height:14px;}
-.export-wrap{position:relative;}
-.export-menu{
-  position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1.5px solid var(--border);
-  border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,0.14);min-width:170px;z-index:60;
-  overflow:hidden;display:none;
+.btn-add svg{width:15px;height:15px;}
+
+/* ---------- Search + filter row ---------- */
+.search-row{display:flex;gap:10px;margin-bottom:14px;}
+.search-box{
+  flex:1;display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--border);
+  border-radius:12px;padding:11px 14px;min-width:0;
 }
-.export-menu.show{display:block;}
-.export-menu button{
-  display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;padding:12px 14px;
-  font-size:12.5px;font-weight:700;color:var(--navy-dark);cursor:pointer;text-align:left;
+.search-box svg{width:16px;height:16px;color:var(--muted);flex-shrink:0;}
+.search-box input{
+  border:none;outline:none;font-size:13px;flex:1;min-width:0;color:var(--navy-dark);background:transparent;
 }
-.export-menu button:not(:last-child){border-bottom:1px solid var(--border);}
-.export-menu button:hover{background:var(--gray-bg);}
-.export-menu svg{width:15px;height:15px;color:var(--muted);flex-shrink:0;}
-
-/* ---------- Filters ---------- */
-.filters-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-.filter-box{
-  background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;cursor:pointer;
+.search-box input::placeholder{color:#9aa3b0;}
+.btn-filter{
+  display:flex;align-items:center;gap:7px;background:#fff;border:1.5px solid var(--border);
+  border-radius:12px;padding:11px 15px;font-size:12.5px;font-weight:700;color:var(--navy-dark);
+  cursor:pointer;white-space:nowrap;
 }
-.filter-box .f-label{font-size:10.5px;color:var(--muted);font-weight:600;margin-bottom:3px;}
-.filter-box .f-value{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12.5px;font-weight:700;color:var(--navy-dark);}
-.filter-box .f-value .f-left{display:flex;align-items:center;gap:7px;min-width:0;}
-.filter-box .f-value svg.f-icon{width:14px;height:14px;color:var(--green);flex-shrink:0;}
-.filter-box .f-value svg.chev{width:12px;height:12px;color:var(--muted);flex-shrink:0;}
-.filter-box.wide{grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between;padding:11px 14px;margin-bottom:16px;}
-.filter-box.wide .f-value{font-size:12.5px;}
-.filter-box.wide svg.f-icon{width:15px;height:15px;color:var(--navy);}
+.btn-filter svg{width:14px;height:14px;color:var(--muted);}
 
-/* ---------- Stat grid (4 cards) ---------- */
-.stat-grid4{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
-.stat-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:14px;}
-.stat-icon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
-.stat-icon svg{width:17px;height:17px;color:#fff;}
-.stat-icon.green{background:var(--green);}
-.stat-icon.gold{background:var(--gold);}
-.stat-icon.blue{background:var(--blue);}
-.stat-icon.red{background:var(--red);}
-.stat-card .s-label{font-size:11.5px;color:var(--muted);font-weight:600;}
-.stat-card .s-num{font-size:18px;font-weight:800;color:var(--navy-dark);margin:2px 0 4px;}
-.stat-card .s-num.green{color:var(--green);}
-.stat-card .s-num.gold{color:#b9791a;}
-.stat-card .s-sub{font-size:10.5px;color:var(--muted);font-weight:600;}
-.stat-card .s-sub.up{color:var(--green);display:flex;align-items:center;gap:3px;}
-.stat-card .s-sub.up svg{width:11px;height:11px;}
-
-/* ---------- Chart card ---------- */
-.chart-section{margin-bottom:18px;}
-.chart-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
-.chart-head h3{font-size:15px;font-weight:800;color:var(--navy-dark);}
-.legend-row{display:flex;align-items:center;gap:14px;}
-.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:600;}
-.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.legend-dot.solid{background:var(--green);}
-.legend-dot.dashed{background:#b7bec9;}
-.date-select{
-  background:#fff;border:1.5px solid var(--border);border-radius:9px;padding:8px 12px;font-size:12px;
-  font-weight:700;color:var(--navy-dark);display:flex;align-items:center;gap:6px;cursor:pointer;
+/* ---------- Filter tabs ---------- */
+.tab-scroll{display:flex;gap:9px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;scrollbar-width:none;}
+.tab-scroll::-webkit-scrollbar{display:none;}
+.tab-pill{
+  display:flex;align-items:center;gap:7px;padding:10px 14px;border-radius:11px;border:1.5px solid var(--border);
+  background:#fff;font-size:12.5px;font-weight:700;color:var(--navy-dark);white-space:nowrap;cursor:pointer;
+  flex-shrink:0;
 }
-.date-select svg{width:13px;height:13px;color:var(--muted);}
-.chart-card{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:16px 10px 10px;}
-.chart-svg-wrap{width:100%;overflow:hidden;}
+.tab-pill svg{width:14px;height:14px;}
+.tab-pill.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+.tab-pill.active svg{color:#fff;}
+.tab-pill.t-active svg{color:var(--green);}
+.tab-pill.t-inactive svg{color:var(--gold);}
+.tab-pill.t-suspended svg{color:var(--red);}
 
-/* ---------- Mini metric grid ---------- */
-.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
-.mini-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:14px;}
-.mini-top{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
-.mini-top svg{width:14px;height:14px;}
-.mini-top svg.green{color:var(--green);}
-.mini-top svg.red{color:var(--red);}
-.mini-top svg.navy{color:var(--navy);}
-.mini-top span{font-size:11px;color:var(--muted);font-weight:600;}
-.mini-num{font-size:17px;font-weight:800;color:var(--navy-dark);}
-.mini-num.green{color:var(--green);}
-.mini-num.red{color:var(--red);}
-.mini-sub{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:3px;}
-
-/* ---------- Two column section: donut + status ---------- */
-.two-col{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:18px;}
-.panel{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:16px;}
-.panel h3{font-size:14.5px;font-weight:800;color:var(--navy-dark);margin-bottom:14px;}
-.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
-.donut-svg-wrap{position:relative;width:180px;height:180px;}
-.donut-svg-wrap svg{display:block;}
-.donut-center-label{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  font-size:11px;color:var(--muted);font-weight:700;text-align:center;line-height:1.3;
+/* ---------- Member list ---------- */
+.list-head{
+  display:grid;grid-template-columns:1.7fr 1fr 0.4fr;gap:8px;padding:0 4px 10px;
+  font-size:10.5px;font-weight:800;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;
 }
-.donut-center-label .amt{font-size:16px;font-weight:800;color:var(--navy-dark);display:block;}
-.donut-legend{width:100%;display:flex;flex-direction:column;gap:11px;}
-.dl-row{display:flex;align-items:flex-start;gap:9px;}
-.dl-dot{width:10px;height:10px;border-radius:50%;margin-top:3px;flex-shrink:0;}
-.dl-dot.green{background:var(--green);}
-.dl-dot.gold{background:var(--gold);}
-.dl-dot.blue{background:var(--blue);}
-.dl-dot.red{background:var(--red);}
-.dl-text{font-size:12px;color:var(--navy-dark);font-weight:700;}
-.dl-text small{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-top:1px;}
-
-/* ---------- Member status summary ---------- */
-.status-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
-.status-row:last-child{border-bottom:none;}
-.status-ic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.status-ic svg{width:16px;height:16px;color:#fff;}
-.status-ic.green{background:var(--green);}
-.status-ic.gold{background:var(--gold);}
-.status-ic.red{background:var(--red);}
-.status-ic.blue{background:var(--blue);}
-.status-txt{flex:1;font-size:12.5px;color:var(--navy-dark);font-weight:700;}
-.status-val{font-size:13.5px;font-weight:800;color:var(--navy-dark);}
-
-/* ---------- Top collectors table ---------- */
-.collectors-panel{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:6px;}
-.collectors-panel h3{font-size:14.5px;font-weight:800;color:var(--navy-dark);margin-bottom:12px;}
-.col-head-row{display:grid;grid-template-columns:0.5fr 1.4fr 1.2fr;gap:6px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;padding-bottom:8px;border-bottom:1px solid var(--border);}
-.col-row{display:grid;grid-template-columns:0.5fr 1.4fr 1.2fr;gap:6px;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);}
-.col-row:last-child{border-bottom:none;}
-.rank-badge{font-size:15px;}
-.rank-num{font-size:12.5px;font-weight:800;color:var(--muted);}
-.col-name{font-size:12.5px;font-weight:700;color:var(--navy-dark);}
-.col-detail{font-size:11px;color:var(--muted);margin-top:1px;}
-.perf-wrap{display:flex;align-items:center;gap:7px;}
-.perf-bar-bg{flex:1;height:6px;border-radius:4px;background:#eef1f5;overflow:hidden;}
-.perf-bar-fill{height:100%;border-radius:4px;background:var(--green);}
-.perf-bar-fill.gold{background:var(--gold);}
-.perf-pct{font-size:11px;font-weight:800;color:var(--navy-dark);flex-shrink:0;}
-.view-all-link{
-  display:flex;align-items:center;justify-content:center;gap:5px;padding:14px 0 6px;
-  font-size:12.5px;font-weight:700;color:var(--blue);text-decoration:none;cursor:pointer;background:none;border:none;width:100%;
+.member-card{
+  background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:12px 12px;
+  display:flex;align-items:center;gap:12px;margin-bottom:10px;
 }
-.view-all-link svg{width:13px;height:13px;}
+.avatar{
+  width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;color:#fff;
+}
+.m-info{flex:1;min-width:0;}
+.m-info h4{font-size:13.5px;font-weight:700;color:var(--navy-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.m-info .m-id{font-size:11px;color:var(--muted);margin-top:1px;}
+.m-info .m-sub{display:flex;gap:12px;margin-top:5px;flex-wrap:wrap;}
+.m-info .m-sub span{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+.m-info .m-sub svg{width:11px;height:11px;}
+.m-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;}
+.status-pill{
+  font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;
+}
+.status-pill.active{background:#e6f4ea;color:var(--green);}
+.status-pill.inactive{background:#fef3e0;color:#b9791a;}
+.status-pill.suspended{background:#fbe8e6;color:var(--red);}
+.more-btn{
+  width:26px;height:26px;border:none;background:none;color:var(--muted);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;
+}
+
+/* ---------- Pagination ---------- */
+.pagination{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  padding:6px 4px 20px;
+}
+.pg-info{font-size:11.5px;color:var(--muted);}
+.pg-controls{display:flex;align-items:center;gap:6px;}
+.pg-btn{
+  width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:#fff;
+  color:var(--navy-dark);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.pg-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+.pg-btn svg{width:14px;height:14px;}
+.pg-dots{color:var(--muted);font-size:12px;padding:0 2px;}
 
 /* ---------- Bottom nav (shared) ---------- */
 .bottom-nav{
@@ -240,6 +186,109 @@ header.topbar{
   max-width:400px;text-align:center;
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ---------- Member modal (Add / View) ---------- */
+.member-modal-overlay{
+  position:fixed;inset:0;z-index:700;background:rgba(10,20,40,0.6);
+  opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease;
+  display:flex;align-items:flex-end;
+}
+.member-modal-overlay.open{opacity:1;visibility:visible;}
+.member-modal{
+  width:100%;max-width:480px;margin:0 auto;background:var(--gray-bg);border-radius:20px 20px 0 0;
+  max-height:92vh;overflow-y:auto;transform:translateY(24px);transition:transform .25s ease;
+  padding:20px 18px max(20px, env(safe-area-inset-bottom));
+}
+.member-modal-overlay.open .member-modal{transform:translateY(0);}
+.mm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.mm-head h3{font-size:16.5px;font-weight:800;color:var(--navy-dark);}
+.mm-close{width:34px;height:34px;border-radius:50%;background:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(13,33,64,0.1);flex-shrink:0;}
+.mm-close svg{width:16px;height:16px;color:var(--navy-dark);}
+.mm-section{background:#fff;border-radius:14px;padding:14px;box-shadow:0 3px 12px rgba(13,33,64,0.06);margin-bottom:14px;}
+.mm-section h4{font-size:11.5px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.mm-section h4 svg{width:14px;height:14px;color:var(--gold);}
+.mm-field{margin-bottom:12px;}
+.mm-field:last-child{margin-bottom:0;}
+.mm-field label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:6px;}
+.mm-field input,.mm-field select{
+  width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;
+  color:var(--navy-dark);outline:none;background:#fff;
+}
+.mm-field input:focus,.mm-field select:focus{border-color:var(--navy);}
+.mm-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mm-photo-row{display:flex;align-items:center;gap:14px;}
+.mm-photo-preview{
+  width:64px;height:64px;border-radius:50%;background:var(--gray-bg);border:1.5px dashed var(--border);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;color:var(--muted);
+}
+.mm-photo-preview img{width:100%;height:100%;object-fit:cover;}
+.mm-photo-btn{
+  background:var(--navy);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;
+  font-weight:700;cursor:pointer;
+}
+.mm-save-btn{
+  width:100%;background:var(--navy);color:#fff;border:none;border-radius:12px;padding:14px;
+  font-size:13.5px;font-weight:800;cursor:pointer;margin-top:4px;box-shadow:0 8px 20px rgba(13,33,64,0.3);
+}
+.mm-error{color:var(--red);font-size:11.5px;margin-top:6px;display:none;}
+.mm-error.show{display:block;}
+
+/* View-member detail sheet */
+.vm-photo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:16px;}
+.vm-photo{
+  width:84px;height:84px;border-radius:50%;background:var(--navy);color:var(--gold);font-weight:800;
+  font-size:26px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 4px 14px rgba(13,33,64,0.25);
+}
+.vm-photo img{width:100%;height:100%;object-fit:cover;}
+.vm-photo-wrap h4{margin-top:10px;font-size:15.5px;font-weight:800;color:var(--navy-dark);}
+.vm-photo-wrap p{font-size:12px;color:var(--muted);margin-top:2px;}
+.vm-qr{display:flex;justify-content:center;padding:14px 0 4px;}
+.vm-qr-box{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:10px;}
+.vm-row{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+.vm-row:last-child{border-bottom:none;}
+.vm-row .vk{font-size:12px;color:var(--muted);font-weight:600;}
+.vm-row .vv{font-size:12.5px;color:var(--navy-dark);font-weight:700;text-align:right;}
+
+/* ---------- Stat grid (collections summary) ---------- */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.stat-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:16px;}
+.stat-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+.stat-icon svg{width:18px;height:18px;color:#fff;}
+.stat-icon.green{background:var(--green);}
+.stat-icon.gold{background:var(--gold);}
+.stat-icon.navy{background:var(--navy);}
+.stat-icon.red{background:var(--red);}
+.stat-num{font-size:19px;font-weight:800;color:var(--navy-dark);}
+.stat-label{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.3;}
+
+/* ---------- Type quick-select (Record Payment modal) ---------- */
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
+.type-btn{
+  display:flex;align-items:center;gap:9px;border:1.5px solid var(--border);border-radius:12px;
+  padding:11px;background:#fff;font-size:12px;font-weight:700;color:var(--navy-dark);cursor:pointer;
+}
+.type-btn svg{width:16px;height:16px;color:var(--muted);flex-shrink:0;}
+.type-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+.type-btn.active svg{color:var(--gold);}
+
+/* ---------- Transaction list ---------- */
+.txn-card{
+  background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:12px;
+  display:flex;align-items:center;gap:12px;margin-bottom:10px;
+}
+.txn-icon{width:42px;height:42px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.txn-icon svg{width:19px;height:19px;color:#fff;}
+.txn-icon.contribution{background:var(--green);}
+.txn-icon.registration{background:var(--gold);}
+.txn-icon.fine{background:var(--red);}
+.txn-icon.other{background:var(--purple);}
+.txn-info{flex:1;min-width:0;}
+.txn-info h4{font-size:13.5px;font-weight:700;color:var(--navy-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.txn-info .txn-id{font-size:11px;color:var(--muted);margin-top:1px;}
+.txn-info .txn-sub{display:flex;gap:10px;margin-top:5px;flex-wrap:wrap;}
+.txn-info .txn-sub span{font-size:10.5px;color:var(--muted);font-weight:700;padding:2px 8px;border-radius:20px;background:var(--gray-bg);}
+.txn-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.txn-amount{font-size:14px;font-weight:800;color:var(--navy-dark);white-space:nowrap;}
 
 /* ---------- Install app bar (PWA) ---------- */
 .install-bar{
@@ -265,27 +314,33 @@ header.topbar{
   background:none;border:none;color:#c9d3e0;font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;
 }
 </style>
+<style>
+.view-only-tag{
+  display:inline-flex;align-items:center;gap:6px;background:#eef2f8;color:var(--navy);
+  font-size:11px;font-weight:800;padding:6px 12px;border-radius:20px;margin-bottom:16px;
+}
+.view-only-tag svg{width:13px;height:13px;}
+.wc-card{
+  background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:12px;
+  display:flex;align-items:center;gap:12px;margin-bottom:10px;
+}
+.wc-avatar{
+  width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;
+}
+.wc-info{flex:1;min-width:0;}
+.wc-info h4{font-size:13.5px;font-weight:700;color:var(--navy-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wc-info .wc-id{font-size:11px;color:var(--muted);margin-top:1px;}
+.wc-info .wc-sub{display:flex;gap:10px;margin-top:5px;flex-wrap:wrap;}
+.wc-info .wc-sub span{font-size:10.5px;color:var(--muted);font-weight:700;padding:2px 8px;border-radius:20px;background:var(--gray-bg);}
+.wc-amount{font-size:14px;font-weight:800;color:var(--navy-dark);white-space:nowrap;flex-shrink:0;}
+.empty-state{text-align:center;padding:40px 10px;color:var(--muted);font-size:13px;}
+</style>
+
 <link rel="stylesheet" href="desktop.css">
 </head>
 <body>
-<script>KatiniAuth.requireRole(['admin','member']);</script>
-<script>
-// Members get a read-only Reports view: no admin bottom-nav, no export/generate controls.
-(function(){
-  var user = KatiniAuth.getCurrentUser();
-  var isMember = !user || user.role !== 'admin';
-  document.addEventListener('DOMContentLoaded', function(){
-    if (isMember) {
-      var adminNav = document.getElementById('adminBottomNav');
-      var memberNav = document.getElementById('memberBottomNav');
-      var exportWrap = document.getElementById('exportWrap');
-      if (adminNav) adminNav.style.display = 'none';
-      if (memberNav) memberNav.style.display = '';
-      if (exportWrap) exportWrap.style.display = 'none';
-    }
-  });
-})();
-</script>
+<script>KatiniAuth.requireRole(['admin']);</script>
 
 <div id="app">
 
@@ -299,7 +354,7 @@ header.topbar{
       </div>
       <div class="hdr-text">
         <h1>KATANI <span class="accent">MAIN STAGE</span><br>BODA SELF HELP GROUP</h1>
-        <div class="admin-tag">Reports &amp; Analytics</div>
+        <div class="admin-tag">Welfare Contributions</div>
       </div>
       <button class="icon-btn" onclick="location.href='notifications.html'" aria-label="Notifications">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -312,211 +367,72 @@ header.topbar{
 
     <div class="page-head-row">
       <div class="page-head-left">
-        <h2>Reports Overview</h2>
-        <p>Track collections, members and activities.</p>
-      </div>
-      <div class="export-wrap" id="exportWrap">
-        <button class="btn-export" onclick="toggleExportMenu(event)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export Report
-        </button>
-        <div class="export-menu" id="exportMenu">
-          <button onclick="exportReportPDF()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/></svg>
-            Export as PDF
-          </button>
-          <button onclick="exportReportExcel()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
-            Export as Excel
-          </button>
-        </div>
+        <h2>Welfare Contributions</h2>
+        <p>A read-only record of every welfare contribution logged.</p>
       </div>
     </div>
 
-    <div class="filters-grid">
-      <div class="filter-box" onclick="showToast('Change report type')">
-        <div class="f-label">Report Type</div>
-        <div class="f-value">
-          <div class="f-left">
-            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            <span>Collections Report</span>
-          </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-        </div>
-      </div>
-      <div class="filter-box" onclick="showToast('Change date range')">
-        <div class="f-label">Date Range</div>
-        <div class="f-value">
-          <div class="f-left"><span>This Month</span></div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-        </div>
-      </div>
-      <div class="filter-box wide" onclick="showToast('Open calendar')">
-        <div class="f-value">
-          <div class="f-left">
-            <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <span id="rp-filter-range">01 May &ndash; 18 May 2025</span>
-          </div>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-        </div>
-      </div>
+    <div class="view-only-tag">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      View only &mdash; recorded under Collections
     </div>
 
-    <div class="stat-grid4">
+    <div class="stat-grid">
       <div class="stat-card">
-        <div class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
-        <div class="s-label">Total Collections</div>
-        <div class="s-num green" id="rp-total-collections">KSh 0</div>
-<div class="s-sub" id="rp-total-sub">&mdash;</div>
+        <div class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="stat-num" id="stat-total">KSh 0</div>
+        <div class="stat-label">Total Contributed</div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><circle cx="12" cy="14" r="3"/><path d="M17 7 15 3H9L7 7"/></svg></div>
-        <div class="s-label">Today's Collections</div>
-        <div class="s-num gold" id="rp-today-collections">KSh 0</div>
-<div class="s-sub">&mdash;</div>
+        <div class="stat-icon navy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+        <div class="stat-num" id="stat-month">KSh 0</div>
+        <div class="stat-label">This Month</div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <div class="s-label">Total Members</div>
-        <div class="s-num" id="rp-total-members">0</div>
-        <div class="s-sub" id="rp-active-members">Active: 0</div>
+        <div class="stat-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+        <div class="stat-num" id="stat-count">0</div>
+        <div class="stat-label">Contributions Recorded</div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.29 3.86-8.18 14.14A1.5 1.5 0 0 0 3.4 20h17.2a1.5 1.5 0 0 0 1.29-2L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-        <div class="s-label">Pending Payments</div>
-        <div class="s-num" id="rp-pending-count">0</div>
-        <div class="s-sub" id="rp-pending-sub">&mdash;</div>
+        <div class="stat-icon purple" style="background:var(--purple);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="stat-num" id="stat-members">0</div>
+        <div class="stat-label">Contributing Members</div>
       </div>
     </div>
 
-    <div class="chart-section">
-      <div class="chart-head">
-        <h3>Collections Trend</h3>
-      </div>
-      <div class="chart-head" style="margin-top:-8px;">
-        <div class="legend-row">
-          <span class="legend-item"><span class="legend-dot solid"></span>This Month</span>
-          <span class="legend-item"><span class="legend-dot dashed"></span>Last Month</span>
-        </div>
-        <button class="date-select" id="trendRangeBtn" onclick="cycleTrendRange()">
-          <span id="trendRangeLabel">Last 18 days</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-        </button>
-      </div>
-      <div class="chart-card">
-        <div class="chart-svg-wrap" id="trendChartWrap"></div>
+    <div class="search-row">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by member name or reference..." oninput="renderList()">
       </div>
     </div>
 
-    <div class="mini-grid">
-      <div class="mini-card">
-        <div class="mini-top">
-          <svg class="navy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>Average Daily Collection</span>
-        </div>
-        <div class="mini-num green">KSh 0</div>
-        <div class="mini-sub">Per day</div>
-      </div>
-      <div class="mini-card">
-        <div class="mini-top">
-          <svg class="green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          <span>Highest Collection</span>
-        </div>
-        <div class="mini-num green">KSh 0</div>
-        <div class="mini-sub">&mdash;</div>
-      </div>
-      <div class="mini-card">
-        <div class="mini-top">
-          <svg class="red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-          <span>Lowest Collection</span>
-        </div>
-        <div class="mini-num red">KSh 0</div>
-        <div class="mini-sub">&mdash;</div>
-      </div>
-      <div class="mini-card">
-        <div class="mini-top">
-          <svg class="navy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="15" x2="14" y2="15"/></svg>
-          <span>Total Transactions</span>
-        </div>
-        <div class="mini-num">0</div>
-        <div class="mini-sub">This Month</div>
-      </div>
-    </div>
-
-    <div class="two-col">
-      <div class="panel">
-        <h3>Collection Breakdown</h3>
-        <div class="donut-wrap">
-          <div class="donut-svg-wrap" id="donutWrap">
-            <svg viewBox="0 0 180 180" width="180" height="180">
-              <g transform="rotate(-90 90 90)" id="donutArcs">
-                <circle cx="90" cy="90" r="70" fill="none" stroke="#eef1f5" stroke-width="26"/>
-              </g>
-            </svg>
-            <div class="donut-center-label">
-              <span class="amt" id="rp-donut-total">KSh<br>0</span>
-              Total
-            </div>
-          </div>
-          <div class="donut-legend">
-            <div class="dl-row">
-              <span class="dl-dot green"></span>
-              <div class="dl-text">Member Contributions<small id="rp-donut-contribution">KSh 0</small></div>
-            </div>
-            <div class="dl-row">
-              <span class="dl-dot gold"></span>
-              <div class="dl-text">Registration Fees<small id="rp-donut-registration">KSh 0</small></div>
-            </div>
-            <div class="dl-row">
-              <span class="dl-dot blue"></span>
-              <div class="dl-text">Fines<small id="rp-donut-fine">KSh 0</small></div>
-            </div>
-            <div class="dl-row">
-              <span class="dl-dot red"></span>
-              <div class="dl-text">Other Income<small id="rp-donut-other">KSh 0</small></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <h3>Member Status Summary</h3>
-        <div class="status-row">
-          <div class="status-ic green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></div>
-          <div class="status-txt">Active Members</div>
-          <div class="status-val" id="ms-active">0</div>
-        </div>
-        <div class="status-row">
-          <div class="status-ic gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-          <div class="status-txt">Inactive Members</div>
-          <div class="status-val" id="ms-inactive">0</div>
-        </div>
-        <div class="status-row">
-          <div class="status-ic red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
-          <div class="status-txt">Suspended Members</div>
-          <div class="status-val" id="ms-suspended">0</div>
-        </div>
-        <div class="status-row">
-          <div class="status-ic blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-          <div class="status-txt">New This Month</div>
-          <div class="status-val" id="ms-new">0</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="collectors-panel">
-      <h3>Top Collectors This Month</h3>
-      <div id="collectorsBody">
-        <div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No collection data yet.</div>
-      </div>
-    </div>
+    <div id="wcList"></div>
 
   </div>
-</div>
 
-<div id="toast"></div>
+  <!-- View contribution detail (read-only) -->
+  <div class="member-modal-overlay" id="viewOverlay" onclick="if(event.target===this) closeView()">
+    <div class="member-modal">
+      <div class="mm-head">
+        <h3>Contribution Details</h3>
+        <button class="mm-close" onclick="closeView()" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="mm-section">
+        <div class="vm-row"><span class="vk">Member</span><span class="vv" id="vt-member">&mdash;</span></div>
+        <div class="vm-row"><span class="vk">Reference</span><span class="vv" id="vt-id">&mdash;</span></div>
+        <div class="vm-row"><span class="vk">Amount</span><span class="vv" id="vt-amount">&mdash;</span></div>
+        <div class="vm-row"><span class="vk">Method</span><span class="vv" id="vt-method">&mdash;</span></div>
+        <div class="vm-row"><span class="vk">M-Pesa / Bank Ref</span><span class="vv" id="vt-reference">&mdash;</span></div>
+        <div class="vm-row"><span class="vk">Date</span><span class="vv" id="vt-date">&mdash;</span></div>
+        <div class="vm-row"><span class="vk">Note</span><span class="vv" id="vt-note">&mdash;</span></div>
+      </div>
+    </div>
+  </div>
 
-<nav class="bottom-nav" id="adminBottomNav">
+<nav class="bottom-nav">
   <button class="nav-item" onclick="location.href='admin-dashboard.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Dashboard
@@ -525,11 +441,11 @@ header.topbar{
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     Members
   </button>
-  <button class="nav-item" onclick="setActiveNav(this,'Collections')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7 16 12l7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-    Collections
+  <button class="nav-item active" onclick="setActiveNav(this,'Welfare')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    Welfare
   </button>
-  <button class="nav-item active" onclick="setActiveNav(this,'Reports')">
+  <button class="nav-item" onclick="location.href='reports.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
     Reports
   </button>
@@ -539,29 +455,9 @@ header.topbar{
   </button>
 </nav>
 
-<!-- View-only nav for members: mirrors the members-portal bottom bar, no admin links -->
-<nav class="bottom-nav" id="memberBottomNav" style="display:none;">
-  <button class="nav-item" onclick="location.href='members-portal.html'">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
-    Home
-  </button>
-  <button class="nav-item" onclick="location.href='members-portal.html#idCardAnchor'">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="14" x2="17" y2="14"/><line x1="14" y1="17" x2="14" y2="17.01"/><line x1="14" y1="21" x2="17" y2="21"/><line x1="17" y1="17" x2="21" y2="17"/><line x1="21" y1="14" x2="21" y2="14.01"/><line x1="21" y1="21" x2="21" y2="21.01"/></svg>
-    My ID
-  </button>
-  <button class="nav-item" onclick="location.href='members-portal.html'">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    Profile
-  </button>
-  <button class="nav-item active">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    Reports
-  </button>
-  <button class="nav-item" onclick="location.href='members-portal.html#contactSection'">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-    Contact
-  </button>
-</nav>
+<div id="toast"></div>
+
+</div>
 
 <script>
 let toastTimer;
@@ -575,428 +471,82 @@ function showToast(msg){
 function setActiveNav(el,label){
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   el.classList.add('active');
-  showToast(label);
 }
-
-/* -------- Real collections & member stats -------- */
 function formatKsh(n){
-  return 'KSh ' + Math.round(n || 0).toLocaleString('en-KE');
+  return 'KSh ' + Math.round(n).toLocaleString('en-KE');
+}
+function initials(name){
+  return String(name || '?').trim().split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase();
 }
 
-function renderSummaryStats(){
-  const users = KatiniAuth.getUsers().filter(u => u.role === 'member');
-  const active = users.filter(u => (u.status || 'active') === 'active');
-  document.getElementById('rp-total-members').textContent = users.length;
-  document.getElementById('rp-active-members').textContent = 'Active: ' + active.length;
+let records = [];
 
-  const txns = KatiniAuth.getCollections();
+function loadData(){
+  records = KatiniAuth.getCollections().filter(t => t.type === 'contribution');
+}
+
+function renderSummary(){
   const now = new Date();
-  const todayStr = now.toISOString().slice(0,10);
-  const monthStr = todayStr.slice(0,7);
-
-  const totalAll = txns.reduce((s,t) => s + t.amount, 0);
-  const totalToday = txns.filter(t => t.date === todayStr).reduce((s,t) => s + t.amount, 0);
-
-  document.getElementById('rp-total-collections').textContent = formatKsh(totalAll);
-  document.getElementById('rp-total-sub').textContent = txns.length + ' record' + (txns.length === 1 ? '' : 's');
-  document.getElementById('rp-today-collections').textContent = formatKsh(totalToday);
-
-  // Real date range: 1st of this month -> today
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const opts = { day: '2-digit', month: 'short' };
-  document.getElementById('rp-filter-range').textContent =
-    monthStart.toLocaleDateString('en-GB', opts) + ' \u2013 ' + now.toLocaleDateString('en-GB', opts) + ' ' + now.getFullYear();
-
-  // Pending payments (real, from KatiniAuth.getPaymentSummary)
-  const summary = KatiniAuth.getPaymentSummary(now);
-  document.getElementById('rp-pending-count').textContent = summary.pending.length + summary.defaulters.length;
-  document.getElementById('rp-pending-sub').textContent = summary.defaulters.length + ' defaulter' + (summary.defaulters.length === 1 ? '' : 's');
-
-  // Collection breakdown donut (real proportions)
-  const byType = { contribution: 0, registration: 0, fine: 0, other: 0 };
-  txns.forEach(t => { byType[t.type] = (byType[t.type] || 0) + t.amount; });
-  document.getElementById('rp-donut-contribution').textContent = formatKsh(byType.contribution);
-  document.getElementById('rp-donut-registration').textContent = formatKsh(byType.registration);
-  document.getElementById('rp-donut-fine').textContent = formatKsh(byType.fine);
-  document.getElementById('rp-donut-other').textContent = formatKsh(byType.other);
-  document.getElementById('rp-donut-total').innerHTML = 'KSh<br>' + Math.round(totalAll).toLocaleString('en-KE');
-  renderDonut(byType, totalAll);
-
-  // Member status summary (real)
-  const inactive = users.filter(u => (u.status || 'active') === 'inactive');
-  const suspended = users.filter(u => (u.status || 'active') === 'suspended');
-  const newThisMonth = users.filter(u => {
-    const d = new Date(u.memberSince);
-    return !isNaN(d.getTime()) && d.toISOString().slice(0,7) === monthStr;
+  const monthStr = now.toISOString().slice(0,7);
+  let total = 0, month = 0;
+  const members = new Set();
+  records.forEach(t => {
+    total += t.amount;
+    if((t.date || '').slice(0,7) === monthStr) month += t.amount;
+    if(t.memberId) members.add(t.memberId);
   });
-  document.getElementById('ms-active').textContent = active.length;
-  document.getElementById('ms-inactive').textContent = inactive.length;
-  document.getElementById('ms-suspended').textContent = suspended.length;
-  document.getElementById('ms-new').textContent = newThisMonth.length;
-
-  // Top collectors leaderboard (real)
-  renderTopCollectors(monthStr);
-
-  const byDate = {};
-  txns.forEach(t => { byDate[t.date] = (byDate[t.date] || 0) + t.amount; });
-  const dailyTotals = Object.values(byDate);
-  const daysWithCollections = dailyTotals.length || 1;
-  const avgDaily = dailyTotals.reduce((s,v) => s + v, 0) / daysWithCollections;
-  const highest = dailyTotals.length ? Math.max(...dailyTotals) : 0;
-  const lowest = dailyTotals.length ? Math.min(...dailyTotals) : 0;
-
-  const miniNums = document.querySelectorAll('.mini-grid .mini-num');
-  if(miniNums[0]) miniNums[0].textContent = formatKsh(avgDaily);
-  if(miniNums[1]) miniNums[1].textContent = formatKsh(highest);
-  if(miniNums[2]) miniNums[2].textContent = formatKsh(lowest);
-  if(miniNums[3]) miniNums[3].textContent = txns.length;
+  document.getElementById('stat-total').textContent = formatKsh(total);
+  document.getElementById('stat-month').textContent = formatKsh(month);
+  document.getElementById('stat-count').textContent = records.length;
+  document.getElementById('stat-members').textContent = members.size;
 }
 
-function renderDonut(byType, total){
-  const colors = { contribution: '#2e7d32', registration: '#f5a623', fine: '#1565c0', other: '#c0392b' };
-  const order = ['contribution','registration','fine','other'];
-  const r = 70, circumference = 2 * Math.PI * r;
-  let offset = 0;
-  let arcs = '';
-  if(total > 0){
-    order.forEach(key => {
-      const val = byType[key] || 0;
-      if(val <= 0) return;
-      const len = (val / total) * circumference;
-      arcs += '<circle cx="90" cy="90" r="' + r + '" fill="none" stroke="' + colors[key] + '" stroke-width="26" ' +
-        'stroke-dasharray="' + len.toFixed(2) + ' ' + (circumference - len).toFixed(2) + '" ' +
-        'stroke-dashoffset="-' + offset.toFixed(2) + '" stroke-linecap="butt"/>';
-      offset += len;
-    });
-  }
-  document.getElementById('donutArcs').innerHTML =
-    '<circle cx="90" cy="90" r="' + r + '" fill="none" stroke="#eef1f5" stroke-width="26"/>' + arcs;
-}
-
-function renderTopCollectors(monthStr){
-  const top = KatiniAuth.getTopCollectors(5, monthStr);
-  const body = document.getElementById('collectorsBody');
-  if(!top.length){
-    body.innerHTML = '<div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No collection data yet.</div>';
+function renderList(){
+  const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+  const wrap = document.getElementById('wcList');
+  const filtered = records.filter(t => {
+    if(!q) return true;
+    return (t.memberName || '').toLowerCase().includes(q) || (t.id || '').toLowerCase().includes(q) || (t.reference || '').toLowerCase().includes(q);
+  });
+  if(filtered.length === 0){
+    wrap.innerHTML = '<div class="empty-state">No welfare contributions recorded yet.</div>';
     return;
   }
-  const maxTotal = top[0].total || 1;
-  const medals = ['\ud83e\udd47','\ud83e\udd48','\ud83e\udd49'];
-  let html = '<div class="col-head-row"><span>Rank</span><span>Member</span><span>Amount</span></div>';
-  top.forEach((c, i) => {
-    const pct = Math.round((c.total / maxTotal) * 100);
-    const rankCell = i < 3 ? '<span class="rank-badge">' + medals[i] + '</span>' : '<span class="rank-num">#' + (i+1) + '</span>';
-    html += '<div class="col-row">' +
-      rankCell +
-      '<div><div class="col-name">' + escapeHtml(c.memberName) + '</div>' +
-        '<div class="col-detail">' + c.count + ' payment' + (c.count === 1 ? '' : 's') + '</div></div>' +
-      '<div class="perf-wrap"><div class="perf-bar-bg"><div class="perf-bar-fill' + (i===0?'':' gold') + '" style="width:' + pct + '%"></div></div>' +
-        '<span class="perf-pct">' + formatKsh(c.total) + '</span></div>' +
-      '</div>';
-  });
-  body.innerHTML = html;
+  wrap.innerHTML = filtered.map(t => `
+    <div class="wc-card" onclick="openView('${t.id}')">
+      <div class="wc-avatar">${initials(t.memberName)}</div>
+      <div class="wc-info">
+        <h4>${t.memberName || 'Member'}</h4>
+        <div class="wc-id">Ref: ${t.id}</div>
+        <div class="wc-sub">
+          <span>${t.method}</span>
+          <span>${t.date}</span>
+        </div>
+      </div>
+      <div class="wc-amount">${formatKsh(t.amount)}</div>
+    </div>
+  `).join('');
 }
 
-function escapeHtml(s){
-  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function openView(id){
+  const t = records.find(r => r.id === id);
+  if(!t) return;
+  document.getElementById('vt-member').textContent = t.memberName || '\u2014';
+  document.getElementById('vt-id').textContent = t.id;
+  document.getElementById('vt-amount').textContent = formatKsh(t.amount);
+  document.getElementById('vt-method').textContent = t.method || '\u2014';
+  document.getElementById('vt-reference').textContent = t.reference || '\u2014';
+  document.getElementById('vt-date').textContent = t.date || '\u2014';
+  document.getElementById('vt-note').textContent = t.note || '\u2014';
+  document.getElementById('viewOverlay').classList.add('open');
+}
+function closeView(){
+  document.getElementById('viewOverlay').classList.remove('open');
 }
 
-renderSummaryStats();
-
-/* -------- Collections Trend chart (two series, real data, choosable range) -------- */
-const TREND_RANGE_OPTIONS = [18, 7, 30];
-let trendRangeIdx = 0;
-
-function cycleTrendRange(){
-  trendRangeIdx = (trendRangeIdx + 1) % TREND_RANGE_OPTIONS.length;
-  renderTrendChart();
-}
-
-function renderTrendChart(){
-  const days = TREND_RANGE_OPTIONS[trendRangeIdx];
-  document.getElementById('trendRangeLabel').textContent = 'Last ' + days + ' days';
-
-  const today = new Date();
-  const thisPeriod = KatiniAuth.getDailyTotals(days, today);
-  const priorEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() - days);
-  const lastPeriod = KatiniAuth.getDailyTotals(days, priorEnd);
-
-  const thisMonth = thisPeriod.values;
-  const lastMonth = lastPeriod.values;
-  const labels = thisPeriod.labels;
-
-  const w = 420, h = 200, padL = 34, padR = 6, padT = 10, padB = 26;
-  const maxVal = Math.max(...thisMonth, ...lastMonth, 1);
-  const maxY = niceCeilTrend(maxVal);
-  const plotW = w - padL - padR;
-  const plotH = h - padT - padB;
-  const xStep = plotW / (thisMonth.length - 1 || 1);
-
-  function toPoints(data){
-    return data.map((v,i) => {
-      const x = padL + i * xStep;
-      const y = padT + plotH - (v / maxY) * plotH;
-      return [x,y];
-    });
-  }
-  function toPath(points){
-    return points.map((p,i) => (i===0? 'M':'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
-  }
-
-  const pThis = toPoints(thisMonth);
-  const pLast = toPoints(lastMonth);
-  const lineThis = toPath(pThis);
-  const lineLast = toPath(pLast);
-  const areaThis = lineThis + ' L' + pThis[pThis.length-1][0].toFixed(1) + ',' + (padT+plotH) + ' L' + pThis[0][0].toFixed(1) + ',' + (padT+plotH) + ' Z';
-
-  const steps = 5;
-  const gridLines = Array.from({length: steps+1}, (_,i) => Math.round(maxY * i / steps)).map(v => {
-    const y = padT + plotH - (v/maxY)*plotH;
-    return '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (w-padR) + '" y2="' + y.toFixed(1) + '" stroke="#eef1f5" stroke-width="1"/>' +
-           '<text x="2" y="' + (y+4).toFixed(1) + '" font-size="9" fill="#9aa3b0" font-weight="600">' + formatAxisValTrend(v) + '</text>';
-  }).join('');
-
-  const dotsThis = pThis.map(p => '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3" fill="#2e7d32"/>').join('');
-  const dotsLast = pLast.map(p => '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="2.5" fill="#b7bec9"/>').join('');
-
-  const labelEvery = Math.max(1, Math.ceil(labels.length / 6));
-  const xLabels = labels.map((lab,i) => {
-    if(i % labelEvery !== 0 && i !== labels.length - 1) return '';
-    const x = padL + i*xStep;
-    return '<text x="' + x.toFixed(1) + '" y="' + (h-6) + '" font-size="9" fill="#9aa3b0" font-weight="600" text-anchor="middle">' + lab + '</text>';
-  }).join('');
-
-  const svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">' +
-    '<defs><linearGradient id="areaGradThis" x1="0" y1="0" x2="0" y2="1">' +
-    '<stop offset="0%" stop-color="#2e7d32" stop-opacity="0.30"/>' +
-    '<stop offset="100%" stop-color="#2e7d32" stop-opacity="0"/>' +
-    '</linearGradient></defs>' +
-    gridLines +
-    '<path d="' + areaThis + '" fill="url(#areaGradThis)"/>' +
-    '<path d="' + lineLast + '" fill="none" stroke="#b7bec9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4"/>' +
-    dotsLast +
-    '<path d="' + lineThis + '" fill="none" stroke="#2e7d32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
-    dotsThis +
-    xLabels +
-    '</svg>';
-
-  document.getElementById('trendChartWrap').innerHTML = svg;
-}
-
-function niceCeilTrend(v){
-  if(v <= 0) return 1;
-  const mag = Math.pow(10, Math.floor(Math.log10(v)));
-  return Math.ceil(v / mag) * mag;
-}
-function formatAxisValTrend(v){
-  if(v >= 1000) return Math.round(v/1000) + 'K';
-  return String(v);
-}
-
-renderTrendChart();
-
-/* -------- Export menu + real PDF / Excel report generation -------- */
-function toggleExportMenu(e){
-  e.stopPropagation();
-  document.getElementById('exportMenu').classList.toggle('show');
-}
-document.addEventListener('click', () => document.getElementById('exportMenu').classList.remove('show'));
-
-function gatherReportData(){
-  const users = KatiniAuth.getUsers().filter(u => u.role === 'member');
-  const txns = KatiniAuth.getCollections();
-  const now = new Date();
-  const summary = KatiniAuth.getPaymentSummary(now);
-  const byType = { contribution: 0, registration: 0, fine: 0, other: 0 };
-  txns.forEach(t => { byType[t.type] = (byType[t.type] || 0) + t.amount; });
-  const totalAll = txns.reduce((s,t) => s + t.amount, 0);
-  const topCollectors = KatiniAuth.getTopCollectors(10, now.toISOString().slice(0,7));
-  return { users, txns, now, summary, byType, totalAll, topCollectors };
-}
-
-function exportReportPDF(){
-  document.getElementById('exportMenu').classList.remove('show');
-  if(typeof window.jspdf === 'undefined'){ showToast('PDF library failed to load'); return; }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const data = gatherReportData();
-  const dateStr = data.now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-
-  let y = 18;
-  doc.setFontSize(16); doc.setFont(undefined, 'bold');
-  doc.text('Katani Main Stage Boda Self Help Group', 14, y);
-  y += 7;
-  doc.setFontSize(11); doc.setFont(undefined, 'normal');
-  doc.text('Collections & Membership Report \u2014 generated ' + dateStr, 14, y);
-  y += 10;
-
-  doc.setFontSize(12); doc.setFont(undefined, 'bold');
-  doc.text('Summary', 14, y); y += 6;
-  doc.setFontSize(10); doc.setFont(undefined, 'normal');
-  const lines = [
-    'Total Collections (all time): ' + formatKsh(data.totalAll),
-    'Total Members: ' + data.users.length,
-    'Paid this month: ' + data.summary.paid.length,
-    'Pending this month: ' + data.summary.pending.length,
-    'Defaulters: ' + data.summary.defaulters.length
-  ];
-  lines.forEach(l => { doc.text(l, 14, y); y += 6; });
-  y += 4;
-
-  doc.setFontSize(12); doc.setFont(undefined, 'bold');
-  doc.text('Collection Breakdown', 14, y); y += 6;
-  doc.setFontSize(10); doc.setFont(undefined, 'normal');
-  ['contribution','registration','fine','other'].forEach(k => {
-    doc.text(k.charAt(0).toUpperCase() + k.slice(1) + ': ' + formatKsh(data.byType[k]), 14, y); y += 6;
-  });
-  y += 4;
-
-  doc.setFontSize(12); doc.setFont(undefined, 'bold');
-  doc.text('Top Collectors This Month', 14, y); y += 6;
-  doc.setFontSize(10); doc.setFont(undefined, 'normal');
-  if(data.topCollectors.length){
-    data.topCollectors.forEach((c, i) => {
-      if(y > 275){ doc.addPage(); y = 18; }
-      doc.text((i+1) + '. ' + c.memberName + ' \u2014 ' + formatKsh(c.total) + ' (' + c.count + ' payments)', 14, y);
-      y += 6;
-    });
-  } else {
-    doc.text('No collection data yet.', 14, y); y += 6;
-  }
-  y += 4;
-
-  if(data.txns.length){
-    doc.setFontSize(12); doc.setFont(undefined, 'bold');
-    doc.text('Recent Transactions', 14, y); y += 6;
-    doc.setFontSize(9); doc.setFont(undefined, 'normal');
-    data.txns.slice(0, 40).forEach(t => {
-      if(y > 280){ doc.addPage(); y = 18; }
-      const label = t.type === 'contribution' ? (t.memberName || 'Member') : (t.source || t.type);
-      doc.text(t.date + '  ' + label + '  ' + formatKsh(t.amount) + '  ' + t.method, 14, y);
-      y += 5.5;
-    });
-  }
-
-  doc.save('katani-main-stage-report-' + data.now.toISOString().slice(0,10) + '.pdf');
-  showToast('PDF report downloaded');
-}
-
-function exportReportExcel(){
-  document.getElementById('exportMenu').classList.remove('show');
-  if(typeof window.XLSX === 'undefined'){ showToast('Excel library failed to load'); return; }
-  const data = gatherReportData();
-  const wb = XLSX.utils.book_new();
-
-  const summarySheet = XLSX.utils.aoa_to_sheet([
-    ['Katani Main Stage Boda Self Help Group \u2014 Report'],
-    ['Generated', data.now.toLocaleString('en-GB')],
-    [],
-    ['Metric', 'Value'],
-    ['Total Collections (all time)', data.totalAll],
-    ['Total Members', data.users.length],
-    ['Paid this month', data.summary.paid.length],
-    ['Pending this month', data.summary.pending.length],
-    ['Defaulters', data.summary.defaulters.length],
-    [],
-    ['Collection Type', 'Amount'],
-    ['Member Contributions', data.byType.contribution],
-    ['Registration Fees', data.byType.registration],
-    ['Fines', data.byType.fine],
-    ['Other Income', data.byType.other]
-  ]);
-  XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
-
-  const txnRows = data.txns.map(t => ({
-    Date: t.date,
-    Type: t.type,
-    Member: t.type === 'contribution' ? t.memberName : (t.source || ''),
-    Amount: t.amount,
-    Method: t.method,
-    Reference: t.reference || '',
-    Note: t.note || ''
-  }));
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(txnRows), 'Collections');
-
-  const collectorRows = data.topCollectors.map((c, i) => ({
-    Rank: i + 1,
-    Member: c.memberName,
-    'Total Paid': c.total,
-    Payments: c.count
-  }));
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(collectorRows), 'Top Collectors');
-
-  const memberRows = data.users.map(u => ({
-    'Member ID': u.memberId,
-    Name: u.name,
-    Phone: u.phone,
-    Status: u.status || 'active',
-    'Member Since': u.memberSince
-  }));
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(memberRows), 'Members');
-
-  XLSX.writeFile(wb, 'katani-main-stage-report-' + data.now.toISOString().slice(0,10) + '.xlsx');
-  showToast('Excel report downloaded');
-}
-</script>
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js').catch(() => {});
-  });
-}
-</script>
-<div class="install-bar" id="installBar">
-  <div class="install-bar-icon"><img src="icon-192.png" alt=""></div>
-  <div class="install-bar-text">
-    <strong>Install Katani Main Stage</strong>
-    <span id="installBarMsg">Add it to your home screen for one-tap, offline-ready access.</span>
-  </div>
-  <button class="install-bar-btn" id="installBarBtn" onclick="triggerInstall()">Install</button>
-  <button class="install-bar-close" onclick="dismissInstallBar()" aria-label="Dismiss">&times;</button>
-</div>
-<script>
-/* ---------- Install app prompt (PWA) ---------- */
-(function(){
-  const bar = document.getElementById('installBar');
-  const btn = document.getElementById('installBarBtn');
-  const msg = document.getElementById('installBarMsg');
-  let deferredPrompt = null;
-
-  function isStandalone(){
-    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  }
-  function isIos(){
-    return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
-  }
-
-  if(!isStandalone() && !sessionStorage.getItem('kms_install_dismissed')){
-    if(isIos()){
-      msg.textContent = 'Tap Share, then "Add to Home Screen" to install.';
-      btn.style.display = 'none';
-      bar.classList.add('show');
-    } else {
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        bar.classList.add('show');
-      });
-    }
-  }
-
-  window.triggerInstall = function(){
-    if(!deferredPrompt) return;
-    bar.classList.remove('show');
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.finally(() => { deferredPrompt = null; });
-  };
-  window.dismissInstallBar = function(){
-    bar.classList.remove('show');
-    sessionStorage.setItem('kms_install_dismissed', '1');
-  };
-  window.addEventListener('appinstalled', () => {
-    bar.classList.remove('show');
-  });
-})();
+loadData();
+renderSummary();
+renderList();
 </script>
 </body>
 </html>

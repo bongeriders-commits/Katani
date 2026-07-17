@@ -1,4 +1,4 @@
-const CACHE_NAME = 'katani-main-stage-v2';
+const CACHE_NAME = 'katani-main-stage-v3';
 const APP_SHELL = [
   './index.html',
   './register.html',
@@ -8,6 +8,8 @@ const APP_SHELL = [
   './admin-dashboard.html',
   './notifications.html',
   './reports.html',
+  './welfare-contributions.html',
+  './minutes.html',
   './auth.js',
   './desktop.css',
   './manifest.json',

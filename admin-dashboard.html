@@ -216,8 +216,9 @@ header.topbar{
 .settings-field{padding:13px 16px;border-bottom:1px solid var(--border);}
 .settings-field:last-child{border-bottom:none;}
 .settings-field label{display:block;font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;}
-.settings-field input{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:9px 11px;font-size:14px;font-weight:700;color:var(--navy-dark);}
-.settings-field input:focus{outline:none;border-color:var(--navy);}
+.settings-field input,.settings-field textarea{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:9px 11px;font-size:14px;font-weight:700;color:var(--navy-dark);font-family:inherit;}
+.settings-field textarea{resize:vertical;min-height:90px;font-weight:600;line-height:1.4;}
+.settings-field input:focus,.settings-field textarea:focus{outline:none;border-color:var(--navy);}
 .settings-hint{font-size:11px;color:var(--muted);margin-top:5px;}
 .settings-save{
   width:100%;margin-top:14px;background:var(--navy);color:#fff;border:none;border-radius:10px;
@@ -478,7 +479,7 @@ header.topbar{
           <div class="qa-icon navy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
           <p>Welfare Contribution</p>
         </button>
-        <button class="qa-item" onclick="showToast('Opening Send Announcement')">
+        <button class="qa-item" onclick="openSendAnnouncement()">
           <div class="qa-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></div>
           <p>Send Announcement</p>
         </button>
@@ -542,23 +543,15 @@ header.topbar{
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Manage Members
       </button>
-      <button class="menu-item" onclick="closeMenu();openPendingApprovals()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
-        Approve Pending Registrations
-      </button>
       <button class="menu-item" onclick="closeMenu();location.href='collections.html'">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Record Payment / Collections
       </button>
-      <button class="menu-item" onclick="closeMenu();location.href='collections.html?type=contribution'">
+      <button class="menu-item" onclick="closeMenu();location.href='welfare-contributions.html'">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         Welfare Contributions
       </button>
-      <button class="menu-item" onclick="closeMenu();showToast('Opening Loans & Fines...')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
-        Loans &amp; Fines Management
-      </button>
-      <button class="menu-item" onclick="closeMenu();showToast('Opening Send Announcement')">
+      <button class="menu-item" onclick="closeMenu();openSendAnnouncement()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
         Send Announcement
       </button>
@@ -566,7 +559,7 @@ header.topbar{
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         Reports &amp; Exports
       </button>
-      <button class="menu-item" onclick="closeMenu();showToast('Opening Meeting Minutes...')">
+      <button class="menu-item" onclick="closeMenu();location.href='minutes.html'">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Meeting Minutes / Records
       </button>
@@ -670,7 +663,7 @@ header.topbar{
       <div class="settings-field">
         <label>Meeting Absence Fine (KSh)</label>
         <input type="number" id="set-fineAbsence" inputmode="numeric">
-        <p class="settings-hint">Reference amounts for Collections &amp; Loans/Fines Management.</p>
+        <p class="settings-hint">Reference amounts used when recording fines under Collections.</p>
       </div>
     </div>
 
@@ -771,6 +764,31 @@ header.topbar{
   </div>
 </div>
 
+<div class="profile-overlay" id="announcementOverlay" onclick="if(event.target===this) closeSendAnnouncement()">
+  <div class="profile-panel">
+    <div class="profile-panel-head">
+      <h3>Send Announcement</h3>
+      <button class="profile-close" onclick="closeSendAnnouncement()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="profile-detail-card">
+      <div class="settings-field">
+        <label>Title</label>
+        <input type="text" id="ann-title" placeholder="e.g. Meeting this Sunday">
+      </div>
+      <div class="settings-field">
+        <label>Message</label>
+        <textarea id="ann-message" placeholder="Write the announcement for all members..."></textarea>
+        <p class="settings-hint">This will be sent to every member's portal and marked unread until they open it.</p>
+      </div>
+    </div>
+    <button class="settings-save" onclick="submitSendAnnouncement()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+      Send Announcement
+    </button>
+  </div>
+</div>
 
 <script>
 // Auth guard: only administrators may view this dashboard.
@@ -910,6 +928,32 @@ function demoteAdmin(email){
   } else {
     showToast(result.message);
   }
+}
+
+/* -------- Send Announcement: broadcast to all members' portals -------- */
+function openSendAnnouncement(){
+  document.getElementById('ann-title').value = '';
+  document.getElementById('ann-message').value = '';
+  document.getElementById('announcementOverlay').classList.add('open');
+}
+function closeSendAnnouncement(){
+  document.getElementById('announcementOverlay').classList.remove('open');
+}
+function submitSendAnnouncement(){
+  const title = document.getElementById('ann-title').value;
+  const message = document.getElementById('ann-message').value;
+  const result = KatiniAuth.sendAnnouncement({
+    title: title,
+    message: message,
+    sentBy: currentAdmin ? currentAdmin.email : '',
+    sentByName: currentAdmin ? currentAdmin.name : 'Committee'
+  });
+  if(!result.success){
+    showToast(result.message);
+    return;
+  }
+  closeSendAnnouncement();
+  showToast('Announcement sent to all members');
 }
 
 /* -------- 7. Membership Approval: review pending registrations -------- */

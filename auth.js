@@ -230,6 +230,127 @@
     return { success: true, record: record };
   }
 
+  // ---- Meeting Minutes ----
+  var MINUTES_KEY = 'kms_minutes';
+
+  function getMinutes() {
+    var list;
+    try { list = JSON.parse(localStorage.getItem(MINUTES_KEY)) || []; }
+    catch (e) { list = []; }
+    list.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+    return list;
+  }
+  function saveMinutesList(list) { localStorage.setItem(MINUTES_KEY, JSON.stringify(list)); }
+
+  function nextMinutesId() {
+    return 'MIN-' + Date.now().toString(36).toUpperCase().slice(-6) + Math.floor(10 + Math.random() * 89);
+  }
+
+  // data: { meetingDate, title, membersPresent: [{memberId,name}], agenda: [{title,details}], recordedBy }
+  function addMinutes(data) {
+    if (!data.meetingDate) {
+      return { success: false, message: 'Enter the date of the meeting.' };
+    }
+    if (!data.title || !String(data.title).trim()) {
+      return { success: false, message: 'Enter a title for the meeting.' };
+    }
+    var list = getMinutes();
+    var record = {
+      id: nextMinutesId(),
+      meetingDate: data.meetingDate,
+      title: data.title,
+      membersPresent: data.membersPresent || [],
+      agenda: data.agenda || [],
+      recordedBy: data.recordedBy || '',
+      createdAt: Date.now()
+    };
+    list.unshift(record);
+    saveMinutesList(list);
+    return { success: true, record: record };
+  }
+
+  function getMinutesById(id) {
+    return getMinutes().find(function (m) { return m.id === id; }) || null;
+  }
+
+  function deleteMinutes(id) {
+    var list = getMinutes().filter(function (m) { return m.id !== id; });
+    saveMinutesList(list);
+    return { success: true };
+  }
+
+  // ---- Announcements (admin -> members broadcast, with per-member read tracking) ----
+  var ANNOUNCEMENTS_KEY = 'kms_announcements';
+
+  function getAnnouncements() {
+    var list;
+    try { list = JSON.parse(localStorage.getItem(ANNOUNCEMENTS_KEY)) || []; }
+    catch (e) { list = []; }
+    list.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+    return list;
+  }
+  function saveAnnouncements(list) { localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(list)); }
+
+  function nextAnnouncementId() {
+    return 'ANN-' + Date.now().toString(36).toUpperCase().slice(-6) + Math.floor(10 + Math.random() * 89);
+  }
+
+  // Sends (creates) a new announcement. data: { title, message, sentBy (email), sentByName }
+  function sendAnnouncement(data) {
+    var title = String(data.title || '').trim();
+    var message = String(data.message || '').trim();
+    if (!title) return { success: false, message: 'Enter an announcement title.' };
+    if (!message) return { success: false, message: 'Enter the announcement message.' };
+    var list = getAnnouncements();
+    var record = {
+      id: nextAnnouncementId(),
+      title: title,
+      message: message,
+      sentBy: data.sentBy || '',
+      sentByName: data.sentByName || 'Committee',
+      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      createdAt: Date.now(),
+      readBy: []
+    };
+    list.unshift(record);
+    saveAnnouncements(list);
+    return { success: true, announcement: record };
+  }
+
+  // Unread count for a given member/admin email (announcements they have not opened yet).
+  function getUnreadAnnouncementCount(email) {
+    var email_l = String(email || '').trim().toLowerCase();
+    if (!email_l) return 0;
+    return getAnnouncements().filter(function (a) {
+      return (a.readBy || []).indexOf(email_l) === -1;
+    }).length;
+  }
+
+  function markAnnouncementRead(id, email) {
+    var email_l = String(email || '').trim().toLowerCase();
+    if (!email_l) return;
+    var list = getAnnouncements();
+    var a = list.find(function (x) { return x.id === id; });
+    if (a && (a.readBy || []).indexOf(email_l) === -1) {
+      a.readBy = (a.readBy || []).concat([email_l]);
+      saveAnnouncements(list);
+    }
+  }
+
+  function markAllAnnouncementsRead(email) {
+    var email_l = String(email || '').trim().toLowerCase();
+    if (!email_l) return;
+    var list = getAnnouncements();
+    var changed = false;
+    list.forEach(function (a) {
+      if ((a.readBy || []).indexOf(email_l) === -1) {
+        a.readBy = (a.readBy || []).concat([email_l]);
+        changed = true;
+      }
+    });
+    if (changed) saveAnnouncements(list);
+  }
+
   // ---- Shared analytics helpers (payment status, leaderboard, trends) ----
 
   function ymd(d) { return d.toISOString().slice(0, 10); }
@@ -543,6 +664,15 @@
     requireRole: requireRole,
     getCollections: getCollections,
     addCollection: addCollection,
+    getMinutes: getMinutes,
+    addMinutes: addMinutes,
+    getMinutesById: getMinutesById,
+    deleteMinutes: deleteMinutes,
+    getAnnouncements: getAnnouncements,
+    sendAnnouncement: sendAnnouncement,
+    getUnreadAnnouncementCount: getUnreadAnnouncementCount,
+    markAnnouncementRead: markAnnouncementRead,
+    markAllAnnouncementsRead: markAllAnnouncementsRead,
     getPaymentSummary: getPaymentSummary,
     getTopCollectors: getTopCollectors,
     getDailyTotals: getDailyTotals,
