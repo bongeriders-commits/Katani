@@ -60,7 +60,7 @@
       memberId: nextMemberId(),
       memberSince: data.memberSince || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       stage: data.stage || 'Katani Main Stage',
-      status: data.status || 'active',
+      status: data.status || (getSettings().requireApproval ? 'pending' : 'active'),
       dob: data.dob || '',
       gender: data.gender || '',
       nationalId: data.nationalId || '',
@@ -317,6 +317,218 @@
     return { labels: labels, values: values, dates: dates };
   }
 
+  // ---- Group Settings (admin-editable, drives Group Overview + Payment Due + more) ----
+  var SETTINGS_KEY = 'kms_settings';
+  var DEFAULT_SETTINGS = {
+    // Contributions & fines
+    foundingYear: 2015,   // used to compute "Years of Unity"
+    monthlyDue: 500,      // KSh expected per member per month
+    dueDay: 5,             // day-of-month contributions are due
+    fineLate: 100,         // KSh fine for a late contribution
+    fineAbsence: 50,       // KSh fine for missing a meeting
+    // Group identity
+    groupName: 'Katani Main Stage',
+    stageLocation: 'Katani, Machakos County',
+    motto: 'United Riders. Stronger Together.',
+    logo: '',
+    // Contact details
+    officePhone: '0712 345 678',
+    officeEmail: 'admin@katanimainstage.co.ke',
+    meetingPoint: 'Katani Main Stage Office',
+    // Membership
+    requireApproval: false,
+    // Notifications
+    notifyNewRegistration: true,
+    notifyPaymentReceived: true,
+    notifyFineIssued: true
+  };
+
+  function getSettings() {
+    try {
+      var s = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+      return Object.assign({}, DEFAULT_SETTINGS, s || {});
+    } catch (e) { return Object.assign({}, DEFAULT_SETTINGS); }
+  }
+  function saveSettings(data) {
+    var current = getSettings();
+    var num = function (v, fallback) { var n = Number(v); return isNaN(n) ? fallback : n; };
+    var str = function (v, fallback) { return (v === undefined || v === null) ? fallback : String(v); };
+    var bool = function (v, fallback) { return (v === undefined) ? fallback : !!v; };
+    var merged = {
+      foundingYear: num(data.foundingYear, current.foundingYear),
+      monthlyDue: num(data.monthlyDue, current.monthlyDue),
+      dueDay: Math.min(28, Math.max(1, num(data.dueDay, current.dueDay))),
+      fineLate: num(data.fineLate, current.fineLate),
+      fineAbsence: num(data.fineAbsence, current.fineAbsence),
+      groupName: str(data.groupName, current.groupName).trim() || current.groupName,
+      stageLocation: str(data.stageLocation, current.stageLocation),
+      motto: str(data.motto, current.motto),
+      logo: str(data.logo, current.logo),
+      officePhone: str(data.officePhone, current.officePhone),
+      officeEmail: str(data.officeEmail, current.officeEmail),
+      meetingPoint: str(data.meetingPoint, current.meetingPoint),
+      requireApproval: bool(data.requireApproval, current.requireApproval),
+      notifyNewRegistration: bool(data.notifyNewRegistration, current.notifyNewRegistration),
+      notifyPaymentReceived: bool(data.notifyPaymentReceived, current.notifyPaymentReceived),
+      notifyFineIssued: bool(data.notifyFineIssued, current.notifyFineIssued)
+    };
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged));
+    return merged;
+  }
+
+  // ---- Computed: Group Overview stats (Registered Members, Active Riders, Payment Compliance, Years of Unity) ----
+  function getGroupStats(refDate) {
+    var settings = getSettings();
+    var members = getUsers().filter(function (u) { return u.role === 'member'; });
+    var active = members.filter(function (u) { return (u.status || 'active') === 'active'; });
+
+    var summary = getPaymentSummary(refDate);
+    var compliance = summary.total ? Math.round((summary.paid.length / summary.total) * 100) : 0;
+
+    return {
+      totalMembers: members.length,
+      activeRiders: active.length,
+      paymentCompliance: compliance,
+      yearsOfUnity: Math.max(0, new Date().getFullYear() - settings.foundingYear)
+    };
+  }
+
+  // ---- Computed: one member's payment summary (Total Paid, Pending, Total Due, Fines) ----
+  function getMemberPaymentSummary(memberId) {
+    var settings = getSettings();
+    var monthStr = monthOf(ymd(new Date()));
+    var totalPaid = 0, paidThisMonth = 0, fines = 0;
+    getCollections().forEach(function (t) {
+      if (t.memberId !== memberId) return;
+      if (t.type === 'contribution') {
+        totalPaid += t.amount;
+        if (monthOf(t.date) === monthStr) paidThisMonth += t.amount;
+      } else if (t.type === 'fine') {
+        fines += t.amount;
+      }
+    });
+    var totalDue = settings.monthlyDue;
+    var pending = Math.max(0, totalDue - paidThisMonth);
+    return { totalPaid: totalPaid, pending: pending, totalDue: totalDue, fines: fines, paidThisMonth: paidThisMonth };
+  }
+
+  // ---- Computed: next payment due date + status for one member ----
+  function getNextPaymentDue(memberId) {
+    var settings = getSettings();
+    var summary = getMemberPaymentSummary(memberId);
+    var now = new Date();
+    var upToDate = summary.pending <= 0;
+    var dueDate = upToDate
+      ? new Date(now.getFullYear(), now.getMonth() + 1, settings.dueDay)
+      : new Date(now.getFullYear(), now.getMonth(), settings.dueDay);
+    var overdue = !upToDate && now.getDate() > settings.dueDay;
+    return {
+      date: dueDate,
+      label: dueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      upToDate: upToDate,
+      overdue: overdue,
+      amount: summary.pending
+    };
+  }
+
+  // ---- Computed: a member's contributions grouped by day (for the Payment History popup) ----
+  function getMemberPaymentsByDay(memberId) {
+    var byDay = {};
+    getCollections().forEach(function (t) {
+      if (t.type !== 'contribution' || t.memberId !== memberId) return;
+      var d = t.date || 'Unknown date';
+      if (!byDay[d]) byDay[d] = { amount: 0, count: 0 };
+      byDay[d].amount += t.amount;
+      byDay[d].count += 1;
+    });
+    return Object.keys(byDay).sort().reverse().map(function (d) {
+      return { date: d, amount: byDay[d].amount, count: byDay[d].count };
+    });
+  }
+
+  // ---- Admin Access: create admins & change roles (Group Settings items 1 & 2) ----
+  function createAdmin(data) {
+    var users = getUsers();
+    var email = String(data.email || '').trim().toLowerCase();
+    if (!email) return { success: false, message: 'Email is required.' };
+    if (!data.name || !String(data.name).trim()) return { success: false, message: 'Name is required.' };
+    if (users.some(function (u) { return u.email.toLowerCase() === email; })) {
+      return { success: false, message: 'A user with this email already exists.' };
+    }
+    var tempPassword = data.password || Math.random().toString(36).slice(-8);
+    var user = {
+      name: data.name.trim(),
+      email: email,
+      password: tempPassword,
+      role: 'admin',
+      phone: data.phone || '',
+      altPhone: '',
+      memberId: nextMemberId(),
+      memberSince: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      stage: getSettings().groupName,
+      status: 'active',
+      dob: '', gender: '', nationalId: '', residence: '', photo: '',
+      motorcycle: { plate: '', model: '', color: '', chassis: '' },
+      nextOfKin: { name: '', relationship: '', phone: '' }
+    };
+    users.push(user);
+    saveUsers(users);
+    return { success: true, user: user, tempPassword: tempPassword };
+  }
+
+  function setUserRole(email, role) {
+    var users = getUsers();
+    var email_l = String(email).trim().toLowerCase();
+    var user = users.find(function (u) { return u.email.toLowerCase() === email_l; });
+    if (!user) return { success: false, message: 'User not found.' };
+    user.role = (role === 'admin') ? 'admin' : 'member';
+    saveUsers(users);
+    return { success: true, user: user };
+  }
+
+  function getAdmins() {
+    return getUsers().filter(function (u) { return u.role === 'admin'; });
+  }
+
+  // ---- Pending Registrations: approve/reject when Membership Approval Mode is on ----
+  function getPendingMembers() {
+    return getUsers().filter(function (u) { return u.role === 'member' && u.status === 'pending'; });
+  }
+  function approveMember(memberId) {
+    var users = getUsers();
+    var user = users.find(function (u) { return u.memberId === memberId; });
+    if (!user) return { success: false, message: 'Member not found.' };
+    user.status = 'active';
+    saveUsers(users);
+    return { success: true, user: user };
+  }
+  function rejectMember(memberId) {
+    var users = getUsers();
+    var idx = users.findIndex(function (u) { return u.memberId === memberId; });
+    if (idx === -1) return { success: false, message: 'Member not found.' };
+    var removed = users.splice(idx, 1)[0];
+    saveUsers(users);
+    return { success: true, user: removed };
+  }
+
+  // ---- Backup / Export & Reset (Group Settings items 8 & 9) ----
+  function exportAllData() {
+    return {
+      exportedAt: new Date().toISOString(),
+      settings: getSettings(),
+      users: getUsers().map(function (u) { var c = Object.assign({}, u); delete c.password; return c; }),
+      collections: getCollections()
+    };
+  }
+  function resetAllData() {
+    localStorage.removeItem(USERS_KEY);
+    localStorage.removeItem(COLLECTIONS_KEY);
+    localStorage.removeItem(SETTINGS_KEY);
+    localStorage.removeItem(SESSION_KEY);
+    seed();
+    return { success: true };
+  }
+
   window.KatiniAuth = {
     seed: seed,
     getUsers: getUsers,
@@ -333,6 +545,20 @@
     addCollection: addCollection,
     getPaymentSummary: getPaymentSummary,
     getTopCollectors: getTopCollectors,
-    getDailyTotals: getDailyTotals
+    getDailyTotals: getDailyTotals,
+    getSettings: getSettings,
+    saveSettings: saveSettings,
+    getGroupStats: getGroupStats,
+    getMemberPaymentSummary: getMemberPaymentSummary,
+    getNextPaymentDue: getNextPaymentDue,
+    getMemberPaymentsByDay: getMemberPaymentsByDay,
+    createAdmin: createAdmin,
+    setUserRole: setUserRole,
+    getAdmins: getAdmins,
+    getPendingMembers: getPendingMembers,
+    approveMember: approveMember,
+    rejectMember: rejectMember,
+    exportAllData: exportAllData,
+    resetAllData: resetAllData
   };
 })(window);

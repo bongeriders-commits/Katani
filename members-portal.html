@@ -117,6 +117,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 .balance-left .bl-label{color:var(--text-light);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
 .balance-left .bl-amount{color:#7fd996;font-size:28px;font-weight:800;margin-top:4px;}
 .balance-status{display:flex;align-items:center;gap:6px;margin-top:10px;color:#7fd996;font-size:12px;font-weight:700;}
+.balance-status.overdue{color:#f28b82;}
 .balance-status svg{width:15px;height:15px;flex-shrink:0;}
 .balance-divider{width:1px;background:rgba(255,255,255,0.12);}
 .balance-right{flex:1.3;}
@@ -139,7 +140,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 .this-month svg{width:14px;height:14px;}
 
 /* Quick actions */
-.qa-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
 .qa-item{
   background:#fff;border-radius:14px;padding:14px 4px;text-align:center;box-shadow:0 3px 12px rgba(13,33,64,0.06);
   cursor:pointer;border:none;
@@ -268,6 +269,18 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 .myp-row .pk{font-size:12px;color:var(--muted);font-weight:600;}
 .myp-row .pv{font-size:12.5px;color:var(--navy-dark);font-weight:700;text-align:right;}
 
+/* ---------- Payment History popup ---------- */
+.ph-summary{display:flex;justify-content:space-between;background:var(--navy);border-radius:14px;padding:16px;margin-bottom:14px;}
+.ph-summary div{text-align:center;flex:1;}
+.ph-summary .ph-s-label{color:var(--text-light);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
+.ph-summary .ph-s-val{color:#fff;font-size:15px;font-weight:800;margin-top:4px;}
+.ph-day-card{background:#fff;border-radius:14px;box-shadow:0 3px 12px rgba(13,33,64,0.06);overflow:hidden;}
+.ph-day-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);}
+.ph-day-row:last-child{border-bottom:none;}
+.ph-day-row .ph-date{font-size:13.5px;font-weight:700;color:var(--navy-dark);}
+.ph-day-row .ph-count{font-size:11px;color:var(--muted);margin-top:1px;}
+.ph-day-row .ph-amt{font-size:14.5px;font-weight:800;color:var(--green);}
+
 /* ---------- Contact section ---------- */
 .contact-card{background:#fff;border-radius:14px;box-shadow:0 3px 12px rgba(13,33,64,0.06);overflow:hidden;}
 .contact-row{display:flex;align-items:center;gap:14px;padding:16px;border-bottom:1px solid var(--border);text-decoration:none;}
@@ -358,7 +371,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5.5 3.8 10.7 8 12 4.2-1.3 8-6.5 8-12V5l-8-3z"/></svg>
         Active Member
       </div>
-      <p class="hero-quote">"United Riders. Stronger Together."</p>
+      <p class="hero-quote" id="groupMotto">"United Riders. Stronger Together."</p>
     </div>
 
     <div class="hero-rider">
@@ -403,9 +416,9 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
     <div class="balance-left">
       <div class="bl-label">Current Balance</div>
       <div class="bl-amount" id="bl-amount">KSh 0</div>
-      <div class="balance-status">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg>
-        You are all up to date
+      <div class="balance-status" id="balanceStatus">
+        <svg id="balanceStatusIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg>
+        <span id="balanceStatusText">You are all up to date</span>
       </div>
     </div>
     <div class="balance-divider"></div>
@@ -414,9 +427,9 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-5Z"/><path d="M16 12h4"/></svg>
         Next Payment Due
       </div>
-      <div class="br-date">&mdash;</div>
-      <button class="plan-btn" onclick="showToast('Opening payment plan...')">
-        View Payment Plan
+      <div class="br-date" id="br-date">&mdash;</div>
+      <button class="plan-btn" onclick="openPaymentHistory()">
+        View Payment History
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
     </div>
@@ -429,22 +442,22 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
     <div class="group-stats-card">
       <div class="gs-item icon-green">
         <div class="gs-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <div class="gs-num">0</div>
+        <div class="gs-num" id="gs-totalMembers">0</div>
         <div class="gs-label">Registered<br>Members</div>
       </div>
       <div class="gs-item icon-gold">
         <div class="gs-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1l-1 6h5"/><path d="M12 12h5l2 5.5"/><path d="M5.5 17.5 9 8h4"/></svg></div>
-        <div class="gs-num">0</div>
+        <div class="gs-num" id="gs-activeRiders">0</div>
         <div class="gs-label">Active<br>Riders</div>
       </div>
       <div class="gs-item icon-green">
         <div class="gs-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></div>
-        <div class="gs-num">&mdash;</div>
+        <div class="gs-num" id="gs-compliance">&mdash;</div>
         <div class="gs-label">Payment<br>Compliance</div>
       </div>
       <div class="gs-item icon-gold">
         <div class="gs-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div>
-        <div class="gs-num">0</div>
+        <div class="gs-num" id="gs-yearsOfUnity">0</div>
         <div class="gs-label">Years of<br>Unity</div>
       </div>
     </div>
@@ -458,17 +471,13 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
       </button>
     </div>
     <div class="qa-grid">
-      <button class="qa-item" onclick="showToast('Opening Payment History')">
+      <button class="qa-item" onclick="openPaymentHistory()">
         <div class="qa-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><line x1="9" y1="9" x2="10" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg></div>
         <p>Payment History</p>
       </button>
       <button class="qa-item" onclick="showToast('Downloading receipts...')">
         <div class="qa-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
         <p>Download Receipts</p>
-      </button>
-      <button class="qa-item" onclick="showToast('Opening My Profile')">
-        <div class="qa-icon navy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h4M15 12h4M7 16h10"/></svg></div>
-        <p>My Profile</p>
       </button>
       <button class="qa-item" onclick="showToast('Opening Announcements')">
         <div class="qa-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></div>
@@ -492,22 +501,22 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
       <div class="ps-item">
         <div class="ps-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8c0-2.5-2-4-5-4s-5 1.5-5 4 2 3 5 4 5 1.5 5 4-2 4-5 4-5-1.5-5-4"/><line x1="12" y1="2" x2="12" y2="22"/></svg></div>
         <div class="ps-label">Total Paid</div>
-        <div class="ps-val">KSh 0</div>
+        <div class="ps-val" id="ps-totalPaid">KSh 0</div>
       </div>
       <div class="ps-item">
         <div class="ps-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
         <div class="ps-label">Pending</div>
-        <div class="ps-val">KSh 0</div>
+        <div class="ps-val" id="ps-pending">KSh 0</div>
       </div>
       <div class="ps-item">
         <div class="ps-icon navy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
         <div class="ps-label">Total Due</div>
-        <div class="ps-val">KSh 0</div>
+        <div class="ps-val" id="ps-totalDue">KSh 0</div>
       </div>
       <div class="ps-item">
         <div class="ps-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8c0-2.5-2-4-5-4s-5 1.5-5 4 2 3 5 4 5 1.5 5 4-2 4-5 4-5-1.5-5-4"/><line x1="12" y1="2" x2="12" y2="22"/></svg></div>
         <div class="ps-label">Fines</div>
-        <div class="ps-val">KSh 0</div>
+        <div class="ps-val" id="ps-fines">KSh 0</div>
       </div>
     </div>
   </div>
@@ -547,17 +556,17 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
       <h3>Contact Us</h3>
     </div>
     <div class="contact-card">
-      <a class="contact-row" href="tel:0712345678">
+      <a class="contact-row" id="contactPhoneRow" href="tel:0712345678">
         <div class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
-        <div><h5>Call the Office</h5><p>0712 345 678</p></div>
+        <div><h5>Call the Office</h5><p id="contactPhoneText">0712 345 678</p></div>
       </a>
-      <a class="contact-row" href="mailto:info@katanimainstage.co.ke">
+      <a class="contact-row" id="contactEmailRow" href="mailto:info@katanimainstage.co.ke">
         <div class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg></div>
-        <div><h5>Email Support</h5><p>info@katanimainstage.co.ke</p></div>
+        <div><h5>Email Support</h5><p id="contactEmailText">info@katanimainstage.co.ke</p></div>
       </a>
       <div class="contact-row">
         <div class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>
-        <div><h5>Our Location</h5><p>Katani Main Stage, Machakos County</p></div>
+        <div><h5>Our Location</h5><p id="contactMeetingPoint">Katani Main Stage, Machakos County</p></div>
       </div>
     </div>
   </div>
@@ -602,7 +611,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         My Profile
       </button>
-      <button class="menu-item" onclick="closeMenu();showToast('Opening Payment History')">
+      <button class="menu-item" onclick="closeMenu();openPaymentHistory()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         Payment History
       </button>
@@ -686,6 +695,30 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
   </div>
 </div>
 
+<div class="myp-overlay" id="paymentHistoryOverlay" onclick="if(event.target===this) closePaymentHistory()">
+  <div class="myp-panel">
+    <div class="myp-head">
+      <h3>Payment History</h3>
+      <button class="myp-close" onclick="closePaymentHistory()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="ph-summary">
+      <div>
+        <div class="ph-s-label">Total Paid</div>
+        <div class="ph-s-val" id="ph-total">KSh 0</div>
+      </div>
+      <div>
+        <div class="ph-s-label">Days Paid</div>
+        <div class="ph-s-val" id="ph-days">0</div>
+      </div>
+    </div>
+    <div class="ph-day-card" id="phDayList">
+      <div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No payments yet.</div>
+    </div>
+  </div>
+</div>
+
 <script>
 // Auth guard: only logged-in members (or admins previewing) may view this page.
 const currentUser = KatiniAuth.requireRole(['admin','member']);
@@ -752,6 +785,77 @@ if(currentUser){
       </div>
     `).join('');
   }
+}
+
+/* -------- Group Overview (admin-set founding year + real member/collection data) -------- */
+if(currentUser){
+  const groupSettings = KatiniAuth.getSettings();
+  document.getElementById('groupMotto').textContent = '"' + groupSettings.motto + '"';
+
+  const phoneDigits = (groupSettings.officePhone || '').replace(/\s+/g, '');
+  document.getElementById('contactPhoneRow').href = 'tel:' + phoneDigits;
+  document.getElementById('contactPhoneText').textContent = groupSettings.officePhone;
+  document.getElementById('contactEmailRow').href = 'mailto:' + groupSettings.officeEmail;
+  document.getElementById('contactEmailText').textContent = groupSettings.officeEmail;
+  document.getElementById('contactMeetingPoint').textContent = groupSettings.meetingPoint;
+
+  const gs = KatiniAuth.getGroupStats();
+  document.getElementById('gs-totalMembers').textContent = gs.totalMembers;
+  document.getElementById('gs-activeRiders').textContent = gs.activeRiders;
+  document.getElementById('gs-compliance').textContent = gs.paymentCompliance + '%';
+  document.getElementById('gs-yearsOfUnity').textContent = gs.yearsOfUnity;
+}
+
+/* -------- Payment Summary + Next Payment Due (this member's real contributions) -------- */
+if(currentUser){
+  const ps = KatiniAuth.getMemberPaymentSummary(memberData.memberId);
+  document.getElementById('ps-totalPaid').textContent = formatKsh(ps.totalPaid);
+  document.getElementById('ps-pending').textContent = formatKsh(ps.pending);
+  document.getElementById('ps-totalDue').textContent = formatKsh(ps.totalDue);
+  document.getElementById('ps-fines').textContent = formatKsh(ps.fines);
+
+  const due = KatiniAuth.getNextPaymentDue(memberData.memberId);
+  document.getElementById('br-date').textContent = due.label;
+
+  const statusEl = document.getElementById('balanceStatus');
+  const statusText = document.getElementById('balanceStatusText');
+  const statusIcon = document.getElementById('balanceStatusIcon');
+  if(due.overdue){
+    statusEl.classList.add('overdue');
+    statusText.textContent = 'Overdue \u2014 ' + formatKsh(due.amount) + ' pending';
+    statusIcon.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+  } else if(due.upToDate){
+    statusText.textContent = 'You are all up to date';
+  } else {
+    statusText.textContent = formatKsh(due.amount) + ' due by ' + due.label;
+  }
+}
+
+/* -------- Payment History popup (amount paid by day) -------- */
+function openPaymentHistory(){
+  const byDay = KatiniAuth.getMemberPaymentsByDay(memberData.memberId);
+  const total = byDay.reduce((sum, d) => sum + d.amount, 0);
+  document.getElementById('ph-total').textContent = formatKsh(total);
+  document.getElementById('ph-days').textContent = byDay.length;
+
+  const listEl = document.getElementById('phDayList');
+  if(byDay.length === 0){
+    listEl.innerHTML = '<div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No payments yet.</div>';
+  } else {
+    listEl.innerHTML = byDay.map(d => `
+      <div class="ph-day-row">
+        <div>
+          <div class="ph-date">${d.date}</div>
+          <div class="ph-count">${d.count} payment${d.count > 1 ? 's' : ''}</div>
+        </div>
+        <div class="ph-amt">${formatKsh(d.amount)}</div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('paymentHistoryOverlay').classList.add('open');
+}
+function closePaymentHistory(){
+  document.getElementById('paymentHistoryOverlay').classList.remove('open');
 }
 
 function scrollToSection(id){
