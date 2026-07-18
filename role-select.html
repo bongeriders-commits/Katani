@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Choose Role - Katani Main Stage</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d2140">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Katani Stage">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="auth.js"></script>
+<style>
+:root{
+  --navy:#0d2140; --navy-dark:#0a1830; --gold:#f5a623; --muted:#6b7685; --border:#e3e7ee; --gray-bg:#f4f6f9;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:'Segoe UI',Roboto,-apple-system,BlinkMacSystemFont,sans-serif;}
+html,body{height:100%;}
+body{background:#1a1a1a;overflow-x:hidden;}
+#app{
+  max-width:480px;margin:0 auto;min-height:100vh;background:var(--gray-bg);
+  box-shadow:0 0 40px rgba(0,0,0,0.4);display:flex;flex-direction:column;
+}
+.rs-header{
+  background:linear-gradient(180deg, rgba(13,33,64,0.9) 0%, rgba(13,33,64,0.97) 100%), url('hero-bg.jpg');
+  background-size:cover;background-position:center;padding:40px 22px 32px;text-align:center;
+}
+.rs-header h1{color:#fff;font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:0.3px;}
+.rs-header h1 .accent{color:var(--gold);}
+.rs-header p{color:#c9d3e0;font-size:12.5px;margin-top:8px;}
+.rs-body{flex:1;padding:26px 20px 40px;}
+.rs-name{font-size:13px;color:var(--muted);text-align:center;margin-bottom:22px;}
+.rs-name strong{color:var(--navy-dark);}
+.rs-option{
+  display:flex;align-items:center;gap:14px;width:100%;background:#fff;border:1.5px solid var(--border);
+  border-radius:14px;padding:16px;margin-bottom:14px;cursor:pointer;text-align:left;
+  box-shadow:0 4px 14px rgba(13,33,64,0.06);
+}
+.rs-option:active{transform:scale(0.98);}
+.rs-icon{
+  width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  background:rgba(13,33,64,0.08);color:var(--navy);flex-shrink:0;
+}
+.rs-icon svg{width:22px;height:22px;}
+.rs-option.profile .rs-icon{background:rgba(245,166,35,0.15);color:#b9760f;}
+.rs-text h3{font-size:14.5px;font-weight:800;color:var(--navy-dark);}
+.rs-text p{font-size:12px;color:var(--muted);margin-top:2px;}
+.rs-logout{
+  display:block;width:100%;text-align:center;background:none;border:none;color:var(--muted);
+  font-size:12.5px;font-weight:700;margin-top:18px;padding:10px;cursor:pointer;text-decoration:underline;
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="rs-header">
+    <h1>KATANI <span class="accent">MAIN STAGE</span></h1>
+    <p>You have committee access. Choose how you'd like to continue.</p>
+  </div>
+  <div class="rs-body">
+    <div class="rs-name">Signed in as <strong id="rsEmail">—</strong></div>
+    <div id="rsOptions"></div>
+    <button class="rs-logout" onclick="doLogout()">Log out instead</button>
+  </div>
+</div>
+
+<script>
+const ICONS = {
+  secretary: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+  treasurer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',
+  profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+};
+
+function optionHtml(key, title, sub, extraClass){
+  return `<button class="rs-option ${extraClass||''}" onclick="choose('${key}')">
+    <div class="rs-icon">${ICONS[extraClass === 'profile' ? 'profile' : key]}</div>
+    <div class="rs-text"><h3>${title}</h3><p>${sub}</p></div>
+  </button>`;
+}
+
+function choose(key){
+  if(key === 'profile'){ window.location.href = 'members-portal.html'; return; }
+  KatiniAuth.goToCommitteeDashboard(key);
+}
+
+async function doLogout(){
+  await KatiniAuth.logout();
+  window.location.href = 'index.html';
+}
+
+(async function(){
+  await KatiniAuth.ready;
+  const user = await KatiniAuth.requireRole(['member']);
+  if(!user) return;
+
+  const committeeRole = user.committeeRole || '';
+  if(committeeRole !== 'secretary' && committeeRole !== 'treasurer'){
+    // Nothing to choose — this account isn't a Secretary or Treasurer.
+    window.location.href = 'members-portal.html';
+    return;
+  }
+
+  document.getElementById('rsEmail').textContent = user.email;
+  let html = '';
+  if(committeeRole === 'secretary'){
+    html += optionHtml('secretary', 'Continue as Secretary', 'Members directory, announcements & minutes');
+  }
+  if(committeeRole === 'treasurer'){
+    html += optionHtml('treasurer', 'Continue as Treasurer', 'Record payments & welfare contributions');
+  }
+  html += optionHtml('profile', 'View My Profile', 'Open the regular Members Space', 'profile');
+  document.getElementById('rsOptions').innerHTML = html;
+})();
+</script>
+</body>
+</html>

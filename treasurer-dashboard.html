@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Treasurer Dashboard - Katani Main Stage</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d2140">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Katani Stage">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="auth.js"></script>
+<link rel="stylesheet" href="desktop.css">
+<style>
+:root{
+  --navy:#0d2140; --navy-dark:#0a1830; --gold:#f5a623; --muted:#6b7685; --border:#e3e7ee; --gray-bg:#f4f6f9;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:'Segoe UI',Roboto,-apple-system,BlinkMacSystemFont,sans-serif;}
+html,body{height:100%;}
+body{background:#1a1a1a;overflow-x:hidden;}
+#app{max-width:480px;margin:0 auto;background:var(--gray-bg);min-height:100vh;position:relative;box-shadow:0 0 40px rgba(0,0,0,0.4);padding-bottom:30px;}
+header.topbar{
+  background:linear-gradient(180deg, rgba(13,33,64,0.65) 0%, rgba(13,33,64,0.8) 70%, rgba(13,33,64,0.94) 100%), url('hero-bg.jpg');
+  background-size:cover;background-position:center;padding:16px 18px 44px;position:relative;
+}
+.hdr-row{display:flex;align-items:flex-start;gap:14px;}
+.icon-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.08);border:none;border-radius:10px;color:#fff;cursor:pointer;flex-shrink:0;}
+.icon-btn svg{width:20px;height:20px;}
+.logo-wrap{width:74px;height:74px;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,0.35);flex-shrink:0;background:#fff;}
+.logo-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.hdr-text{flex:1;min-width:0;}
+.hdr-text h1{color:#fff;font-size:17.5px;font-weight:800;line-height:1.3;text-transform:uppercase;}
+.hdr-text h1 .accent{color:var(--gold);}
+.hdr-text .admin-tag{color:var(--gold);font-size:12.5px;font-weight:700;margin-top:3px;}
+.main-card{background:#fff;border-radius:22px 22px 0 0;margin-top:-28px;position:relative;z-index:2;padding:22px 18px 4px;}
+.page-head-left h2{font-size:21px;font-weight:800;color:var(--navy-dark);}
+.page-head-left p{font-size:12.5px;color:var(--muted);margin-top:3px;margin-bottom:20px;}
+.menu-list{display:flex;flex-direction:column;gap:10px;}
+.menu-item{
+  display:flex;align-items:center;gap:14px;width:100%;background:#fff;border:1.5px solid var(--border);
+  border-radius:14px;padding:15px 16px;cursor:pointer;text-align:left;font-size:13.5px;font-weight:700;color:var(--navy-dark);
+  box-shadow:0 4px 14px rgba(13,33,64,0.05);
+}
+.menu-item:active{transform:scale(0.98);}
+.menu-item svg{width:19px;height:19px;color:var(--navy);flex-shrink:0;}
+.menu-item .mi-sub{display:block;font-size:11.5px;font-weight:500;color:var(--muted);margin-top:2px;}
+.profile-strip{display:flex;align-items:center;gap:12px;margin-bottom:20px;background:#f4f6f9;border-radius:14px;padding:14px 16px;}
+.profile-strip .pav{width:42px;height:42px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;}
+.profile-strip h4{font-size:13.5px;font-weight:800;color:var(--navy-dark);}
+.profile-strip p{font-size:11.5px;color:var(--muted);}
+.strip-actions{margin-left:auto;display:flex;gap:8px;}
+.strip-actions button{background:none;border:none;font-size:11px;font-weight:700;color:var(--navy);cursor:pointer;text-decoration:underline;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="hdr-row">
+      <div class="logo-wrap"><img src="icon-192.png" alt="Katani Main Stage"></div>
+      <div class="hdr-text">
+        <h1>KATANI <span class="accent">MAIN STAGE</span></h1>
+        <div class="admin-tag">Treasurer Dashboard</div>
+      </div>
+      <button class="icon-btn" onclick="handleLogout()" aria-label="Log out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="main-card">
+    <div class="page-head-left">
+      <h2>Welcome, Treasurer</h2>
+      <p>Record payments and welfare contributions.</p>
+    </div>
+
+    <div class="profile-strip">
+      <div class="pav" id="treInitials">T</div>
+      <div>
+        <h4 id="treName">—</h4>
+        <p id="treEmail">—</p>
+      </div>
+      <div class="strip-actions">
+        <button onclick="window.location.href='role-select.html'">Switch role</button>
+      </div>
+    </div>
+
+    <div class="menu-list">
+      <button class="menu-item" onclick="location.href='collections.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <span>Record Payment<span class="mi-sub">Collections &amp; other payments</span></span>
+      </button>
+      <button class="menu-item" onclick="location.href='welfare-contributions.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span>Welfare Contributions<span class="mi-sub">Update member contributions</span></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function initials(name){
+  return (name || '').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() || 'T';
+}
+
+async function handleLogout(){
+  await KatiniAuth.logout();
+  window.location.href = 'index.html';
+}
+
+(async function(){
+  await KatiniAuth.ready;
+  const user = await KatiniAuth.requireRole(['admin','treasurer']);
+  if(!user) return;
+  document.getElementById('treName').textContent = user.name;
+  document.getElementById('treEmail').textContent = user.email;
+  document.getElementById('treInitials').textContent = initials(user.name);
+  if(user.role === 'admin'){
+    document.querySelector('.strip-actions').style.display = 'none';
+  }
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

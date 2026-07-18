@@ -31,6 +31,16 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && myProfile().role == 'admin';
     }
+    // Secretary/Treasurer are ordinary members (role == 'member') with an extra
+    // committeeRole flag — see auth.js createAdmin()/setCommitteeRole(). Using
+    // .get() with a default means older member docs without the field simply
+    // evaluate to '' (no committee access) instead of the rule erroring out.
+    function isSecretary() {
+      return isSignedIn() && myProfile().role == 'member' && myProfile().get('committeeRole', '') == 'secretary';
+    }
+    function isTreasurer() {
+      return isSignedIn() && myProfile().role == 'member' && myProfile().get('committeeRole', '') == 'treasurer';
+    }
     function isActive() {
       return isSignedIn() && myProfile().status == 'active';
     }
@@ -60,19 +70,35 @@ service cloud.firestore {
             && request.resource.data.role == 'member'
             && request.resource.data.status in ['active', 'pending'])
         // Case 2: an existing admin creating a profile doc for someone
-        // they just registered via the Admin Dashboard (member OR admin).
-        || isAdmin();
+        // they just registered via the Admin Dashboard (member, Secretary,
+        // Treasurer, or another admin).
+        || isAdmin()
+        // Case 3: the Secretary adding a new member via Members Directory.
+        // Restricted to plain members — the Secretary can never grant admin
+        // or a committeeRole (that privilege escalation stays admin-only).
+        || (isSecretary()
+            && request.resource.data.role == 'member'
+            && request.resource.data.get('committeeRole', '') == '');
 
       allow update:
         // Admin can edit anything (approve/reject, promote/demote, edit
-        // member details).
+        // member details, assign/revoke Secretary or Treasurer).
         if isAdmin()
         // A member may edit their own non-privileged fields, but can
-        // never touch their own role, status, or email from the client.
+        // never touch their own role, committeeRole, status, or email
+        // from the client.
         || (isSelf(uid) && onlyChanges([
               'name','phone','altPhone','photo','dob','gender',
               'nationalId','residence','motorcycle','nextOfKin',
               'mustChangePassword'
+            ]))
+        // The Secretary can edit any member's directory profile fields
+        // (Members Directory "Edit" action — same field set editMember()
+        // writes) but can't touch role/committeeRole/email/mustChangePassword.
+        || (isSecretary() && onlyChanges([
+              'name','phone','status','dob','gender',
+              'nationalId','residence','saccoNumber','motorcycle',
+              'nextOfKin','photo'
             ]));
 
       allow delete: if isAdmin();
@@ -80,23 +106,25 @@ service cloud.firestore {
 
     // ---- collections (payments / fees / fines) ------------------------
     match /collections/{id} {
-      // A member may only read their own payment records; admin reads all.
-      allow read: if isAdmin() || (isActive() && resource.data.memberUid == request.auth.uid);
-      // Only admins record/edit/delete collections (matches the app's
-      // Record Payment flow, which is an admin-only screen).
-      allow create, update, delete: if isAdmin();
+      // A member may only read their own payment records; admin/Treasurer read all.
+      allow read: if isAdmin() || isTreasurer() || (isActive() && resource.data.memberUid == request.auth.uid);
+      // Admins and the Treasurer record/edit/delete collections (matches the
+      // app's Record Payment / Welfare Contributions screens — the Treasurer's
+      // only two features).
+      allow create, update, delete: if isAdmin() || isTreasurer();
     }
 
     // ---- meeting minutes -----------------------------------------------
     match /minutes/{id} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAdmin() || isSecretary();
     }
 
     // ---- announcements ---------------------------------------------------
     match /announcements/{id} {
       allow read: if isSignedIn();
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || (isSignedIn() && onlyChanges(['readBy']));
+      allow create: if isAdmin() || isSecretary();
+      allow delete: if isAdmin();
+      allow update: if isAdmin() || isSecretary() || (isSignedIn() && onlyChanges(['readBy']));
     }
 
     // ---- group settings --------------------------------------------------

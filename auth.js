@@ -130,7 +130,7 @@
 
   function getSession() {
     if (!cachedUser) return null;
-    return { email: cachedUser.email, role: cachedUser.role, uid: cachedUser.uid };
+    return { email: cachedUser.email, role: cachedUser.role, uid: cachedUser.uid, committeeRole: cachedUser.committeeRole || '' };
   }
 
   function getCurrentUser() {
@@ -146,7 +146,35 @@
     await readyPromise;
     var s = getSession();
     if (!s) { window.location.href = 'index.html'; return; }
-    window.location.href = s.role === 'admin' ? 'admin-dashboard.html' : 'members-portal.html';
+    if (s.role === 'admin') { window.location.href = 'admin-dashboard.html'; return; }
+    var user = getCurrentUser();
+    if (user && (user.committeeRole === 'secretary' || user.committeeRole === 'treasurer')) {
+      window.location.href = 'role-select.html';
+      return;
+    }
+    window.location.href = 'members-portal.html';
+  }
+
+  // Sends the signed-in Secretary/Treasurer straight to their dashboard,
+  // bypassing the role-select chooser — used by "Switch Role" links and by
+  // role-select.html itself once the person taps a choice.
+  function goToCommitteeDashboard(role) {
+    if (role === 'secretary') { window.location.href = 'secretary-dashboard.html'; return; }
+    if (role === 'treasurer') { window.location.href = 'treasurer-dashboard.html'; return; }
+    window.location.href = 'members-portal.html';
+  }
+
+  // Used by the bottom-nav "Dashboard" button on shared pages (Members
+  // Directory, Minutes, Collections, Welfare Contributions) that Secretary/
+  // Treasurer can now also reach — sends each signed-in user back to the
+  // right home screen for their role instead of always assuming admin.
+  function goDashboard() {
+    var user = getCurrentUser();
+    if (!user) { window.location.href = 'index.html'; return; }
+    if (user.role === 'admin') { window.location.href = 'admin-dashboard.html'; return; }
+    if (user.committeeRole === 'secretary') { window.location.href = 'secretary-dashboard.html'; return; }
+    if (user.committeeRole === 'treasurer') { window.location.href = 'treasurer-dashboard.html'; return; }
+    window.location.href = 'members-portal.html';
   }
 
   // ---- Fingerprint / Face ID device unlock ---------------------------------
@@ -267,7 +295,16 @@
       user = snap.exists ? docToUser(snap) : null;
     } catch (e) { user = null; }
     cachedUser = user;
-    if (!user || roles.indexOf(user.role) === -1) {
+    if (!user) {
+      window.location.href = 'index.html';
+      return null;
+    }
+    var effectiveRoles = [user.role];
+    if (user.role === 'member' && (user.committeeRole === 'secretary' || user.committeeRole === 'treasurer')) {
+      effectiveRoles.push(user.committeeRole);
+    }
+    var allowed = roles.some(function (r) { return effectiveRoles.indexOf(r) !== -1; });
+    if (!allowed) {
       window.location.href = 'index.html';
       return null;
     }
@@ -369,6 +406,7 @@
         name: data.name || 'New Member',
         email: email,
         role: 'member',
+        committeeRole: '',
         phone: data.phone || '',
         altPhone: data.altPhone || '',
         memberId: nextMemberId(),
@@ -427,6 +465,7 @@
         name: data.name || 'New Member',
         email: email,
         role: 'member',
+        committeeRole: '',
         phone: data.phone || '',
         altPhone: data.altPhone || '',
         memberId: nextMemberId(),
@@ -1108,10 +1147,16 @@
   }
 
   // ---- Admin Access: create admins & change roles (Group Settings items 1 & 2) ----
+  // accountType: 'admin' (default) | 'secretary' | 'treasurer'. Secretary/Treasurer
+  // accounts stay ordinary members (role 'member') so they keep showing up in the
+  // Members Directory and can log in and view their own profile like any other
+  // member — committeeRole is what grants their extra Secretary/Treasurer screens
+  // (see requireRole above and role-select.html).
   async function createAdmin(data) {
     var email = String(data.email || '').trim().toLowerCase();
     if (!email) return { success: false, message: 'Email is required.' };
     if (!data.name || !String(data.name).trim()) return { success: false, message: 'Name is required.' };
+    var accountType = ['secretary', 'treasurer'].indexOf(data.accountType) !== -1 ? data.accountType : 'admin';
     var tempPassword = data.password || Math.random().toString(36).slice(-8);
     try {
       var cred = await secondaryAuth.createUserWithEmailAndPassword(email, tempPassword);
@@ -1120,7 +1165,8 @@
       var user = {
         name: data.name.trim(),
         email: email,
-        role: 'admin',
+        role: accountType === 'admin' ? 'admin' : 'member',
+        committeeRole: accountType === 'admin' ? '' : accountType,
         phone: data.phone || '',
         altPhone: '',
         memberId: nextMemberId(),
@@ -1152,6 +1198,30 @@
     } catch (e) {
       return { success: false, message: firebaseErrorMessage(e) };
     }
+  }
+
+  // Promotes/demotes an existing member to Secretary or Treasurer, or clears
+  // it (pass '' to revoke). Does not touch their base role — they remain 'member'.
+  async function setCommitteeRole(uid, committeeRole) {
+    var value = ['secretary', 'treasurer'].indexOf(committeeRole) !== -1 ? committeeRole : '';
+    try {
+      var ref = usersCol.doc(uid);
+      var snap = await ref.get();
+      if (!snap.exists) return { success: false, message: 'Member not found.' };
+      await ref.update({ committeeRole: value });
+      return { success: true, user: Object.assign({ uid: uid }, snap.data(), { committeeRole: value }) };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
+  }
+
+  async function getCommitteeMembers() {
+    try {
+      var users = await getUsers();
+      return users.filter(function (u) {
+        return u.role === 'member' && (u.committeeRole === 'secretary' || u.committeeRole === 'treasurer');
+      });
+    } catch (e) { return []; }
   }
 
   async function getAdmins() {
@@ -1259,6 +1329,8 @@
     getSession: getSession,
     getCurrentUser: getCurrentUser,
     routeToHome: routeToHome,
+    goToCommitteeDashboard: goToCommitteeDashboard,
+    goDashboard: goDashboard,
     requireRole: requireRole,
     getCollections: getCollections,
     getMyCollections: getMyCollections,
@@ -1283,6 +1355,8 @@
     getMemberPaymentsByDay: getMemberPaymentsByDay,
     createAdmin: createAdmin,
     setUserRole: setUserRole,
+    setCommitteeRole: setCommitteeRole,
+    getCommitteeMembers: getCommitteeMembers,
     getAdmins: getAdmins,
     getPendingMembers: getPendingMembers,
     approveMember: approveMember,
