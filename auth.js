@@ -201,7 +201,10 @@
 
   // Guards a page: pass an array of allowed roles, e.g. ['admin'] or ['admin','member'].
   // Redirects to the login gate if there is no valid session for this page.
-  function requireRole(roles) {
+  // NOTE: several pages call this as `KatiniAuth.requireRole(...).then(...)`,
+  // so it must return a real Promise (hence `async`) even though everything
+  // inside it is synchronous localStorage access.
+  async function requireRole(roles) {
     var s = getSession();
     if (!s || roles.indexOf(s.role) === -1) {
       window.location.href = 'index.html';
