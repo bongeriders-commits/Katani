@@ -226,6 +226,13 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
   justify-content:center;gap:8px;
 }
 .logout-btn svg{width:16px;height:16px;}
+.biometric-btn{
+  width:100%;margin-top:14px;background:#eef1f6;color:var(--navy-dark);border:none;border-radius:10px;
+  padding:13px;font-size:13.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:8px;
+}
+.biometric-btn svg{width:16px;height:16px;}
+.biometric-note{font-size:11.5px;color:var(--muted);text-align:center;margin:8px 0 0;line-height:1.4;}
 
 /* ---------- Hamburger Menu ---------- */
 .menu-overlay{
@@ -645,6 +652,11 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
       <div class="myp-row"><span class="pk">Phone</span><span class="pv" id="myp-kinPhone">—</span></div>
     </div>
 
+    <button class="biometric-btn" id="biometricToggleBtn" onclick="toggleBiometric()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11c0-3.87-2.69-7-6-7S6 7.13 6 11c0 2.5-.5 8-3 10"/><path d="M15 9a3 3 0 0 0-6 0c0 6-1 8-2 10"/><path d="M12 12a1 1 0 0 0 1 1c0 2.5-.5 6-1.5 8"/><path d="M9 12a3.5 3.5 0 0 0 3.5 3.5"/><path d="M18 19a20 20 0 0 0 1.5-8"/></svg>
+      <span id="biometricToggleLabel">Enable Fingerprint Unlock</span>
+    </button>
+    <p class="biometric-note" id="biometricNote"></p>
     <button class="logout-btn" onclick="handleLogout()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       Log Out
@@ -980,6 +992,7 @@ function closeMenu(){
 }
 
 function openMyProfile(){
+  refreshBiometricUI();
   document.getElementById('myp-photo').innerHTML = memberData.photo ? `<img src="${KatiniAuth.escapeHtml(memberData.photo)}" alt="${KatiniAuth.escapeHtml(memberData.name)}">` : initials(memberData.name);
   document.getElementById('myp-name').textContent = memberData.name;
   document.getElementById('myp-id').textContent = 'ID: ' + memberData.memberId;
@@ -1025,6 +1038,41 @@ function openMyProfile(){
 function closeMyProfile(){
   document.getElementById('myProfileOverlay').classList.remove('open');
 }
+
+async function refreshBiometricUI(){
+  const btn = document.getElementById('biometricToggleBtn');
+  const label = document.getElementById('biometricToggleLabel');
+  const note = document.getElementById('biometricNote');
+  if (!memberData.uid) return;
+  if (!(await KatiniAuth.isPlatformAuthenticatorAvailable())) {
+    btn.style.display = 'none';
+    note.textContent = "Fingerprint/Face ID unlock isn't available on this device or browser.";
+    return;
+  }
+  btn.style.display = '';
+  const on = KatiniAuth.isBiometricEnabled(memberData.uid);
+  label.textContent = on ? 'Disable Fingerprint Unlock' : 'Enable Fingerprint Unlock';
+  note.textContent = on
+    ? 'This device will ask for your fingerprint/Face ID once per app session.'
+    : 'Add a fingerprint/Face ID check before this device shows your Members Space.';
+}
+
+async function toggleBiometric(){
+  if (!memberData.uid) return;
+  const btn = document.getElementById('biometricToggleBtn');
+  btn.disabled = true;
+  if (KatiniAuth.isBiometricEnabled(memberData.uid)) {
+    KatiniAuth.disableBiometricUnlock();
+  } else {
+    const result = await KatiniAuth.enableBiometricUnlock();
+    if (!result.success) {
+      alert(result.message);
+    }
+  }
+  btn.disabled = false;
+  refreshBiometricUI();
+}
+
 function initials(name){
   return name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
 }
