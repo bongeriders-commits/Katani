@@ -284,7 +284,67 @@
       window.location.href = 'index.html';
       return null;
     }
+    // A temporary, admin-set password (new member, or an existing member
+    // whose password an admin just reset) only ever gets this member as far
+    // as this blocking screen — nothing else in the app renders behind it
+    // until they set their own password.
+    if (user.mustChangePassword) {
+      await showForcePasswordChangeModal();
+      user.mustChangePassword = false;
+    }
     return user;
+  }
+
+  // ---- Blocking "set your new password" screen ------------------------
+  // Built and injected purely in JS so every page gets it for free just by
+  // including auth.js — no markup needs to be copy-pasted onto each page.
+  function showForcePasswordChangeModal() {
+    return new Promise(function (resolve) {
+      var overlay = document.createElement('div');
+      overlay.setAttribute('style',
+        'position:fixed;inset:0;z-index:9999;background:rgba(10,20,40,0.82);' +
+        'display:flex;align-items:center;justify-content:center;padding:20px;font-family:"Segoe UI",Roboto,-apple-system,BlinkMacSystemFont,sans-serif;');
+      overlay.innerHTML =
+        '<div style="width:100%;max-width:380px;background:#f4f6f9;border-radius:18px;padding:24px 20px;box-shadow:0 20px 50px rgba(0,0,0,0.4);">' +
+          '<h3 style="font-size:16.5px;font-weight:800;color:#0d2140;margin-bottom:6px;">Set Your New Password</h3>' +
+          '<p style="font-size:12.5px;color:#6b7685;margin-bottom:16px;line-height:1.5;">You logged in with a temporary password. For your account\'s security, choose a new password now &mdash; it only takes a moment.</p>' +
+          '<div style="margin-bottom:10px;">' +
+            '<label style="display:block;font-size:11.5px;font-weight:700;color:#6b7685;margin-bottom:6px;">New Password</label>' +
+            '<input type="password" id="fpc-new" placeholder="At least 6 characters" style="width:100%;border:1.5px solid #e3e7ee;border-radius:10px;padding:10px 12px;font-size:13px;color:#0d2140;outline:none;background:#fff;box-sizing:border-box;">' +
+          '</div>' +
+          '<div style="margin-bottom:6px;">' +
+            '<label style="display:block;font-size:11.5px;font-weight:700;color:#6b7685;margin-bottom:6px;">Confirm Password</label>' +
+            '<input type="password" id="fpc-confirm" placeholder="Re-enter password" style="width:100%;border:1.5px solid #e3e7ee;border-radius:10px;padding:10px 12px;font-size:13px;color:#0d2140;outline:none;background:#fff;box-sizing:border-box;">' +
+          '</div>' +
+          '<div id="fpc-error" style="color:#c0392b;font-size:11.5px;margin:8px 0 0;display:none;"></div>' +
+          '<button id="fpc-save" style="width:100%;background:#0d2140;color:#fff;border:none;border-radius:12px;padding:14px;font-size:13.5px;font-weight:800;cursor:pointer;margin-top:16px;">Save New Password</button>' +
+        '</div>';
+      document.body.appendChild(overlay);
+
+      var btn = overlay.querySelector('#fpc-save');
+      var err = overlay.querySelector('#fpc-error');
+      btn.addEventListener('click', async function () {
+        var p1 = overlay.querySelector('#fpc-new').value;
+        var p2 = overlay.querySelector('#fpc-confirm').value;
+        if (p1 !== p2) {
+          err.textContent = 'Passwords do not match.';
+          err.style.display = 'block';
+          return;
+        }
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+        var result = await changePassword(p1);
+        if (!result.success) {
+          err.textContent = result.message;
+          err.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Save New Password';
+          return;
+        }
+        document.body.removeChild(overlay);
+        resolve();
+      });
+    });
   }
 
   // ---- Registration ------------------------------------------------------
@@ -350,6 +410,12 @@
   }
 
   // ---- Admin-added member (does NOT log the admin in as the new member) ----
+  // The password the admin sets here is a TEMPORARY, one-time credential:
+  // mustChangePassword is stamped onto the profile, and requireRole() (see
+  // below) will block every page behind a forced "set your new password"
+  // screen the moment this member's very first login lands, before they can
+  // see or do anything else in the app. See changePassword() for the other
+  // half of that flow.
   async function addMember(data) {
     var email = String(data.email || '').trim().toLowerCase();
     if (!email) return { success: false, message: 'Email is required.' };
@@ -372,6 +438,7 @@
         nationalId: data.nationalId || '',
         residence: data.residence || '',
         photo: data.photo || '',
+        mustChangePassword: true,
         motorcycle: {
           plate: (data.motorcycle && data.motorcycle.plate) || '',
           model: (data.motorcycle && data.motorcycle.model) || '',
@@ -389,11 +456,145 @@
       // rules) — not by the brand-new secondary-app account.
       await usersCol.doc(uid).set(user);
       await secondaryAuth.signOut();
-      return { success: true, user: Object.assign({ uid: uid }, user) };
+      // tempPassword is handed back so the caller (Members Directory) can
+      // show it once and offer to send it over WhatsApp. It is never
+      // written to Firestore in plain text.
+      return { success: true, user: Object.assign({ uid: uid }, user), tempPassword: password };
     } catch (e) {
       try { await secondaryAuth.signOut(); } catch (e2) { /* ignore */ }
       return { success: false, message: firebaseErrorMessage(e) };
     }
+  }
+
+  // ---- Admin edits an existing member's profile (no password/email/auth
+  // account changes here — those go through resetMemberPassword()). ----
+  async function editMember(uid, data) {
+    if (!uid) return { success: false, message: 'Missing member id.' };
+    try {
+      var ref = usersCol.doc(uid);
+      var snap = await ref.get();
+      if (!snap.exists) return { success: false, message: 'Member not found.' };
+      var updates = {
+        name: data.name || '',
+        phone: data.phone || '',
+        status: data.status || snap.data().status || 'active',
+        dob: data.dob || '',
+        gender: data.gender || '',
+        nationalId: data.nationalId || '',
+        residence: data.residence || '',
+        motorcycle: {
+          plate: (data.motorcycle && data.motorcycle.plate) || '',
+          model: (data.motorcycle && data.motorcycle.model) || '',
+          color: (data.motorcycle && data.motorcycle.color) || '',
+          chassis: (data.motorcycle && data.motorcycle.chassis) || ''
+        },
+        nextOfKin: {
+          name: (data.nextOfKin && data.nextOfKin.name) || '',
+          relationship: (data.nextOfKin && data.nextOfKin.relationship) || '',
+          phone: (data.nextOfKin && data.nextOfKin.phone) || ''
+        }
+      };
+      if (typeof data.photo === 'string' && data.photo) updates.photo = data.photo;
+      await ref.update(updates);
+      return { success: true, user: Object.assign({ uid: uid }, snap.data(), updates) };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
+  }
+
+  // ---- Admin deletes a member ----------------------------------------
+  // Same limitation as rejectMember(): this removes the Firestore profile
+  // (so they vanish from the directory and finalizeSession() refuses their
+  // next login attempt), but it cannot delete the underlying Firebase
+  // Authentication account from client-side JS — that needs the Admin SDK
+  // (Firebase console, or the reset-member-password serverless function's
+  // service account, extended to also support delete).
+  async function deleteMember(uid) {
+    if (!uid) return { success: false, message: 'Missing member id.' };
+    try {
+      var ref = usersCol.doc(uid);
+      var snap = await ref.get();
+      if (!snap.exists) return { success: false, message: 'Member not found.' };
+      var removed = Object.assign({ uid: uid }, snap.data());
+      await ref.delete();
+      return { success: true, user: removed };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
+  }
+
+  // ---- Admin resets an existing member's password ---------------------
+  // Firebase's client SDK can only ever change the password of whichever
+  // account is CURRENTLY signed in — there is no client-side call that lets
+  // one signed-in user (the admin) set another user's password. Doing that
+  // for an existing account needs the Admin SDK, which only runs server
+  // side. This calls a small serverless function (see
+  // /api/reset-member-password.js) that does exactly that and nothing else:
+  // it checks the caller is a real admin, then sets the new temp password
+  // and re-flags mustChangePassword so the member is forced through the
+  // same one-time-password screen as a brand new member.
+  async function resetMemberPassword(uid) {
+    if (!uid) return { success: false, message: 'Missing member id.' };
+    var fbUser = auth.currentUser;
+    if (!fbUser) return { success: false, message: 'You must be signed in as an admin.' };
+    var newPassword = Math.random().toString(36).slice(-8);
+    try {
+      var idToken = await fbUser.getIdToken();
+      var res = await fetch('/api/reset-member-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: idToken, uid: uid, newPassword: newPassword })
+      });
+      var body = await res.json().catch(function () { return {}; });
+      if (!res.ok || !body.success) {
+        return { success: false, message: body.message || 'Password reset isn\'t set up yet — see /api/reset-member-password.js.' };
+      }
+      await usersCol.doc(uid).update({ mustChangePassword: true });
+      return { success: true, tempPassword: newPassword };
+    } catch (e) {
+      return { success: false, message: 'Password reset isn\'t set up yet — see /api/reset-member-password.js.' };
+    }
+  }
+
+  // ---- Member sets their own password (first-login forced change, or a
+  // voluntary change later). Requires the member to already be signed in,
+  // which is always true right after login/registration. ----
+  async function changePassword(newPassword) {
+    var fbUser = auth.currentUser;
+    if (!fbUser) return { success: false, message: 'You must be signed in.' };
+    if (!newPassword || String(newPassword).length < 6) {
+      return { success: false, message: 'Password must be at least 6 characters.' };
+    }
+    try {
+      await fbUser.updatePassword(newPassword);
+      await usersCol.doc(fbUser.uid).update({ mustChangePassword: false });
+      if (cachedUser) cachedUser.mustChangePassword = false;
+      return { success: true };
+    } catch (e) {
+      if (e && e.code === 'auth/requires-recent-login') {
+        return { success: false, message: 'For security, please log out and log back in with your temporary password, then try again.' };
+      }
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
+  }
+
+  // ---- WhatsApp handoff (best-effort, no backend/API keys required) ----
+  // There's no way to silently auto-send a WhatsApp message from a plain
+  // static web app — WhatsApp's Business Cloud API needs server credentials
+  // and Meta approval. Instead this opens wa.me with the message pre-filled
+  // so the admin just taps Send in WhatsApp — one tap, no typing.
+  function toWhatsAppNumber(phone) {
+    var digits = String(phone || '').replace(/[^\d]/g, '');
+    if (!digits) return '';
+    if (digits.charAt(0) === '0') digits = '254' + digits.slice(1);
+    else if (digits.length <= 9) digits = '254' + digits;
+    return digits;
+  }
+
+  function buildWhatsAppLink(phone, message) {
+    var num = toWhatsAppNumber(phone);
+    var text = encodeURIComponent(message || '');
+    return num ? ('https://wa.me/' + num + '?text=' + text) : ('https://wa.me/?text=' + text);
   }
 
   // ---- Login -------------------------------------------------------------
@@ -1031,6 +1232,11 @@
     getUsers: getUsers,
     registerMember: registerMember,
     addMember: addMember,
+    editMember: editMember,
+    deleteMember: deleteMember,
+    resetMemberPassword: resetMemberPassword,
+    changePassword: changePassword,
+    buildWhatsAppLink: buildWhatsAppLink,
     login: login,
     sendLoginLink: sendLoginLink,
     sendPasswordReset: sendPasswordReset,

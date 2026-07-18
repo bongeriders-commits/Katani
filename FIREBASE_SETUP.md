@@ -106,3 +106,46 @@ Auth account — that requires the Admin SDK. If you want "Reject" to fully
 remove the login too, add a small Cloud Function (or do it by hand once in
 a while in Authentication -> Users) that deletes any Auth user with no
 matching Firestore profile.
+
+## Editing, deleting and resetting passwords for members
+The Members Directory's member profile screen now has **Edit**, **Reset
+Password** and **Delete** actions (`editMember`, `resetMemberPassword`,
+`deleteMember` in `auth.js`):
+- **Edit** only touches the Firestore profile (name, phone, bike details,
+  next of kin, etc.) — it never changes login email or password, and works
+  entirely client-side, no setup required.
+- **Delete** has the same limitation as `rejectMember()` above: it removes
+  the Firestore profile, not the underlying Auth account.
+- **Reset Password** sets a brand-new temporary password on an *existing*
+  member's account. Unlike "Add Member" (which creates the account itself,
+  so it can set the first password directly), changing another user's
+  password after the fact needs the Admin SDK — there's no client-side
+  Firebase call for it. This ships as a small Vercel serverless function,
+  `/api/reset-member-password.js`, with full setup steps in the comment at
+  the top of that file (short version: generate a Firebase service-account
+  key, add it as the `FIREBASE_SERVICE_ACCOUNT` env var in Vercel, deploy).
+  Until that's deployed, the button fails gracefully with a message
+  telling you so — nothing else in the app breaks.
+
+## First-login forced password change
+Every temporary password an admin sets (via Add Member or Reset Password)
+stamps `mustChangePassword: true` onto that member's profile. The next
+time they log in, `requireRole()` (called at the top of every protected
+page) blocks the page behind a "Set Your New Password" screen before
+anything else renders, and won't let them past it until they choose their
+own password. There's no server-side way to make a Firebase Auth password
+literally stop working after one use, so in the rare case someone logs in
+twice with the temporary password before changing it, they'll just see
+that same forced screen again both times — they can never reach the rest
+of the app without setting their own password first.
+
+## Sending the temporary password over WhatsApp
+After Add Member or Reset Password, a "Send via WhatsApp" button opens
+`wa.me` with the member's phone number and a pre-filled message (app link +
+login details) — the admin just taps Send inside WhatsApp. This needs no
+API key or backend because it's not actually sending anything
+automatically: true silent auto-send requires WhatsApp's Business Cloud
+API, which needs Meta approval and server credentials, so it's out of
+scope for a static app like this one. Kenyan numbers are auto-formatted
+(a leading `0` becomes `254`); numbers already in international format are
+left as-is.

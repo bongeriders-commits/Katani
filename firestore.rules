@@ -71,7 +71,8 @@ service cloud.firestore {
         // never touch their own role, status, or email from the client.
         || (isSelf(uid) && onlyChanges([
               'name','phone','altPhone','photo','dob','gender',
-              'nationalId','residence','motorcycle','nextOfKin'
+              'nationalId','residence','motorcycle','nextOfKin',
+              'mustChangePassword'
             ]));
 
       allow delete: if isAdmin();

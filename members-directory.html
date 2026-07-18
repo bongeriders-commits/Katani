@@ -238,6 +238,37 @@ header.topbar{
 .mm-error{color:var(--red);font-size:11.5px;margin-top:6px;display:none;}
 .mm-error.show{display:block;}
 
+/* View-member action row (Edit / Reset Password / Delete) */
+.vm-actions{display:flex;gap:8px;margin:4px 0 16px;}
+.vm-action-btn{
+  flex:1;border:none;border-radius:12px;padding:12px 6px;font-size:11.5px;font-weight:800;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:5px;color:#fff;
+}
+.vm-action-btn svg{width:16px;height:16px;}
+.vm-action-btn.edit{background:var(--blue);}
+.vm-action-btn.reset{background:var(--gold);color:var(--navy-dark);}
+.vm-action-btn.delete{background:var(--red);}
+
+/* Delete confirm */
+.confirm-box{background:#fff;border-radius:14px;padding:16px;box-shadow:0 3px 12px rgba(13,33,64,0.06);margin-bottom:14px;}
+.confirm-box p{font-size:13px;color:var(--navy-dark);line-height:1.5;margin-bottom:14px;}
+.confirm-row{display:flex;gap:10px;}
+.confirm-row button{flex:1;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:800;cursor:pointer;}
+.confirm-cancel{background:var(--gray-bg);color:var(--navy-dark);border:1.5px solid var(--border) !important;}
+.confirm-delete{background:var(--red);color:#fff;}
+
+/* Credentials / WhatsApp handoff modal */
+.cred-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.cred-row:last-child{border-bottom:none;}
+.cred-row .ck{font-size:11.5px;color:var(--muted);font-weight:700;}
+.cred-row .cv{font-size:13px;color:var(--navy-dark);font-weight:700;font-family:monospace;word-break:break-all;text-align:right;}
+.cred-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:14px;}
+.cred-whatsapp-btn{
+  width:100%;background:#25D366;color:#fff;border:none;border-radius:12px;padding:14px;
+  font-size:13.5px;font-weight:800;cursor:pointer;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.cred-whatsapp-btn svg{width:17px;height:17px;}
+
 /* View-member detail sheet */
 .vm-photo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:16px;}
 .vm-photo{
@@ -381,11 +412,12 @@ header.topbar{
 <div class="member-modal-overlay" id="addMemberOverlay" onclick="if(event.target===this) closeAddMember()">
   <div class="member-modal">
     <div class="mm-head">
-      <h3>Add New Member</h3>
+      <h3 id="mm-form-title">Add New Member</h3>
       <button class="mm-close" onclick="closeAddMember()" aria-label="Close">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
+    <input type="hidden" id="nm-uid" value="">
 
     <div class="mm-section">
       <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Personal Details</h4>
@@ -398,7 +430,7 @@ header.topbar{
           <label>Phone Number *</label>
           <input type="tel" id="nm-phone" placeholder="07XX XXX XXX">
         </div>
-        <div class="mm-field">
+        <div class="mm-field" id="nm-email-field">
           <label>Email *</label>
           <input type="email" id="nm-email" placeholder="you@example.com">
         </div>
@@ -428,9 +460,10 @@ header.topbar{
           <input type="text" id="nm-residence" placeholder="e.g. Katani, Machakos">
         </div>
       </div>
-      <div class="mm-field">
+      <div class="mm-field" id="nm-password-field">
         <label>Temporary Password *</label>
         <input type="text" id="nm-password" placeholder="Shared with the member to log in">
+        <div style="font-size:11px;color:var(--muted);margin-top:5px;">The member must set their own password on first login — this one only works once.</div>
       </div>
       <div class="mm-error" id="nm-error"></div>
     </div>
@@ -497,7 +530,7 @@ header.topbar{
       </div>
     </div>
 
-    <button class="mm-save-btn" onclick="saveNewMember()">Save Member</button>
+    <button class="mm-save-btn" id="nm-save-btn" onclick="saveMember()">Save Member</button>
   </div>
 </div>
 
@@ -515,6 +548,32 @@ header.topbar{
       <h4 id="vm-name">—</h4>
       <p id="vm-id">—</p>
     </div>
+
+    <div class="vm-actions">
+      <button class="vm-action-btn edit" onclick="openEditMemberFromView()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        Edit
+      </button>
+      <button class="vm-action-btn reset" onclick="resetPasswordFromView()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Reset Password
+      </button>
+      <button class="vm-action-btn delete" onclick="openDeleteConfirm()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        Delete
+      </button>
+    </div>
+
+    <div class="mm-section" id="vm-delete-confirm" style="display:none;">
+      <div class="confirm-box" style="box-shadow:none;padding:0;">
+        <p><strong id="vm-delete-name">This member</strong> will be removed from the directory and will no longer be able to log in. This can't be undone from here.</p>
+        <div class="confirm-row">
+          <button class="confirm-cancel" onclick="closeDeleteConfirm()">Cancel</button>
+          <button class="confirm-delete" onclick="confirmDeleteMember()">Delete Member</button>
+        </div>
+      </div>
+    </div>
+
     <div class="vm-qr"><div class="vm-qr-box" id="vm-qrcode"></div></div>
 
     <div class="mm-section">
@@ -542,6 +601,28 @@ header.topbar{
       <div class="vm-row"><span class="vk">Relationship</span><span class="vv" id="vm-kinRelation">—</span></div>
       <div class="vm-row"><span class="vk">Phone</span><span class="vv" id="vm-kinPhone">—</span></div>
     </div>
+  </div>
+</div>
+
+<!-- Credentials / WhatsApp handoff modal (shown after Add Member / Reset Password) -->
+<div class="member-modal-overlay" id="credOverlay" onclick="if(event.target===this) closeCredModal()">
+  <div class="member-modal">
+    <div class="mm-head">
+      <h3 id="cred-title">Member Added</h3>
+      <button class="mm-close" onclick="closeCredModal()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="mm-section">
+      <p class="cred-note">Share these sign-in details with <strong id="cred-name">the member</strong>. They'll be asked to set their own password the first time they log in &mdash; this temporary one only works once.</p>
+      <div class="cred-row"><span class="ck">Email</span><span class="cv" id="cred-email">—</span></div>
+      <div class="cred-row"><span class="ck">Temporary Password</span><span class="cv" id="cred-password">—</span></div>
+    </div>
+    <button class="cred-whatsapp-btn" id="cred-whatsapp-btn" onclick="sendCredsViaWhatsApp()">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2z"/></svg>
+      Send via WhatsApp
+    </button>
+    <div style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center;">Opens WhatsApp with the message pre-filled &mdash; just tap Send.</div>
   </div>
 </div>
 
@@ -669,6 +750,12 @@ async function refreshDirectory(){
 let nmPhotoDataUrl = '';
 
 function openAddMember(){
+  resetAddMemberForm();
+  document.getElementById('nm-uid').value = '';
+  document.getElementById('mm-form-title').textContent = 'Add New Member';
+  document.getElementById('nm-save-btn').textContent = 'Save Member';
+  document.getElementById('nm-password-field').style.display = '';
+  document.getElementById('nm-email').disabled = false;
   document.getElementById('addMemberOverlay').classList.add('open');
 }
 function closeAddMember(){
@@ -690,6 +777,48 @@ function resetAddMemberForm(){
   err.textContent = '';
 }
 
+/* -------- Edit Member (reuses the Add Member modal) -------- */
+let editingMemberId = '';
+
+async function openEditMemberFromView(){
+  const uid = editingMemberId;
+  if(!uid) return;
+  const users = await KatiniAuth.getUsers();
+  const u = users.find(x => x.memberId === uid || x.uid === uid);
+  if(!u){ showToast('Member not found'); return; }
+
+  resetAddMemberForm();
+  document.getElementById('nm-uid').value = u.uid;
+  document.getElementById('mm-form-title').textContent = 'Edit Member';
+  document.getElementById('nm-save-btn').textContent = 'Save Changes';
+  document.getElementById('nm-password-field').style.display = 'none';
+  document.getElementById('nm-email').disabled = true;
+
+  document.getElementById('nm-name').value = u.name || '';
+  document.getElementById('nm-phone').value = u.phone || '';
+  document.getElementById('nm-email').value = u.email || '';
+  document.getElementById('nm-nationalId').value = u.nationalId || '';
+  document.getElementById('nm-gender').value = u.gender || '';
+  document.getElementById('nm-dob').value = u.dob || '';
+  document.getElementById('nm-residence').value = u.residence || '';
+  const mc = u.motorcycle || {};
+  document.getElementById('nm-plate').value = mc.plate || '';
+  document.getElementById('nm-bikeModel').value = mc.model || '';
+  document.getElementById('nm-bikeColor').value = mc.color || '';
+  document.getElementById('nm-chassisNo').value = mc.chassis || '';
+  const kin = u.nextOfKin || {};
+  document.getElementById('nm-kinName').value = kin.name || '';
+  document.getElementById('nm-kinRelation').value = kin.relationship || '';
+  document.getElementById('nm-kinPhone').value = kin.phone || '';
+  if(u.photo){
+    nmPhotoDataUrl = u.photo;
+    document.getElementById('nm-photoPreview').innerHTML = `<img src="${u.photo}" alt="Preview">`;
+  }
+
+  closeViewMember();
+  document.getElementById('addMemberOverlay').classList.add('open');
+}
+
 document.getElementById('nm-photoInput').addEventListener('change', function(e){
   const file = e.target.files[0];
   if(!file) return;
@@ -706,20 +835,25 @@ document.getElementById('nm-photoInput').addEventListener('change', function(e){
   reader.readAsDataURL(file);
 });
 
-async function saveNewMember(){
+async function saveMember(){
+  const uid = document.getElementById('nm-uid').value;
+  const isEdit = !!uid;
   const name = document.getElementById('nm-name').value.trim();
   const phone = document.getElementById('nm-phone').value.trim();
   const email = document.getElementById('nm-email').value.trim();
   const password = document.getElementById('nm-password').value.trim();
   const err = document.getElementById('nm-error');
+  err.classList.remove('show');
 
-  if(!name || !phone || !email || !password){
-    err.textContent = 'Full name, phone, email and a temporary password are required.';
+  if(!name || !phone || (!isEdit && (!email || !password))){
+    err.textContent = isEdit
+      ? 'Full name and phone are required.'
+      : 'Full name, phone, email and a temporary password are required.';
     err.classList.add('show');
     return;
   }
 
-  const result = await KatiniAuth.addMember({
+  const payload = {
     name, phone, email, password,
     nationalId: document.getElementById('nm-nationalId').value.trim(),
     gender: document.getElementById('nm-gender').value,
@@ -737,7 +871,11 @@ async function saveNewMember(){
       relationship: document.getElementById('nm-kinRelation').value,
       phone: document.getElementById('nm-kinPhone').value.trim()
     }
-  });
+  };
+
+  const result = isEdit
+    ? await KatiniAuth.editMember(uid, payload)
+    : await KatiniAuth.addMember(payload);
 
   if(!result.success){
     err.textContent = result.message;
@@ -746,8 +884,86 @@ async function saveNewMember(){
   }
 
   closeAddMember();
-  refreshDirectory();
-  showToast(`${name} was added successfully`);
+  await refreshDirectory();
+
+  if(isEdit){
+    showToast(`${name}'s details were updated`);
+  }else{
+    showToast(`${name} was added successfully`);
+    openCredModal({
+      title: 'Member Added',
+      name,
+      email,
+      phone,
+      password: result.tempPassword || password
+    });
+  }
+}
+
+/* -------- Delete Member -------- */
+function openDeleteConfirm(){
+  document.getElementById('vm-delete-name').textContent = document.getElementById('vm-name').textContent;
+  document.getElementById('vm-delete-confirm').style.display = 'block';
+}
+function closeDeleteConfirm(){
+  document.getElementById('vm-delete-confirm').style.display = 'none';
+}
+async function confirmDeleteMember(){
+  const users = await KatiniAuth.getUsers();
+  const u = users.find(x => x.memberId === editingMemberId || x.uid === editingMemberId);
+  if(!u){ showToast('Member not found'); return; }
+  const result = await KatiniAuth.deleteMember(u.uid);
+  if(!result.success){
+    showToast(result.message);
+    return;
+  }
+  closeDeleteConfirm();
+  closeViewMember();
+  await refreshDirectory();
+  showToast(`${u.name} was removed`);
+}
+
+/* -------- Reset Password -------- */
+async function resetPasswordFromView(){
+  const users = await KatiniAuth.getUsers();
+  const u = users.find(x => x.memberId === editingMemberId || x.uid === editingMemberId);
+  if(!u){ showToast('Member not found'); return; }
+  showToast('Resetting password…');
+  const result = await KatiniAuth.resetMemberPassword(u.uid);
+  if(!result.success){
+    showToast(result.message);
+    return;
+  }
+  closeViewMember();
+  openCredModal({
+    title: 'Password Reset',
+    name: u.name,
+    email: u.email,
+    phone: u.phone,
+    password: result.tempPassword
+  });
+}
+
+/* -------- Credentials / WhatsApp handoff modal -------- */
+let credState = null;
+function openCredModal(state){
+  credState = state;
+  document.getElementById('cred-title').textContent = state.title;
+  document.getElementById('cred-name').textContent = state.name;
+  document.getElementById('cred-email').textContent = state.email || '—';
+  document.getElementById('cred-password').textContent = state.password || '—';
+  document.getElementById('credOverlay').classList.add('open');
+}
+function closeCredModal(){
+  document.getElementById('credOverlay').classList.remove('open');
+  credState = null;
+}
+function sendCredsViaWhatsApp(){
+  if(!credState) return;
+  const appUrl = window.location.origin + '/index.html';
+  const message = `Hi ${credState.name}, welcome to Katani Main Stage!\n\nDownload/open the app: ${appUrl}\n\nYour login:\nEmail: ${credState.email}\nTemporary password: ${credState.password}\n\nYou'll be asked to set your own password the first time you log in — this one only works once.`;
+  const link = KatiniAuth.buildWhatsAppLink(credState.phone, message);
+  window.open(link, '_blank');
 }
 
 /* -------- View Member modal -------- */
@@ -756,6 +972,8 @@ async function openViewMember(memberId){
   const u = users.find(x => x.memberId === memberId);
   if(!u){ showToast('Member not found'); return; }
 
+  editingMemberId = u.uid;
+  document.getElementById('vm-delete-confirm').style.display = 'none';
   document.getElementById('vm-name').textContent = u.name;
   document.getElementById('vm-id').textContent = 'ID: ' + u.memberId;
   document.getElementById('vm-photo').innerHTML = u.photo ? `<img src="${KatiniAuth.escapeHtml(u.photo)}" alt="${KatiniAuth.escapeHtml(u.name)}">` : initials(u.name);
