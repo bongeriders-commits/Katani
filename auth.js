@@ -65,6 +65,21 @@
       });
   }
 
+  // ---- small binary helper, used by the WebAuthn (fingerprint) code below ----
+  function b64urlToBuf(b64url) {
+    var b64 = String(b64url).replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    var str = window.atob(b64);
+    var bytes = new Uint8Array(str.length);
+    for (var i = 0; i < str.length; i++) bytes[i] = str.charCodeAt(i);
+    return bytes.buffer;
+  }
+  function randomChallenge() {
+    var arr = new Uint8Array(32);
+    window.crypto.getRandomValues(arr);
+    return arr;
+  }
+
   function firebaseErrorMessage(e) {
     var code = e && e.code;
     var map = {
@@ -76,6 +91,8 @@
       'auth/invalid-credential': 'Incorrect email or password. Please try again.',
       'auth/too-many-requests': 'Too many attempts. Please wait a moment and try again.',
       'auth/network-request-failed': 'Network error — check your connection and try again.',
+      'auth/invalid-action-code': 'This sign-in link has expired or already been used. Please request a new one.',
+      'auth/expired-action-code': 'This sign-in link has expired. Please request a new one.',
       'permission-denied': 'You do not have permission to do that.'
     };
     return (code && map[code]) || (e && e.message) || 'Something went wrong. Please try again.';
@@ -132,6 +149,107 @@
     window.location.href = s.role === 'admin' ? 'admin-dashboard.html' : 'members-portal.html';
   }
 
+  // ---- Fingerprint / Face ID device unlock ---------------------------------
+  // This is a LOCAL, per-device convenience layer on top of the Firebase
+  // session that already persists across app opens (see onAuthStateChanged
+  // above) — it never talks to Firebase or Firestore, and it never
+  // replaces finalizeSession()'s server-side "registered members only"
+  // check. What it adds: once enabled on a phone, that phone won't reveal
+  // an already-signed-in member's content again until they pass a
+  // fingerprint/Face ID prompt (via the Web Authentication API's platform
+  // authenticator) — so someone who picks up an unlocked phone can't just
+  // open the installed app and land in the Members Space.
+  var WEBAUTHN_KEY_PREFIX = 'kms_webauthn_';
+  var UNLOCK_SESSION_PREFIX = 'kms_biometric_unlocked_';
+
+  function isWebAuthnSupported() {
+    return !!(window.PublicKeyCredential && navigator.credentials);
+  }
+
+  async function isPlatformAuthenticatorAvailable() {
+    if (!isWebAuthnSupported()) return false;
+    try { return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); }
+    catch (e) { return false; }
+  }
+
+  function isBiometricEnabled(uid) {
+    try { return !!window.localStorage.getItem(WEBAUTHN_KEY_PREFIX + uid); }
+    catch (e) { return false; }
+  }
+
+  // Registers a platform (fingerprint/Face ID) credential for the
+  // currently signed-in user, scoped to this device/browser only.
+  async function enableBiometricUnlock() {
+    if (!cachedUser) return { success: false, message: 'Please log in first.' };
+    if (!isWebAuthnSupported()) return { success: false, message: 'Fingerprint/Face ID unlock is not supported in this browser.' };
+    if (!(await isPlatformAuthenticatorAvailable())) {
+      return { success: false, message: 'No fingerprint/Face ID sensor was found on this device.' };
+    }
+    try {
+      var uidBytes = new TextEncoder().encode(cachedUser.uid);
+      var cred = await navigator.credentials.create({
+        publicKey: {
+          challenge: randomChallenge(),
+          rp: { name: 'Katani Main Stage' },
+          user: { id: uidBytes, name: cachedUser.email, displayName: cachedUser.name || cachedUser.email },
+          pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
+          timeout: 60000
+        }
+      });
+      if (!cred) return { success: false, message: 'Could not set up fingerprint unlock.' };
+      try { window.localStorage.setItem(WEBAUTHN_KEY_PREFIX + cachedUser.uid, cred.id); } catch (e) { /* ignore */ }
+      markUnlockedThisSession(cachedUser.uid);
+      return { success: true };
+    } catch (e) {
+      return { success: false, message: 'Could not set up fingerprint unlock' + (e && e.message ? (': ' + e.message) : '.') };
+    }
+  }
+
+  function disableBiometricUnlock() {
+    if (!cachedUser) return;
+    try { window.localStorage.removeItem(WEBAUTHN_KEY_PREFIX + cachedUser.uid); } catch (e) { /* ignore */ }
+    try { window.sessionStorage.removeItem(UNLOCK_SESSION_PREFIX + cachedUser.uid); } catch (e) { /* ignore */ }
+  }
+
+  function hasUnlockedThisSession(uid) {
+    try { return window.sessionStorage.getItem(UNLOCK_SESSION_PREFIX + uid) === '1'; }
+    catch (e) { return true; } // fail open — never lock someone out over sessionStorage being unavailable
+  }
+  function markUnlockedThisSession(uid) {
+    try { window.sessionStorage.setItem(UNLOCK_SESSION_PREFIX + uid, '1'); } catch (e) { /* ignore */ }
+  }
+
+  // Call once per protected page load (index.html's "already logged in"
+  // branch, and requireRole() below both do). Resolves true if either
+  // biometric unlock isn't enabled, was already satisfied earlier this
+  // browser session, or the device doesn't support it (graceful
+  // fallback) — false only when it's enabled, required, and the person
+  // failed or cancelled the prompt.
+  async function requireBiometricUnlock(uid) {
+    if (!isBiometricEnabled(uid)) return true;
+    if (hasUnlockedThisSession(uid)) return true;
+    if (!isWebAuthnSupported()) return true;
+    var credId = null;
+    try { credId = window.localStorage.getItem(WEBAUTHN_KEY_PREFIX + uid); } catch (e) { /* ignore */ }
+    if (!credId) return true;
+    try {
+      var assertion = await navigator.credentials.get({
+        publicKey: {
+          challenge: randomChallenge(),
+          allowCredentials: [{ id: b64urlToBuf(credId), type: 'public-key' }],
+          userVerification: 'required',
+          timeout: 60000
+        }
+      });
+      if (!assertion) return false;
+      markUnlockedThisSession(uid);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Guards a page: pass an array of allowed roles, e.g. ['admin'] or ['admin','member'].
   // Always re-fetches the caller's profile fresh from Firestore (not just the
   // cache) so an admin suspending/rejecting someone takes effect immediately,
@@ -155,6 +273,14 @@
     }
     if (user.role === 'member' && user.status && user.status !== 'active') {
       await logout();
+      window.location.href = 'index.html';
+      return null;
+    }
+    // If this device has fingerprint/Face ID unlock enabled for this
+    // account and it hasn't been satisfied yet this browser session,
+    // bounce to the login gate — index.html will prompt for it and
+    // route back in once it succeeds.
+    if (!(await requireBiometricUnlock(user.uid))) {
       window.location.href = 'index.html';
       return null;
     }
@@ -271,32 +397,96 @@
   }
 
   // ---- Login -------------------------------------------------------------
+  // Shared post-authentication gate: used by every sign-in method (password
+  // AND email link). This is what actually enforces "registered members
+  // only" — a Firebase Auth session with no matching Firestore /users doc
+  // (or a not-yet-approved / suspended one) is signed straight back out,
+  // regardless of how the person authenticated. So even if a stranger types
+  // an arbitrary email into the email-link form, the link Firebase sends
+  // them can sign them into Firebase Auth, but it can never get them past
+  // this check into a member's data.
+  async function finalizeSession(uid) {
+    var snap = await usersCol.doc(uid).get();
+    if (!snap.exists) {
+      await auth.signOut();
+      return { success: false, message: 'This email is not registered as a member. Please Join Now to register, or contact an administrator.' };
+    }
+    var user = docToUser(snap);
+    if (user.role === 'member' && user.status === 'pending') {
+      await auth.signOut();
+      return { success: false, message: 'Your registration is still awaiting committee approval.' };
+    }
+    if (user.role === 'member' && user.status && user.status !== 'active') {
+      await auth.signOut();
+      return { success: false, message: 'Your account is not active. Please contact an administrator.' };
+    }
+    cachedUser = user;
+    return { success: true, user: user };
+  }
+
   async function login(email, password) {
     var emailL = String(email).trim().toLowerCase();
     try {
       var cred = await auth.signInWithEmailAndPassword(emailL, password);
-      var uid = cred.user.uid;
-      var snap = await usersCol.doc(uid).get();
-      if (!snap.exists) {
-        await auth.signOut();
-        return { success: false, message: 'Your account is not fully set up. Please contact an administrator.' };
-      }
-      var user = docToUser(snap);
-      if (user.role === 'member' && user.status === 'pending') {
-        await auth.signOut();
-        return { success: false, message: 'Your registration is still awaiting committee approval.' };
-      }
-      if (user.role === 'member' && user.status && user.status !== 'active') {
-        await auth.signOut();
-        return { success: false, message: 'Your account is not active. Please contact an administrator.' };
-      }
-      // NOTE: role can only ever be changed by an existing admin (see
-      // Firestore rules — users cannot self-edit `role`). A reserved
-      // admin email must be promoted once via the Admin Dashboard's
-      // "Create Admin" flow or by an existing admin; it will not
-      // auto-promote itself on login.
-      cachedUser = user;
-      return { success: true, user: user };
+      return await finalizeSession(cred.user.uid);
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
+  }
+
+  // ---- Email link (passwordless) login ------------------------------------
+  // An alternative to password login for already-registered members. Does
+  // NOT touch the Firestore rules or the "members only" guarantee above —
+  // finalizeSession() still runs after every successful link sign-in and
+  // signs out anyone without a real member profile.
+  //
+  // Console setup required (one-time): Authentication -> Sign-in method ->
+  // enable "Email link (passwordless sign-in)" alongside Email/Password.
+  var EMAIL_FOR_SIGN_IN_KEY = 'kms_emailForSignIn';
+
+  function emailLinkSettings() {
+    // Points back at whichever page sends the link, so long as that page
+    // also calls completeEmailLinkSignIn() on load (index.html does, below).
+    return {
+      url: window.location.href.split('#')[0].split('?')[0],
+      handleCodeInApp: true
+    };
+  }
+
+  async function sendLoginLink(email) {
+    var emailL = String(email).trim().toLowerCase();
+    if (!emailL) return { success: false, message: 'Enter your email address.' };
+    try {
+      await auth.sendSignInLinkToEmail(emailL, emailLinkSettings());
+      try { window.localStorage.setItem(EMAIL_FOR_SIGN_IN_KEY, emailL); } catch (e) { /* ignore */ }
+      return { success: true };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
+  }
+
+  function isEmailLinkSignIn() {
+    try { return auth.isSignInWithEmailLink(window.location.href); }
+    catch (e) { return false; }
+  }
+
+  // Call this on page load whenever isEmailLinkSignIn() is true. If the
+  // link is opened on a different device/browser than it was requested
+  // from, there's no saved email to read back — pass promptedEmail (ask
+  // the user to re-type the email they used) in that case.
+  async function completeEmailLinkSignIn(promptedEmail) {
+    if (!isEmailLinkSignIn()) return null;
+    var email = null;
+    try { email = window.localStorage.getItem(EMAIL_FOR_SIGN_IN_KEY); } catch (e) { /* ignore */ }
+    email = email || promptedEmail;
+    if (!email) return { success: false, needEmail: true };
+    try {
+      var cred = await auth.signInWithEmailLink(String(email).trim().toLowerCase(), window.location.href);
+      try { window.localStorage.removeItem(EMAIL_FOR_SIGN_IN_KEY); } catch (e) { /* ignore */ }
+      // Strip the one-time sign-in params out of the URL so refreshing or
+      // re-sharing this exact link can't replay it.
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return await finalizeSession(cred.user.uid);
     } catch (e) {
       return { success: false, message: firebaseErrorMessage(e) };
     }
@@ -824,6 +1014,15 @@
     registerMember: registerMember,
     addMember: addMember,
     login: login,
+    sendLoginLink: sendLoginLink,
+    isEmailLinkSignIn: isEmailLinkSignIn,
+    completeEmailLinkSignIn: completeEmailLinkSignIn,
+    isWebAuthnSupported: isWebAuthnSupported,
+    isPlatformAuthenticatorAvailable: isPlatformAuthenticatorAvailable,
+    isBiometricEnabled: isBiometricEnabled,
+    enableBiometricUnlock: enableBiometricUnlock,
+    disableBiometricUnlock: disableBiometricUnlock,
+    requireBiometricUnlock: requireBiometricUnlock,
     logout: logout,
     getSession: getSession,
     getCurrentUser: getCurrentUser,
