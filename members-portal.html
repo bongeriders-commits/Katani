@@ -18,6 +18,8 @@
 <script src="firebase-config.js"></script>
 <script src="auth.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root{
   --navy:#0d2140;
@@ -477,7 +479,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
       </button>
     </div>
     <div class="qa-grid">
-      <button class="qa-item" onclick="showToast('Downloading receipts...')">
+      <button class="qa-item" onclick="downloadReceipt()">
         <div class="qa-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
         <p>Download Receipts</p>
       </button>
@@ -572,7 +574,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         Payment History
       </button>
-      <button class="menu-item" onclick="closeMenu();showToast('Downloading receipts...')">
+      <button class="menu-item" onclick="closeMenu();downloadReceipt()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Download Receipts / Statement
       </button>
@@ -747,6 +749,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 <script>
 // Auth guard: only logged-in members (or admins previewing) may view this page.
 let currentUser = null;
+let myContributions = [];
 let memberData = {
   name: "Member", uid: "", memberId: "—", memberSince: "—", email: "—", phone: "—", stage: "—", status: "active",
   photo: '', nationalId: '—', gender: '—', dob: '—', residence: '—', motorcycle: {}, nextOfKin: {}
@@ -788,6 +791,7 @@ function formatKsh(n){
   const myTxns = (currentUser.role === 'admin' ? await KatiniAuth.getCollections() : await KatiniAuth.getMyCollections())
     .filter(t => t.type === 'contribution' && t.memberId === memberData.memberId)
     .sort((a,b) => b.createdAt - a.createdAt);
+  myContributions = myTxns;
 
   const totalContributed = myTxns.reduce((sum, t) => sum + t.amount, 0);
   document.getElementById('bl-amount').textContent = formatKsh(totalContributed);
@@ -1042,6 +1046,127 @@ function showToast(msg){
 function downloadId(){
   showToast('Preparing your Member ID card...');
   // Placeholder: wire this to html2canvas or a server-rendered ID card image later.
+}
+
+/* -------- Payment history PDF receipt/statement -------- */
+function downloadReceipt(){
+  if(!window.jspdf || !window.jspdf.jsPDF){
+    showToast('PDF tool is still loading — please try again in a moment.');
+    return;
+  }
+  if(!myContributions || myContributions.length === 0){
+    showToast('No payment history yet to download.');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 40;
+
+  // Header band
+  doc.setFillColor(13, 33, 64);
+  doc.rect(0, 0, pageWidth, 88, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text('KATANI MAIN STAGE', margin, 36);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10.5);
+  doc.text('Boda Boda Self Help Group', margin, 52);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12.5);
+  doc.text('PAYMENT STATEMENT', pageWidth - margin, 34, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  const genAt = new Date();
+  doc.text(
+    'Generated: ' + genAt.toLocaleDateString('en-GB') + ' ' + genAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+    pageWidth - margin, 50, { align: 'right' }
+  );
+  doc.text('Receipt No: STMT-' + (memberData.memberId || 'MEM') + '-' + genAt.getTime().toString().slice(-6), pageWidth - margin, 64, { align: 'right' });
+
+  // Member details block
+  let y = 116;
+  doc.setTextColor(20, 20, 20);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('Member Details', margin, y);
+  doc.setDrawColor(220, 220, 220);
+  doc.line(margin, y + 6, pageWidth - margin, y + 6);
+  y += 24;
+
+  doc.setFontSize(10);
+  const info = [
+    ['Full Name', memberData.name || '—'],
+    ['Member ID', memberData.memberId || '—'],
+    ['Stage / Route', memberData.stage || '—'],
+    ['Member Since', memberData.memberSince || '—']
+  ];
+  info.forEach(function(row){
+    doc.setFont('helvetica', 'bold');
+    doc.text(row[0] + ':', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(row[1]), margin + 105, y);
+    y += 16;
+  });
+
+  y += 12;
+
+  // Payment history table: date, time, amount, method, M-Pesa/bank reference (as entered by the treasurer)
+  const rows = myContributions.map(function(t){
+    const created = new Date(t.createdAt);
+    const timeStr = isNaN(created.getTime())
+      ? '—'
+      : created.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return [
+      t.date || '—',
+      timeStr,
+      formatKsh(t.amount),
+      t.method || '—',
+      (t.reference && String(t.reference).trim()) ? t.reference : '—'
+    ];
+  });
+
+  doc.autoTable({
+    startY: y,
+    margin: { left: margin, right: margin },
+    head: [['Date', 'Time Paid', 'Amount Paid', 'Method', 'M-Pesa / Bank Ref']],
+    body: rows,
+    theme: 'striped',
+    styles: { font: 'helvetica', fontSize: 9.5, cellPadding: 6 },
+    headStyles: { fillColor: [13, 33, 64], textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [245, 247, 250] },
+    columnStyles: { 2: { halign: 'right' } }
+  });
+
+  // Total
+  const total = myContributions.reduce(function(sum, t){ return sum + t.amount; }, 0);
+  let finalY = doc.lastAutoTable.finalY + 26;
+  if(finalY > pageHeight - 60){
+    doc.addPage();
+    finalY = 50;
+  }
+  doc.setDrawColor(200, 200, 200);
+  doc.line(pageWidth - margin - 200, finalY - 16, pageWidth - margin, finalY - 16);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(20, 20, 20);
+  doc.text('Total Paid:', pageWidth - margin - 140, finalY);
+  doc.setTextColor(20, 130, 80);
+  doc.text(formatKsh(total), pageWidth - margin, finalY, { align: 'right' });
+
+  // Footer
+  doc.setTextColor(140, 150, 165);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.text('This is a system-generated statement from the Katani Main Stage Member Portal.', margin, pageHeight - 30);
+  doc.text('For queries about this statement, contact the group office.', margin, pageHeight - 18);
+
+  doc.save('Katani-Payment-History-' + (memberData.memberId || 'member') + '.pdf');
+  showToast('Payment history PDF downloaded.');
 }
 
 
