@@ -766,6 +766,8 @@ function formatKsh(n){
   currentUser = await KatiniAuth.requireRole(['admin','member']);
   if(!currentUser) return;
 
+  try {
+
   memberData = {
     name: currentUser.name,
     uid: currentUser.uid,
@@ -875,6 +877,11 @@ function formatKsh(n){
     }
   }catch(e){
     document.getElementById('qrcode').innerHTML = '<div style="font-size:9px;text-align:center;color:#0d2140;padding:8px;">QR unavailable offline</div>';
+  }
+
+  } catch (err) {
+    console.error('Katani: failed to load member portal data', err);
+    showToast('Could not load your balance — ' + (err && err.message ? err.message : 'please try again') );
   }
 })();
 
