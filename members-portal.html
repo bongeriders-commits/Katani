@@ -144,7 +144,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 .this-month svg{width:14px;height:14px;}
 
 /* Quick actions */
-.qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.qa-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
 .qa-item{
   background:#fff;border-radius:14px;padding:14px 4px;text-align:center;box-shadow:0 3px 12px rgba(13,33,64,0.06);
   cursor:pointer;border:none;position:relative;
@@ -318,7 +318,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 /* ---------- Bottom nav ---------- */
 .bottom-nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;
-  display:grid;grid-template-columns:repeat(5,1fr);box-shadow:0 -4px 20px rgba(0,0,0,0.08);
+  display:grid;grid-template-columns:repeat(4,1fr);box-shadow:0 -4px 20px rgba(0,0,0,0.08);
   padding:9px 0 max(9px, env(safe-area-inset-bottom));z-index:50;align-items:center;
 }
 .nav-item{
@@ -418,27 +418,6 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
     </div>
   </div>
 
-  <div class="id-card" id="idCardAnchor" onclick="downloadId()">
-    <div class="id-left">
-      <div class="id-row">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span>Member ID</span>
-      </div>
-      <div class="id-num" id="memberIdNum">&mdash;</div>
-      <div class="id-since-row">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        <div>
-          <p>Member Since</p>
-          <h5>&mdash;</h5>
-        </div>
-      </div>
-    </div>
-    <div class="id-right">
-      <div class="qr-box"><div id="qrcode"></div></div>
-      <p>Tap to download ID</p>
-    </div>
-  </div>
-
   <div class="balance-card">
     <div class="balance-left">
       <div class="bl-label">Current Balance</div>
@@ -498,10 +477,6 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
       </button>
     </div>
     <div class="qa-grid">
-      <button class="qa-item" onclick="openPaymentHistory()">
-        <div class="qa-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><line x1="9" y1="9" x2="10" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg></div>
-        <p>Payment History</p>
-      </button>
       <button class="qa-item" onclick="showToast('Downloading receipts...')">
         <div class="qa-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
         <p>Download Receipts</p>
@@ -557,44 +532,6 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
     </div>
   </div>
 
-  <div class="section" id="profileSection">
-    <div class="section-head">
-      <h3>My Profile</h3>
-    </div>
-    <div class="profile-card">
-      <div class="profile-row"><span class="pk">Full Name</span><span class="pv" id="pf-name">—</span></div>
-      <div class="profile-row"><span class="pk">Member ID</span><span class="pv" id="pf-memberId">—</span></div>
-      <div class="profile-row"><span class="pk">Email</span><span class="pv" id="pf-email">—</span></div>
-      <div class="profile-row"><span class="pk">Phone</span><span class="pv" id="pf-phone">—</span></div>
-      <div class="profile-row"><span class="pk">Stage / Route</span><span class="pv" id="pf-stage">—</span></div>
-      <div class="profile-row"><span class="pk">Member Since</span><span class="pv" id="pf-since">—</span></div>
-    </div>
-    <button class="logout-btn" onclick="handleLogout()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      Log Out
-    </button>
-  </div>
-
-  <div class="section" id="contactSection">
-    <div class="section-head">
-      <h3>Contact Us</h3>
-    </div>
-    <div class="contact-card">
-      <a class="contact-row" id="contactPhoneRow" href="tel:0712345678">
-        <div class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
-        <div><h5>Call the Office</h5><p id="contactPhoneText">0712 345 678</p></div>
-      </a>
-      <a class="contact-row" id="contactEmailRow" href="mailto:info@katanimainstage.co.ke">
-        <div class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg></div>
-        <div><h5>Email Support</h5><p id="contactEmailText">info@katanimainstage.co.ke</p></div>
-      </a>
-      <div class="contact-row">
-        <div class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>
-        <div><h5>Our Location</h5><p id="contactMeetingPoint">Katani Main Stage, Machakos County</p></div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <div id="toast"></div>
@@ -604,7 +541,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Home
   </button>
-  <button class="nav-item" onclick="scrollToSection('idCardAnchor')">
+  <button class="nav-item" onclick="openIdCard()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="14" x2="17" y2="14"/><line x1="14" y1="17" x2="14" y2="17.01"/><line x1="14" y1="21" x2="17" y2="21"/><line x1="17" y1="17" x2="21" y2="17"/><line x1="21" y1="14" x2="21" y2="14.01"/><line x1="21" y1="21" x2="21" y2="21.01"/></svg>
     My ID
   </button>
@@ -612,11 +549,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     Profile
   </button>
-  <button class="nav-item" onclick="location.href='reports.html'">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    Reports
-  </button>
-  <button class="nav-item" onclick="scrollToSection('contactSection')">
+  <button class="nav-item" onclick="openContact()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
     Contact
   </button>
@@ -643,7 +576,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Download Receipts / Statement
       </button>
-      <button class="menu-item" onclick="closeMenu();scrollToSection('idCardAnchor')">
+      <button class="menu-item" onclick="closeMenu();openIdCard()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         My ID Card
       </button>
@@ -656,7 +589,7 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
         Group Documents
       </button>
-      <button class="menu-item" onclick="closeMenu();scrollToSection('contactSection')">
+      <button class="menu-item" onclick="closeMenu();openContact()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
         Contact Officials
       </button>
@@ -709,6 +642,11 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
       <div class="myp-row"><span class="pk">Relationship</span><span class="pv" id="myp-kinRelation">—</span></div>
       <div class="myp-row"><span class="pk">Phone</span><span class="pv" id="myp-kinPhone">—</span></div>
     </div>
+
+    <button class="logout-btn" onclick="handleLogout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Log Out
+    </button>
   </div>
 </div>
 
@@ -746,6 +684,62 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
     </div>
     <div class="ph-day-card" id="announcementsList">
       <div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No announcements yet.</div>
+    </div>
+  </div>
+</div>
+
+<div class="myp-overlay" id="idCardOverlay" onclick="if(event.target===this) closeIdCard()">
+  <div class="myp-panel">
+    <div class="myp-head">
+      <h3>My ID Card</h3>
+      <button class="myp-close" onclick="closeIdCard()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="id-card" id="idCardAnchor" onclick="downloadId()" style="margin:0;">
+      <div class="id-left">
+        <div class="id-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Member ID</span>
+        </div>
+        <div class="id-num" id="memberIdNum">&mdash;</div>
+        <div class="id-since-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <div>
+            <p>Member Since</p>
+            <h5>&mdash;</h5>
+          </div>
+        </div>
+      </div>
+      <div class="id-right">
+        <div class="qr-box"><div id="qrcode"></div></div>
+        <p>Tap to download ID</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="myp-overlay" id="contactOverlay" onclick="if(event.target===this) closeContact()">
+  <div class="myp-panel">
+    <div class="myp-head">
+      <h3>Contact Us</h3>
+      <button class="myp-close" onclick="closeContact()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="contact-card">
+      <a class="contact-row" id="contactPhoneRow" href="tel:0712345678">
+        <div class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+        <div><h5>Call the Office</h5><p id="contactPhoneText">0712 345 678</p></div>
+      </a>
+      <a class="contact-row" id="contactEmailRow" href="mailto:info@katanimainstage.co.ke">
+        <div class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg></div>
+        <div><h5>Email Support</h5><p id="contactEmailText">info@katanimainstage.co.ke</p></div>
+      </a>
+      <div class="contact-row">
+        <div class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div><h5>Our Location</h5><p id="contactMeetingPoint">Katani Main Stage, Machakos County</p></div>
+      </div>
     </div>
   </div>
 </div>
@@ -788,17 +782,11 @@ function formatKsh(n){
 
   document.getElementById('memberName').textContent = memberData.name;
   document.getElementById('memberIdNum').textContent = memberData.memberId;
-  document.getElementById('pf-name').textContent = memberData.name;
-  document.getElementById('pf-memberId').textContent = memberData.memberId;
-  document.getElementById('pf-email').textContent = memberData.email;
-  document.getElementById('pf-phone').textContent = memberData.phone;
-  document.getElementById('pf-stage').textContent = memberData.stage;
-  document.getElementById('pf-since').textContent = memberData.memberSince;
   refreshAnnouncementBadges();
 
   /* -------- Balance & transaction history (own contributions) -------- */
   const myTxns = (currentUser.role === 'admin' ? await KatiniAuth.getCollections() : await KatiniAuth.getMyCollections())
-    .filter(t => t.type === 'contribution' && t.memberUid === memberData.uid)
+    .filter(t => t.type === 'contribution' && t.memberId === memberData.memberId)
     .sort((a,b) => b.createdAt - a.createdAt);
 
   const totalContributed = myTxns.reduce((sum, t) => sum + t.amount, 0);
@@ -841,13 +829,13 @@ function formatKsh(n){
   document.getElementById('gs-yearsOfUnity').textContent = gs.yearsOfUnity;
 
   /* -------- Payment Summary + Next Payment Due (this member's real contributions) -------- */
-  const ps = await KatiniAuth.getMemberPaymentSummary(memberData.uid);
+  const ps = await KatiniAuth.getMemberPaymentSummary(memberData.memberId);
   document.getElementById('ps-totalPaid').textContent = formatKsh(ps.totalPaid);
   document.getElementById('ps-pending').textContent = formatKsh(ps.pending);
   document.getElementById('ps-totalDue').textContent = formatKsh(ps.totalDue);
   document.getElementById('ps-fines').textContent = formatKsh(ps.fines);
 
-  const due = await KatiniAuth.getNextPaymentDue(memberData.uid);
+  const due = await KatiniAuth.getNextPaymentDue(memberData.memberId);
   document.getElementById('br-date').textContent = due.label;
 
   const statusEl = document.getElementById('balanceStatus');
@@ -887,7 +875,7 @@ function formatKsh(n){
 
 /* -------- Payment History popup (amount paid by day) -------- */
 async function openPaymentHistory(){
-  const byDay = await KatiniAuth.getMemberPaymentsByDay(memberData.uid);
+  const byDay = await KatiniAuth.getMemberPaymentsByDay(memberData.memberId);
   const total = byDay.reduce((sum, d) => sum + d.amount, 0);
   document.getElementById('ph-total').textContent = formatKsh(total);
   document.getElementById('ph-days').textContent = byDay.length;
@@ -967,6 +955,18 @@ function closeAnnouncements(){
 function scrollToSection(id){
   const el = document.getElementById(id);
   if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function openIdCard(){
+  document.getElementById('idCardOverlay').classList.add('open');
+}
+function closeIdCard(){
+  document.getElementById('idCardOverlay').classList.remove('open');
+}
+function openContact(){
+  document.getElementById('contactOverlay').classList.add('open');
+}
+function closeContact(){
+  document.getElementById('contactOverlay').classList.remove('open');
 }
 function openMenu(){
   document.getElementById('menuOverlay').classList.add('open');
