@@ -703,6 +703,20 @@ header.topbar{
       </div>
     </div>
 
+    <div class="settings-section-title">5b. ID Card Settings</div>
+    <div class="profile-detail-card">
+      <div class="settings-field">
+        <label>Stage Name (on ID card)</label>
+        <input type="text" id="set-idStageName">
+        <p class="settings-hint">Printed top-left on every member's ID card.</p>
+      </div>
+      <div class="settings-field">
+        <label>Stage Number</label>
+        <input type="text" id="set-idStageNumber" placeholder="e.g. REG/2015/00123">
+        <p class="settings-hint">The stage's own registration number, printed on the card.</p>
+      </div>
+    </div>
+
     <div class="settings-section-title">6. Contact Details</div>
     <div class="profile-detail-card">
       <div class="settings-field">
@@ -894,6 +908,8 @@ async function openGroupSettings(){
   document.getElementById('set-groupName').value = s.groupName;
   document.getElementById('set-stageLocation').value = s.stageLocation;
   document.getElementById('set-motto').value = s.motto;
+  document.getElementById('set-idStageName').value = s.idStageName;
+  document.getElementById('set-idStageNumber').value = s.idStageNumber;
   document.getElementById('set-officePhone').value = s.officePhone;
   document.getElementById('set-officeEmail').value = s.officeEmail;
   document.getElementById('set-meetingPoint').value = s.meetingPoint;
@@ -926,6 +942,8 @@ async function saveGroupSettings(){
     groupName: document.getElementById('set-groupName').value,
     stageLocation: document.getElementById('set-stageLocation').value,
     motto: document.getElementById('set-motto').value,
+    idStageName: document.getElementById('set-idStageName').value,
+    idStageNumber: document.getElementById('set-idStageNumber').value,
     officePhone: document.getElementById('set-officePhone').value,
     officeEmail: document.getElementById('set-officeEmail').value,
     meetingPoint: document.getElementById('set-meetingPoint').value,

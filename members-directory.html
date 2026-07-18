@@ -18,6 +18,7 @@
 <script src="firebase-config.js"></script>
 <script src="auth.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
   --navy:#0d2140;
@@ -269,6 +270,36 @@ header.topbar{
 }
 .cred-whatsapp-btn svg{width:17px;height:17px;}
 
+/* ---------- Member ID Card (Kenyan ID / ID-1 card size: 85.6mm x 54mm) ---------- */
+.idcard-wrap{display:flex;justify-content:center;padding:6px 0 18px;}
+.id-card{
+  width:85.6mm;height:54mm;border-radius:3.2mm;position:relative;overflow:hidden;flex-shrink:0;
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);
+  box-shadow:0 8px 24px rgba(13,33,64,0.35);color:#fff;
+  padding:3mm 3.2mm;box-sizing:border-box;display:flex;flex-direction:column;
+  font-family:'Segoe UI',Roboto,-apple-system,BlinkMacSystemFont,sans-serif;
+}
+.id-head{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;}
+.id-head-stage{font-size:6.6pt;font-weight:800;letter-spacing:.3px;line-height:1.15;max-width:26mm;}
+.id-head-sacco{font-size:7.6pt;font-weight:800;letter-spacing:1px;color:var(--gold);text-align:right;}
+.id-logo{width:9mm;height:9mm;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.3);}
+.id-logo img{width:100%;height:100%;object-fit:cover;}
+.id-regno{font-size:5.6pt;color:var(--text-light);text-align:center;margin-top:1mm;letter-spacing:.4px;}
+.id-body{display:flex;align-items:center;gap:3mm;flex:1;margin-top:2mm;}
+.id-photo{
+  width:19mm;height:22mm;border-radius:2mm;background:#fff;border:0.5mm solid var(--gold);
+  overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  color:var(--navy);font-weight:800;font-size:14pt;
+}
+.id-photo img{width:100%;height:100%;object-fit:cover;}
+.id-details{flex:1;min-width:0;}
+.id-name{font-size:9.5pt;font-weight:800;line-height:1.2;margin-bottom:1.8mm;word-break:break-word;}
+.id-line{font-size:6.2pt;color:var(--text-light);margin-bottom:0.6mm;letter-spacing:.2px;}
+.id-line b{color:#fff;font-size:6.6pt;letter-spacing:.3px;}
+.id-foot{border-top:0.3mm solid rgba(255,255,255,0.25);margin-top:2mm;padding-top:1.4mm;}
+.id-disclaimer{font-size:4.6pt;font-style:italic;color:var(--text-light);line-height:1.3;text-align:center;}
+.idcard-actions{display:flex;flex-direction:column;gap:10px;}
+
 /* View-member detail sheet */
 .vm-photo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:16px;}
 .vm-photo{
@@ -460,6 +491,11 @@ header.topbar{
           <input type="text" id="nm-residence" placeholder="e.g. Katani, Machakos">
         </div>
       </div>
+      <div class="mm-field">
+        <label>SACCO Number</label>
+        <input type="text" id="nm-saccoNumber" placeholder="e.g. SACCO/2015/00123">
+        <div style="font-size:11px;color:var(--muted);margin-top:5px;">Printed on the member's ID card. Set/updated by the admin.</div>
+      </div>
       <div class="mm-field" id="nm-password-field">
         <label>Temporary Password *</label>
         <input type="text" id="nm-password" placeholder="Shared with the member to log in">
@@ -585,7 +621,13 @@ header.topbar{
       <div class="vm-row"><span class="vk">Date of Birth</span><span class="vv" id="vm-dob">—</span></div>
       <div class="vm-row"><span class="vk">Residence</span><span class="vv" id="vm-residence">—</span></div>
       <div class="vm-row"><span class="vk">Member Since</span><span class="vv" id="vm-since">—</span></div>
+      <div class="vm-row"><span class="vk">SACCO Number</span><span class="vv" id="vm-saccoNumber">—</span></div>
     </div>
+
+    <button class="mm-photo-btn" style="width:100%;background:var(--purple);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openIdCard()">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><line x1="14" y1="10" x2="18" y2="10"/><line x1="14" y1="14" x2="18" y2="14"/></svg>
+      Download ID Card
+    </button>
 
     <div class="mm-section">
       <h4>Motorcycle Details</h4>
@@ -623,6 +665,46 @@ header.topbar{
       Send via WhatsApp
     </button>
     <div style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center;">Opens WhatsApp with the message pre-filled &mdash; just tap Send.</div>
+  </div>
+</div>
+
+<!-- Member ID Card modal -->
+<div class="member-modal-overlay" id="idCardOverlay" onclick="if(event.target===this) closeIdCard()">
+  <div class="member-modal">
+    <div class="mm-head">
+      <h3>Member ID Card</h3>
+      <button class="mm-close" onclick="closeIdCard()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="idcard-wrap">
+      <div class="id-card" id="id-card">
+        <div class="id-head">
+          <div class="id-head-stage" id="idc-stageName">STAGE NAME</div>
+          <div class="id-logo" id="idc-logo"><img src="icon-192.png" alt="Logo"></div>
+          <div class="id-head-sacco">SACCO</div>
+        </div>
+        <div class="id-regno" id="idc-stageNumber"></div>
+        <div class="id-body">
+          <div class="id-photo" id="idc-photo">?</div>
+          <div class="id-details">
+            <div class="id-name" id="idc-name">Member Name</div>
+            <div class="id-line">STAGE NO.</div>
+            <div class="id-line" style="margin-bottom:1.8mm;"><b id="idc-stageNo">—</b></div>
+            <div class="id-line">SACCO NO.</div>
+            <div class="id-line"><b id="idc-saccoNo">—</b></div>
+          </div>
+        </div>
+        <div class="id-foot">
+          <div class="id-disclaimer">This is a member-only virtual card and can&rsquo;t be used in any official transactions.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="idcard-actions">
+      <button class="mm-save-btn" onclick="downloadIdCard()">Download ID Card (PNG)</button>
+    </div>
   </div>
 </div>
 
@@ -763,7 +845,7 @@ function closeAddMember(){
   resetAddMemberForm();
 }
 function resetAddMemberForm(){
-  ['nm-name','nm-phone','nm-email','nm-nationalId','nm-dob','nm-residence','nm-password',
+  ['nm-name','nm-phone','nm-email','nm-nationalId','nm-dob','nm-residence','nm-password','nm-saccoNumber',
    'nm-plate','nm-bikeModel','nm-bikeColor','nm-chassisNo','nm-kinName','nm-kinPhone'].forEach(id => {
     document.getElementById(id).value = '';
   });
@@ -779,6 +861,7 @@ function resetAddMemberForm(){
 
 /* -------- Edit Member (reuses the Add Member modal) -------- */
 let editingMemberId = '';
+let currentViewedMember = null;
 
 async function openEditMemberFromView(){
   const uid = editingMemberId;
@@ -801,6 +884,7 @@ async function openEditMemberFromView(){
   document.getElementById('nm-gender').value = u.gender || '';
   document.getElementById('nm-dob').value = u.dob || '';
   document.getElementById('nm-residence').value = u.residence || '';
+  document.getElementById('nm-saccoNumber').value = u.saccoNumber || '';
   const mc = u.motorcycle || {};
   document.getElementById('nm-plate').value = mc.plate || '';
   document.getElementById('nm-bikeModel').value = mc.model || '';
@@ -859,6 +943,7 @@ async function saveMember(){
     gender: document.getElementById('nm-gender').value,
     dob: document.getElementById('nm-dob').value,
     residence: document.getElementById('nm-residence').value.trim(),
+    saccoNumber: document.getElementById('nm-saccoNumber').value.trim(),
     photo: nmPhotoDataUrl,
     motorcycle: {
       plate: document.getElementById('nm-plate').value.trim().toUpperCase(),
@@ -966,12 +1051,52 @@ function sendCredsViaWhatsApp(){
   window.open(link, '_blank');
 }
 
+/* -------- Member ID Card -------- */
+async function openIdCard(){
+  const u = currentViewedMember;
+  if(!u){ showToast('Open a member profile first'); return; }
+  const s = await KatiniAuth.getSettings();
+
+  document.getElementById('idc-stageName').textContent = (s.idStageName || 'STAGE NAME').toUpperCase();
+  document.getElementById('idc-stageNumber').textContent = s.idStageNumber ? ('Stage Reg. No: ' + s.idStageNumber) : '';
+  document.getElementById('idc-logo').innerHTML = s.logo
+    ? `<img src="${KatiniAuth.escapeHtml(s.logo)}" alt="Logo">`
+    : `<img src="icon-192.png" alt="Logo">`;
+  document.getElementById('idc-name').textContent = u.name || '—';
+  document.getElementById('idc-stageNo').textContent = u.memberId || '—';
+  document.getElementById('idc-saccoNo').textContent = u.saccoNumber || '—';
+  document.getElementById('idc-photo').innerHTML = u.photo
+    ? `<img src="${KatiniAuth.escapeHtml(u.photo)}" alt="${KatiniAuth.escapeHtml(u.name)}">`
+    : initials(u.name || '?');
+
+  document.getElementById('idCardOverlay').classList.add('open');
+}
+function closeIdCard(){
+  document.getElementById('idCardOverlay').classList.remove('open');
+}
+async function downloadIdCard(){
+  if(!window.html2canvas){ showToast('ID card renderer failed to load — check your connection'); return; }
+  const cardEl = document.getElementById('id-card');
+  showToast('Preparing your ID card…');
+  try{
+    const canvas = await html2canvas(cardEl, { scale: 4, backgroundColor: null, useCORS: true });
+    const link = document.createElement('a');
+    const safeName = (currentViewedMember && currentViewedMember.name ? currentViewedMember.name : 'member').replace(/[^a-z0-9]+/gi, '-');
+    link.download = `${safeName}-ID-Card.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }catch(e){
+    showToast('Could not generate the ID card image');
+  }
+}
+
 /* -------- View Member modal -------- */
 async function openViewMember(memberId){
   const users = await KatiniAuth.getUsers();
   const u = users.find(x => x.memberId === memberId);
   if(!u){ showToast('Member not found'); return; }
 
+  currentViewedMember = u;
   editingMemberId = u.uid;
   document.getElementById('vm-delete-confirm').style.display = 'none';
   document.getElementById('vm-name').textContent = u.name;
@@ -984,6 +1109,7 @@ async function openViewMember(memberId){
   document.getElementById('vm-dob').textContent = u.dob || '—';
   document.getElementById('vm-residence').textContent = u.residence || '—';
   document.getElementById('vm-since').textContent = u.memberSince || '—';
+  document.getElementById('vm-saccoNumber').textContent = u.saccoNumber || '—';
 
   const mc = u.motorcycle || {};
   document.getElementById('vm-plate').textContent = mc.plate || '—';

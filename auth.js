@@ -438,6 +438,7 @@
         nationalId: data.nationalId || '',
         residence: data.residence || '',
         photo: data.photo || '',
+        saccoNumber: data.saccoNumber || '',
         mustChangePassword: true,
         motorcycle: {
           plate: (data.motorcycle && data.motorcycle.plate) || '',
@@ -482,6 +483,7 @@
         gender: data.gender || '',
         nationalId: data.nationalId || '',
         residence: data.residence || '',
+        saccoNumber: data.saccoNumber || '',
         motorcycle: {
           plate: (data.motorcycle && data.motorcycle.plate) || '',
           model: (data.motorcycle && data.motorcycle.model) || '',
@@ -984,6 +986,9 @@
     stageLocation: 'Katani, Machakos County',
     motto: 'United Riders. Stronger Together.',
     logo: '',
+    // ID Card
+    idStageName: 'Katani Main Stage',
+    idStageNumber: '',
     // Contact details
     officePhone: '0712 345 678',
     officeEmail: 'admin@katanimainstage.co.ke',
@@ -1018,6 +1023,8 @@
       stageLocation: str(data.stageLocation, current.stageLocation),
       motto: str(data.motto, current.motto),
       logo: str(data.logo, current.logo),
+      idStageName: str(data.idStageName, current.idStageName).trim() || current.idStageName,
+      idStageNumber: str(data.idStageNumber, current.idStageNumber),
       officePhone: str(data.officePhone, current.officePhone),
       officeEmail: str(data.officeEmail, current.officeEmail),
       meetingPoint: str(data.meetingPoint, current.meetingPoint),
