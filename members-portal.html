@@ -89,53 +89,44 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 .member-badge svg{width:16px;height:16px;}
 .hero-quote{color:var(--text-light);font-size:13px;font-style:italic;margin-top:10px;}
 
-/* ---------- Member ID card (Kenyan national-ID style) ---------- */
+/* ---------- Member ID card (virtual navy card style) ---------- */
 .id-card-wrap{margin:20px 20px 0;}
 .id-card{
-  position:relative;z-index:3;background:#fff;border-radius:14px;overflow:hidden;
-  box-shadow:0 14px 30px rgba(10,20,40,0.35);border:1px solid var(--border);cursor:pointer;
+  position:relative;z-index:3;
+  background:linear-gradient(160deg,var(--navy) 0%,var(--navy-dark) 100%);
+  border-radius:18px;overflow:hidden;padding:18px 18px 14px;
+  box-shadow:0 14px 30px rgba(10,20,40,0.4);cursor:pointer;
 }
-.id-card-head{
-  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);
-  padding:12px 14px;display:flex;align-items:center;gap:10px;position:relative;
+.id-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:16px;}
+.id-card-title{color:#fff;font-size:12.5px;font-weight:800;letter-spacing:0.2px;line-height:1.25;max-width:38%;}
+.id-card-logo-circle{
+  width:52px;height:52px;border-radius:50%;background:#fff;padding:3px;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(0,0,0,0.25);overflow:hidden;
 }
-.id-card-head::after{
-  content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
-  background:linear-gradient(90deg,var(--gold),var(--green),var(--gold));
-}
-.id-card-logo{
-  width:34px;height:34px;border-radius:8px;background:#fff;flex-shrink:0;overflow:hidden;
+.id-card-logo-circle img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.id-card-sacco{color:var(--gold);font-size:13px;font-weight:800;letter-spacing:0.6px;text-align:right;max-width:34%;line-height:1.2;}
+
+.id-card-main{display:flex;align-items:flex-start;gap:12px;}
+.id-photo{
+  width:74px;height:96px;border-radius:10px;border:2.5px solid var(--gold);overflow:hidden;flex-shrink:0;
+  background:var(--navy-card);color:var(--gold);font-weight:800;font-size:19px;
   display:flex;align-items:center;justify-content:center;
 }
-.id-card-logo img{width:100%;height:100%;object-fit:cover;}
-.id-card-headtext{flex:1;min-width:0;}
-.id-card-headtext h4{color:#fff;font-size:13px;font-weight:800;letter-spacing:0.3px;line-height:1.2;}
-.id-card-headtext p{color:var(--gold);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-top:2px;}
-.id-card-body{display:flex;gap:12px;padding:14px;background:#fdfdfc;}
-.id-photo{
-  width:78px;height:92px;border-radius:6px;background:var(--navy);color:var(--gold);font-weight:800;
-  font-size:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;
-  border:2px solid var(--navy-card);box-shadow:0 2px 6px rgba(13,33,64,0.2);
-}
 .id-photo img{width:100%;height:100%;object-fit:cover;}
-.id-fields{flex:1;min-width:0;}
-.id-name{color:var(--navy-dark);font-size:14.5px;font-weight:800;line-height:1.15;margin-bottom:6px;word-break:break-word;}
-.id-field-row{margin-bottom:5px;}
-.id-field-row .fl{color:var(--muted);font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;display:block;}
-.id-field-row .fv{color:var(--navy-dark);font-size:12px;font-weight:700;}
-.id-card-strip{
-  display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--gray-bg);
-  border-top:1px dashed var(--border);
-}
+.id-fields{flex:1;min-width:0;padding-top:2px;}
+.id-name{color:#fff;font-size:17px;font-weight:800;line-height:1.2;margin-bottom:10px;word-break:break-word;}
+.id-field-row{margin-bottom:8px;}
+.id-field-row .fl{color:#93a3bd;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:block;}
+.id-field-row .fv{color:#fff;font-size:12.5px;font-weight:800;letter-spacing:0.2px;}
 .id-qr-box{
-  width:56px;height:56px;background:#fff;border:1px solid var(--border);border-radius:8px;
-  display:flex;align-items:center;justify-content:center;padding:4px;flex-shrink:0;
+  width:52px;height:52px;background:#fff;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;padding:4px;flex-shrink:0;align-self:center;
 }
 #qrcode{width:100%;height:100%;}
 #qrcode img{width:100%!important;height:100%!important;}
-.id-card-strip-text{flex:1;min-width:0;}
-.id-card-strip-text .serial{color:var(--navy-dark);font-size:10.5px;font-weight:800;letter-spacing:0.5px;}
-.id-card-strip-text .tapnote{color:var(--muted);font-size:9.5px;margin-top:1px;}
+
+.id-card-footer{margin-top:16px;padding-top:11px;border-top:1px solid rgba(255,255,255,0.15);}
+.id-card-footer p{color:#8b9ab5;font-size:9px;font-style:italic;text-align:center;line-height:1.4;margin:0;}
 
 /* ---------- Balance card ---------- */
 .balance-card{
@@ -735,37 +726,28 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
     </div>
     <div class="id-card-wrap">
       <div class="id-card" id="idCardAnchor" onclick="downloadId()">
-        <div class="id-card-head">
-          <div class="id-card-logo"><img src="icon-192.png" alt="Katani Main Stage logo"></div>
-          <div class="id-card-headtext">
-            <h4>KATANI MAIN STAGE</h4>
-            <p id="idCardStageName">Boda Boda Self Help Group</p>
-          </div>
+        <div class="id-card-top">
+          <div class="id-card-title">KATANI MAIN STAGE</div>
+          <div class="id-card-logo-circle"><img src="icon-192.png" alt="Katani Main Stage logo"></div>
+          <div class="id-card-sacco">KANGEMLO<br>SACCO</div>
         </div>
-        <div class="id-card-body">
+        <div class="id-card-main">
           <div class="id-photo" id="idCardPhoto">&nbsp;</div>
           <div class="id-fields">
             <div class="id-name" id="idCardName">&mdash;</div>
             <div class="id-field-row">
-              <span class="fl">Member No.</span>
+              <span class="fl">Stage No.</span>
               <span class="fv" id="idCardMemberNo">&mdash;</span>
             </div>
             <div class="id-field-row">
-              <span class="fl">Stage No.</span>
+              <span class="fl">Sacco No.</span>
               <span class="fv" id="idCardStageNo">&mdash;</span>
             </div>
-            <div class="id-field-row">
-              <span class="fl">Member Since</span>
-              <span class="fv" id="idCardSince">&mdash;</span>
-            </div>
           </div>
-        </div>
-        <div class="id-card-strip">
           <div class="id-qr-box"><div id="qrcode"></div></div>
-          <div class="id-card-strip-text">
-            <div class="serial" id="idCardSerial">&mdash;</div>
-            <div class="tapnote">Tap card to download</div>
-          </div>
+        </div>
+        <div class="id-card-footer">
+          <p>This is a member-only virtual card and can't be used in any official transactions.</p>
         </div>
       </div>
     </div>
@@ -1014,10 +996,7 @@ function populateIdCard(groupSettings){
 
   document.getElementById('idCardName').textContent = memberData.name;
   document.getElementById('idCardMemberNo').textContent = memberData.memberId;
-  document.getElementById('idCardSince').textContent = memberData.memberSince;
-  document.getElementById('idCardStageName').textContent = (groupSettings && groupSettings.idStageName) || memberData.stage;
   document.getElementById('idCardStageNo').textContent = (groupSettings && groupSettings.idStageNumber) || '—';
-  document.getElementById('idCardSerial').textContent = 'KMS/' + memberData.memberId;
 
   const qrBox = document.getElementById('qrcode');
   qrBox.innerHTML = '';
@@ -1025,15 +1004,15 @@ function populateIdCard(groupSettings){
     if(window.QRCode){
       new QRCode(qrBox, {
         text: memberData.memberId,
-        width: 48,
-        height: 48,
+        width: 44,
+        height: 44,
         colorDark: "#0d2140",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.M
       });
     }
   }catch(e){
-    qrBox.innerHTML = '<div style="font-size:7px;text-align:center;color:#0d2140;">QR unavailable</div>';
+    qrBox.innerHTML = '<div style="font-size:6px;text-align:center;color:#0d2140;">QR unavailable</div>';
   }
 }
 function openContact(){
@@ -1156,7 +1135,7 @@ function downloadId(){
   }
   showToast('Preparing your Member ID card...');
   const card = document.getElementById('idCardAnchor');
-  html2canvas(card, { scale: 3, backgroundColor: '#ffffff', useCORS: true }).then(function(canvas){
+  html2canvas(card, { scale: 3, backgroundColor: null, useCORS: true }).then(function(canvas){
     const link = document.createElement('a');
     link.download = 'katani-id-' + (memberData.memberId || 'card') + '.png';
     link.href = canvas.toDataURL('image/png');
