@@ -896,26 +896,42 @@ function formatKsh(n){
 
 /* -------- Payment History popup (amount paid by day) -------- */
 async function openPaymentHistory(){
-  const byDay = await KatiniAuth.getMemberPaymentsByDay(memberData.memberId);
-  const total = byDay.reduce((sum, d) => sum + d.amount, 0);
-  document.getElementById('ph-total').textContent = formatKsh(total);
-  document.getElementById('ph-days').textContent = byDay.length;
-
-  const listEl = document.getElementById('phDayList');
-  if(byDay.length === 0){
-    listEl.innerHTML = '<div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No payments yet.</div>';
-  } else {
-    listEl.innerHTML = byDay.map(d => `
-      <div class="ph-day-row">
-        <div>
-          <div class="ph-date">${KatiniAuth.escapeHtml(d.date)}</div>
-          <div class="ph-count">${d.count} payment${d.count > 1 ? 's' : ''}</div>
-        </div>
-        <div class="ph-amt">${formatKsh(d.amount)}</div>
-      </div>
-    `).join('');
+  if(!memberData || !memberData.memberId){
+    showToast('Still loading your data — please try again in a moment.');
+    return;
   }
+  // Open the overlay first so the popup always appears, even if the
+  // payments fetch below is slow or fails.
   document.getElementById('paymentHistoryOverlay').classList.add('open');
+  document.getElementById('ph-total').textContent = formatKsh(0);
+  document.getElementById('ph-days').textContent = 0;
+  document.getElementById('phDayList').innerHTML = '<div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">Loading...</div>';
+
+  try{
+    const byDay = await KatiniAuth.getMemberPaymentsByDay(memberData.memberId);
+    const total = byDay.reduce((sum, d) => sum + d.amount, 0);
+    document.getElementById('ph-total').textContent = formatKsh(total);
+    document.getElementById('ph-days').textContent = byDay.length;
+
+    const listEl = document.getElementById('phDayList');
+    if(byDay.length === 0){
+      listEl.innerHTML = '<div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No payments yet.</div>';
+    } else {
+      listEl.innerHTML = byDay.map(d => `
+        <div class="ph-day-row">
+          <div>
+            <div class="ph-date">${KatiniAuth.escapeHtml(d.date)}</div>
+            <div class="ph-count">${d.count} payment${d.count > 1 ? 's' : ''}</div>
+          </div>
+          <div class="ph-amt">${formatKsh(d.amount)}</div>
+        </div>
+      `).join('');
+    }
+  }catch(err){
+    console.error('Katani: failed to load payment history', err);
+    document.getElementById('phDayList').innerHTML = '<div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">Could not load payment history — please try again.</div>';
+    showToast('Could not load payment history.');
+  }
 }
 function closePaymentHistory(){
   document.getElementById('paymentHistoryOverlay').classList.remove('open');
