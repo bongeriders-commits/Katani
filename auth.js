@@ -465,6 +465,24 @@
     }
   }
 
+  // ---- Forgot password (self-service, no admin required) -----------------
+  // Sends Firebase's built-in "reset your password" email. Firebase only
+  // sends it for emails that actually have an Auth account — an unknown
+  // email surfaces as auth/user-not-found here (unless the Firebase
+  // project has Email Enumeration Protection turned on, in which case
+  // Firebase always reports success without revealing whether the email
+  // exists, which is also safe to show to the member as-is).
+  async function sendPasswordReset(email) {
+    var emailL = String(email || '').trim().toLowerCase();
+    if (!emailL) return { success: false, message: 'Enter your email address.' };
+    try {
+      await auth.sendPasswordResetEmail(emailL, emailLinkSettings());
+      return { success: true };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
+  }
+
   function isEmailLinkSignIn() {
     try { return auth.isSignInWithEmailLink(window.location.href); }
     catch (e) { return false; }
@@ -1015,6 +1033,7 @@
     addMember: addMember,
     login: login,
     sendLoginLink: sendLoginLink,
+    sendPasswordReset: sendPasswordReset,
     isEmailLinkSignIn: isEmailLinkSignIn,
     completeEmailLinkSignIn: completeEmailLinkSignIn,
     isWebAuthnSupported: isWebAuthnSupported,

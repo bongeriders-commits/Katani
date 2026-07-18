@@ -140,6 +140,34 @@ body{
 }
 .gate-login-btn svg{width:18px;height:18px;flex-shrink:0;}
 .gate-login-btn:active{transform:scale(0.98);}
+.gate-forgot-link{text-align:center;margin-top:10px;}
+.gate-forgot-link a{font-size:12.5px;font-weight:700;color:var(--muted,#6b7685);text-decoration:underline;cursor:pointer;}
+
+/* ============ FORGOT PASSWORD MODAL ============ */
+.fp-overlay{
+  position:fixed;inset:0;z-index:9000;background:rgba(10,24,48,0.55);
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;visibility:hidden;transition:opacity .25s ease, visibility .25s ease;
+}
+.fp-overlay.show{opacity:1;visibility:visible;}
+.fp-sheet{
+  width:100%;max-width:480px;background:#fff;border-radius:18px 18px 0 0;
+  padding:22px 20px 26px;box-shadow:0 -8px 30px rgba(13,33,64,0.25);
+  transform:translateY(16px);transition:transform .25s ease;
+}
+.fp-overlay.show .fp-sheet{transform:translateY(0);}
+.fp-sheet h2{font-size:17px;font-weight:800;color:var(--navy-dark);margin-bottom:4px;}
+.fp-sheet .gate-sub{font-size:12.5px;color:var(--muted,#6b7685);margin-bottom:18px;}
+.fp-actions{display:flex;gap:10px;margin-top:4px;}
+.fp-cancel-btn{
+  flex:0 0 auto;background:#f1f3f7;color:var(--navy-dark);border:none;border-radius:10px;
+  padding:14px 18px;font-size:14.5px;font-weight:700;cursor:pointer;
+}
+.fp-send-btn{
+  flex:1;background:var(--gold);color:var(--navy-dark);border:none;border-radius:10px;
+  padding:14px;font-size:14.5px;font-weight:800;cursor:pointer;
+}
+.fp-send-btn:disabled{opacity:0.6;}
 
 .gate-why{padding:26px 20px 4px;}
 .gate-why h3{font-size:17px;font-weight:800;color:var(--navy-dark);position:relative;display:inline-block;padding-bottom:8px;margin-bottom:16px;}
@@ -463,6 +491,9 @@ footer.app-footer{
       <div class="gate-alt-link">
         <a href="#" id="altLoginModeLink" onclick="return toggleAltLoginMode(event)">Or login with your email</a>
       </div>
+      <div class="gate-forgot-link">
+        <a href="#" onclick="return openForgotPasswordModal(event)">Forgot your password?</a>
+      </div>
 
     </div>
   </div>
@@ -502,6 +533,31 @@ footer.app-footer{
         JOIN NOW
       </a>
     </div>
+  </div>
+</div>
+
+<!-- FORGOT PASSWORD MODAL -->
+<div id="forgotPasswordModal" class="fp-overlay" onclick="if(event.target===this) closeForgotPasswordModal()">
+  <div class="fp-sheet">
+    <h2>Reset your password</h2>
+    <p class="gate-sub">Enter the email address you registered with. If it matches a member account, we'll send a link to set a new password.</p>
+
+    <div class="gate-error" id="fpError"></div>
+    <div class="gate-info" id="fpInfo"></div>
+
+    <form id="forgotPasswordForm" onsubmit="return handleForgotPasswordSubmit(event)">
+      <div class="gate-field">
+        <label>Email Address</label>
+        <div class="gate-input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg>
+          <input type="email" id="fpEmail" placeholder="you@example.com" required>
+        </div>
+      </div>
+      <div class="fp-actions">
+        <button type="button" class="fp-cancel-btn" onclick="closeForgotPasswordModal()">Cancel</button>
+        <button type="submit" class="fp-send-btn" id="fpSendBtn">Send Reset Link</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -821,6 +877,49 @@ async function handleGateLogin(e){
 
   await maybeOfferBiometricEnable();
   window.KatiniAuth.routeToHome();
+  return false;
+}
+
+function openForgotPasswordModal(e){
+  if (e) e.preventDefault();
+  document.getElementById('fpError').classList.remove('show');
+  document.getElementById('fpInfo').classList.remove('show');
+  document.getElementById('forgotPasswordForm').style.display = '';
+  const emailField = document.getElementById('fpEmail');
+  emailField.value = document.getElementById('gateEmail').value || '';
+  document.getElementById('forgotPasswordModal').classList.add('show');
+  return false;
+}
+function closeForgotPasswordModal(){
+  document.getElementById('forgotPasswordModal').classList.remove('show');
+}
+
+async function handleForgotPasswordSubmit(e){
+  e.preventDefault();
+  const email = document.getElementById('fpEmail').value;
+  const errBox = document.getElementById('fpError');
+  const infoBox = document.getElementById('fpInfo');
+  errBox.classList.remove('show');
+  infoBox.classList.remove('show');
+
+  const sendBtn = document.getElementById('fpSendBtn');
+  sendBtn.disabled = true;
+  sendBtn.textContent = 'Sending...';
+
+  const result = await window.KatiniAuth.sendPasswordReset(email);
+
+  sendBtn.disabled = false;
+  sendBtn.textContent = 'Send Reset Link';
+
+  if (!result.success) {
+    errBox.textContent = result.message;
+    errBox.classList.add('show');
+    return false;
+  }
+
+  infoBox.textContent = 'If ' + email + ' is a registered member, a password reset email is on its way. Check your inbox (and spam folder).';
+  infoBox.classList.add('show');
+  document.getElementById('forgotPasswordForm').style.display = 'none';
   return false;
 }
 
