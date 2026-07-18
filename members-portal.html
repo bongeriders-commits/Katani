@@ -12,6 +12,10 @@
 <meta name="apple-mobile-web-app-title" content="Katani Stage">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script src="auth.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -367,7 +371,9 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 <link rel="stylesheet" href="desktop.css">
 </head>
 <body>
-<script>if(!(window.KatiniAuth && KatiniAuth.getSession())){ window.location.href = 'index.html'; }</script>
+<!-- NOTE: the instant sync redirect that used to live here can't work with
+     Firebase's async auth state. The real guard is the awaited
+     KatiniAuth.requireRole(['admin','member']) call further down this page. -->
 
 <div id="app">
 
@@ -746,29 +752,38 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 
 <script>
 // Auth guard: only logged-in members (or admins previewing) may view this page.
-const currentUser = KatiniAuth.requireRole(['admin','member']);
-
-const memberData = currentUser ? {
-  name: currentUser.name,
-  memberId: currentUser.memberId,
-  memberSince: currentUser.memberSince || '—',
-  email: currentUser.email,
-  phone: currentUser.phone || '—',
-  stage: currentUser.stage || 'Katani Main Stage',
-  status: "active",
-  photo: currentUser.photo || '',
-  nationalId: currentUser.nationalId || '—',
-  gender: currentUser.gender || '—',
-  dob: currentUser.dob || '—',
-  residence: currentUser.residence || '—',
-  motorcycle: currentUser.motorcycle || {},
-  nextOfKin: currentUser.nextOfKin || {}
-} : {
-  name: "Member", memberId: "—", memberSince: "—", email: "—", phone: "—", stage: "—", status: "active",
+let currentUser = null;
+let memberData = {
+  name: "Member", uid: "", memberId: "—", memberSince: "—", email: "—", phone: "—", stage: "—", status: "active",
   photo: '', nationalId: '—', gender: '—', dob: '—', residence: '—', motorcycle: {}, nextOfKin: {}
 };
 
-if(currentUser){
+function formatKsh(n){
+  return 'KSh ' + Math.round(n).toLocaleString('en-KE');
+}
+
+(async function init(){
+  currentUser = await KatiniAuth.requireRole(['admin','member']);
+  if(!currentUser) return;
+
+  memberData = {
+    name: currentUser.name,
+    uid: currentUser.uid,
+    memberId: currentUser.memberId,
+    memberSince: currentUser.memberSince || '—',
+    email: currentUser.email,
+    phone: currentUser.phone || '—',
+    stage: currentUser.stage || 'Katani Main Stage',
+    status: "active",
+    photo: currentUser.photo || '',
+    nationalId: currentUser.nationalId || '—',
+    gender: currentUser.gender || '—',
+    dob: currentUser.dob || '—',
+    residence: currentUser.residence || '—',
+    motorcycle: currentUser.motorcycle || {},
+    nextOfKin: currentUser.nextOfKin || {}
+  };
+
   document.getElementById('memberName').textContent = memberData.name;
   document.getElementById('memberIdNum').textContent = memberData.memberId;
   document.getElementById('pf-name').textContent = memberData.name;
@@ -778,16 +793,10 @@ if(currentUser){
   document.getElementById('pf-stage').textContent = memberData.stage;
   document.getElementById('pf-since').textContent = memberData.memberSince;
   refreshAnnouncementBadges();
-}
 
-/* -------- Balance & transaction history (own contributions) -------- */
-function formatKsh(n){
-  return 'KSh ' + Math.round(n).toLocaleString('en-KE');
-}
-
-if(currentUser){
-  const myTxns = KatiniAuth.getCollections()
-    .filter(t => t.type === 'contribution' && t.memberId === memberData.memberId)
+  /* -------- Balance & transaction history (own contributions) -------- */
+  const myTxns = (currentUser.role === 'admin' ? await KatiniAuth.getCollections() : await KatiniAuth.getMyCollections())
+    .filter(t => t.type === 'contribution' && t.memberUid === memberData.uid)
     .sort((a,b) => b.createdAt - a.createdAt);
 
   const totalContributed = myTxns.reduce((sum, t) => sum + t.amount, 0);
@@ -801,21 +810,19 @@ if(currentUser){
       <div class="tx-row">
         <div class="tx-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
         <div class="tx-body">
-          <h5>Contribution &ndash; ${t.method}</h5>
-          <p>${t.note || 'Welfare contribution'}</p>
+          <h5>Contribution &ndash; ${KatiniAuth.escapeHtml(t.method)}</h5>
+          <p>${KatiniAuth.escapeHtml(t.note || 'Welfare contribution')}</p>
         </div>
         <div class="tx-right">
           <div class="amt">+${formatKsh(t.amount)}</div>
-          <div class="date">${t.date}</div>
+          <div class="date">${KatiniAuth.escapeHtml(t.date)}</div>
         </div>
       </div>
     `).join('');
   }
-}
 
-/* -------- Group Overview (admin-set founding year + real member/collection data) -------- */
-if(currentUser){
-  const groupSettings = KatiniAuth.getSettings();
+  /* -------- Group Overview (admin-set founding year + real member/collection data) -------- */
+  const groupSettings = await KatiniAuth.getSettings();
   document.getElementById('groupMotto').textContent = '"' + groupSettings.motto + '"';
 
   const phoneDigits = (groupSettings.officePhone || '').replace(/\s+/g, '');
@@ -825,22 +832,20 @@ if(currentUser){
   document.getElementById('contactEmailText').textContent = groupSettings.officeEmail;
   document.getElementById('contactMeetingPoint').textContent = groupSettings.meetingPoint;
 
-  const gs = KatiniAuth.getGroupStats();
+  const gs = await KatiniAuth.getGroupStats();
   document.getElementById('gs-totalMembers').textContent = gs.totalMembers;
   document.getElementById('gs-activeRiders').textContent = gs.activeRiders;
   document.getElementById('gs-compliance').textContent = gs.paymentCompliance + '%';
   document.getElementById('gs-yearsOfUnity').textContent = gs.yearsOfUnity;
-}
 
-/* -------- Payment Summary + Next Payment Due (this member's real contributions) -------- */
-if(currentUser){
-  const ps = KatiniAuth.getMemberPaymentSummary(memberData.memberId);
+  /* -------- Payment Summary + Next Payment Due (this member's real contributions) -------- */
+  const ps = await KatiniAuth.getMemberPaymentSummary(memberData.uid);
   document.getElementById('ps-totalPaid').textContent = formatKsh(ps.totalPaid);
   document.getElementById('ps-pending').textContent = formatKsh(ps.pending);
   document.getElementById('ps-totalDue').textContent = formatKsh(ps.totalDue);
   document.getElementById('ps-fines').textContent = formatKsh(ps.fines);
 
-  const due = KatiniAuth.getNextPaymentDue(memberData.memberId);
+  const due = await KatiniAuth.getNextPaymentDue(memberData.uid);
   document.getElementById('br-date').textContent = due.label;
 
   const statusEl = document.getElementById('balanceStatus');
@@ -855,11 +860,27 @@ if(currentUser){
   } else {
     statusText.textContent = formatKsh(due.amount) + ' due by ' + due.label;
   }
-}
+
+  // Generate QR code encoding the member ID (falls back gracefully if the CDN script fails to load)
+  try{
+    if(window.QRCode){
+      new QRCode(document.getElementById("qrcode"), {
+        text: memberData.memberId,
+        width: 76,
+        height: 76,
+        colorDark: "#0d2140",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+  }catch(e){
+    document.getElementById('qrcode').innerHTML = '<div style="font-size:9px;text-align:center;color:#0d2140;padding:8px;">QR unavailable offline</div>';
+  }
+})();
 
 /* -------- Payment History popup (amount paid by day) -------- */
-function openPaymentHistory(){
-  const byDay = KatiniAuth.getMemberPaymentsByDay(memberData.memberId);
+async function openPaymentHistory(){
+  const byDay = await KatiniAuth.getMemberPaymentsByDay(memberData.uid);
   const total = byDay.reduce((sum, d) => sum + d.amount, 0);
   document.getElementById('ph-total').textContent = formatKsh(total);
   document.getElementById('ph-days').textContent = byDay.length;
@@ -871,7 +892,7 @@ function openPaymentHistory(){
     listEl.innerHTML = byDay.map(d => `
       <div class="ph-day-row">
         <div>
-          <div class="ph-date">${d.date}</div>
+          <div class="ph-date">${KatiniAuth.escapeHtml(d.date)}</div>
           <div class="ph-count">${d.count} payment${d.count > 1 ? 's' : ''}</div>
         </div>
         <div class="ph-amt">${formatKsh(d.amount)}</div>
@@ -885,9 +906,9 @@ function closePaymentHistory(){
 }
 
 /* -------- Announcements (unread badges on bell + Announcements button/menu) -------- */
-function refreshAnnouncementBadges(){
+async function refreshAnnouncementBadges(){
   if(!currentUser) return;
-  const count = KatiniAuth.getUnreadAnnouncementCount(currentUser.email);
+  const count = await KatiniAuth.getUnreadAnnouncementCount(currentUser.email);
   [
     { id: 'notifBadge', display: 'flex' },
     { id: 'annQaBadge', display: 'flex' },
@@ -900,34 +921,35 @@ function refreshAnnouncementBadges(){
   });
 }
 
-function renderAnnouncements(){
-  const list = KatiniAuth.getAnnouncements();
+async function renderAnnouncements(){
+  const list = await KatiniAuth.getAnnouncements();
   const wrap = document.getElementById('announcementsList');
   if(list.length === 0){
     wrap.innerHTML = '<div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No announcements yet.</div>';
     return;
   }
   const myEmail = currentUser ? currentUser.email.toLowerCase() : '';
+  const esc = KatiniAuth.escapeHtml;
   wrap.innerHTML = list.map(a => {
     const isRead = (a.readBy || []).indexOf(myEmail) !== -1;
     return `
       <div class="ann-row">
         <span class="ann-dot ${isRead ? 'read' : ''}"></span>
         <div class="ann-body">
-          <h5>${a.title}</h5>
-          <p>${a.message}</p>
-          <div class="ann-meta">${a.sentByName || 'Committee'} &middot; ${a.date}</div>
+          <h5>${esc(a.title)}</h5>
+          <p>${esc(a.message)}</p>
+          <div class="ann-meta">${esc(a.sentByName || 'Committee')} &middot; ${esc(a.date)}</div>
         </div>
       </div>
     `;
   }).join('');
 }
 
-function openAnnouncements(){
-  renderAnnouncements();
+async function openAnnouncements(){
+  await renderAnnouncements();
   document.getElementById('announcementsOverlay').classList.add('open');
   if(currentUser){
-    KatiniAuth.markAllAnnouncementsRead(currentUser.email);
+    await KatiniAuth.markAllAnnouncementsRead(currentUser.email);
     refreshAnnouncementBadges();
   }
 }
@@ -947,7 +969,7 @@ function closeMenu(){
 }
 
 function openMyProfile(){
-  document.getElementById('myp-photo').innerHTML = memberData.photo ? `<img src="${memberData.photo}" alt="${memberData.name}">` : initials(memberData.name);
+  document.getElementById('myp-photo').innerHTML = memberData.photo ? `<img src="${KatiniAuth.escapeHtml(memberData.photo)}" alt="${KatiniAuth.escapeHtml(memberData.name)}">` : initials(memberData.name);
   document.getElementById('myp-name').textContent = memberData.name;
   document.getElementById('myp-id').textContent = 'ID: ' + memberData.memberId;
   document.getElementById('myp-phone').textContent = memberData.phone;
@@ -996,25 +1018,9 @@ function initials(name){
   return name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
 }
 
-function handleLogout(){
-  KatiniAuth.logout();
+async function handleLogout(){
+  await KatiniAuth.logout();
   window.location.href = 'index.html';
-}
-
-// Generate QR code encoding the member ID (falls back gracefully if the CDN script fails to load)
-try{
-  if(window.QRCode){
-    new QRCode(document.getElementById("qrcode"), {
-      text: memberData.memberId,
-      width: 76,
-      height: 76,
-      colorDark: "#0d2140",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.M
-    });
-  }
-}catch(e){
-  document.getElementById('qrcode').innerHTML = '<div style="font-size:9px;text-align:center;color:#0d2140;padding:8px;">QR unavailable offline</div>';
 }
 
 let toastTimer;
@@ -1030,6 +1036,7 @@ function downloadId(){
   showToast('Preparing your Member ID card...');
   // Placeholder: wire this to html2canvas or a server-rendered ID card image later.
 }
+
 
 document.querySelectorAll('.nav-item').forEach(btn => {
   btn.addEventListener('click', function(){

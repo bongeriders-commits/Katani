@@ -1,0 +1,112 @@
+rules_version = '2';
+
+/* ===================================================================
+   Katani Main Stage — Firestore Security Rules
+   -------------------------------------------------------------------
+   Data model:
+     /users/{uid}          one doc per member/admin, doc id == Firebase Auth uid.
+                            NOTE: no password field lives here — Firebase Auth
+                            owns passwords (hashed, never readable by anyone).
+     /collections/{id}     payment / fee / fine records (admin-entered).
+     /minutes/{id}         meeting minutes (admin-only feature).
+     /announcements/{id}   admin -> members broadcasts, with a `readBy` array
+                            of uids that each member is allowed to append
+                            themselves to (and nothing else on the doc).
+     /settings/group       single document holding group-wide settings.
+
+   The role check reads the requester's OWN /users/{uid} doc — this is the
+   standard Firestore pattern for role-based rules without Cloud Functions
+   / custom claims. It costs one extra document read per rule evaluation,
+   which is negligible at this app's scale.
+=================================================================== */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function myProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isAdmin() {
+      return isSignedIn() && myProfile().role == 'admin';
+    }
+    function isActive() {
+      return isSignedIn() && myProfile().status == 'active';
+    }
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    // True when this write only touches the given fields (used to let a
+    // member "mark as read" without granting them write on the whole doc).
+    function onlyChanges(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    // ---- users -------------------------------------------------------
+    match /users/{uid} {
+      // Any signed-in member/admin can read the directory (matches the
+      // app's Members Directory, which both roles can view). No password
+      // field ever lives in this collection, so this is safe to read.
+      allow read: if isSignedIn();
+
+      allow create:
+        // Case 1: a brand-new account writing its OWN profile doc right
+        // after Firebase Auth sign-up (public self-registration). Forcing
+        // role == 'member' here is what stops a crafted client request
+        // from ever self-granting admin — this is enforced server-side,
+        // not just in the app's JS.
+        if (isSelf(uid)
+            && request.resource.data.role == 'member'
+            && request.resource.data.status in ['active', 'pending'])
+        // Case 2: an existing admin creating a profile doc for someone
+        // they just registered via the Admin Dashboard (member OR admin).
+        || isAdmin();
+
+      allow update:
+        // Admin can edit anything (approve/reject, promote/demote, edit
+        // member details).
+        if isAdmin()
+        // A member may edit their own non-privileged fields, but can
+        // never touch their own role, status, or email from the client.
+        || (isSelf(uid) && onlyChanges([
+              'name','phone','altPhone','photo','dob','gender',
+              'nationalId','residence','motorcycle','nextOfKin'
+            ]));
+
+      allow delete: if isAdmin();
+    }
+
+    // ---- collections (payments / fees / fines) ------------------------
+    match /collections/{id} {
+      // A member may only read their own payment records; admin reads all.
+      allow read: if isAdmin() || (isActive() && resource.data.memberUid == request.auth.uid);
+      // Only admins record/edit/delete collections (matches the app's
+      // Record Payment flow, which is an admin-only screen).
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ---- meeting minutes -----------------------------------------------
+    match /minutes/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // ---- announcements ---------------------------------------------------
+    match /announcements/{id} {
+      allow read: if isSignedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (isSignedIn() && onlyChanges(['readBy']));
+    }
+
+    // ---- group settings --------------------------------------------------
+    match /settings/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

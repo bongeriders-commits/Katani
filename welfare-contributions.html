@@ -12,6 +12,10 @@
 <meta name="apple-mobile-web-app-title" content="Katani Stage">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script src="auth.js"></script>
 <style>
 :root{
@@ -340,7 +344,12 @@ header.topbar{
 <link rel="stylesheet" href="desktop.css">
 </head>
 <body>
-<script>KatiniAuth.requireRole(['admin']);</script>
+<script>KatiniAuth.requireRole(['admin']).then(async u => {
+  if(!u) return;
+  await loadData();
+  renderSummary();
+  renderList();
+});</script>
 
 <div id="app">
 
@@ -481,8 +490,8 @@ function initials(name){
 
 let records = [];
 
-function loadData(){
-  records = KatiniAuth.getCollections().filter(t => t.type === 'contribution');
+async function loadData(){
+  records = (await KatiniAuth.getCollections()).filter(t => t.type === 'contribution');
 }
 
 function renderSummary(){
@@ -512,15 +521,16 @@ function renderList(){
     wrap.innerHTML = '<div class="empty-state">No welfare contributions recorded yet.</div>';
     return;
   }
+  const esc = KatiniAuth.escapeHtml;
   wrap.innerHTML = filtered.map(t => `
     <div class="wc-card" onclick="openView('${t.id}')">
       <div class="wc-avatar">${initials(t.memberName)}</div>
       <div class="wc-info">
-        <h4>${t.memberName || 'Member'}</h4>
-        <div class="wc-id">Ref: ${t.id}</div>
+        <h4>${esc(t.memberName || 'Member')}</h4>
+        <div class="wc-id">Ref: ${esc(t.id)}</div>
         <div class="wc-sub">
-          <span>${t.method}</span>
-          <span>${t.date}</span>
+          <span>${esc(t.method)}</span>
+          <span>${esc(t.date)}</span>
         </div>
       </div>
       <div class="wc-amount">${formatKsh(t.amount)}</div>
@@ -544,9 +554,6 @@ function closeView(){
   document.getElementById('viewOverlay').classList.remove('open');
 }
 
-loadData();
-renderSummary();
-renderList();
 </script>
 </body>
 </html>

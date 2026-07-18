@@ -12,6 +12,10 @@
 <meta name="apple-mobile-web-app-title" content="Katani Stage">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script src="auth.js"></script>
 <style>
 :root{
@@ -386,7 +390,12 @@ header.topbar{
 <link rel="stylesheet" href="desktop.css">
 </head>
 <body>
-<script>KatiniAuth.requireRole(['admin']);</script>
+<script>KatiniAuth.requireRole(['admin']).then(async u => {
+  if(!u) return;
+  await loadMembers();
+  renderPresentList();
+  renderSavedList();
+});</script>
 
 <div id="app">
 
@@ -532,8 +541,8 @@ function escapeHtml(str){
 let directoryMembers = [];
 let agendaCount = 0;
 
-function loadMembers(){
-  directoryMembers = KatiniAuth.getUsers()
+async function loadMembers(){
+  directoryMembers = (await KatiniAuth.getUsers())
     .filter(u => u.role === 'member')
     .map(u => ({ id: u.memberId, name: u.name }));
 }
@@ -624,14 +633,14 @@ function clearForm(){
   updatePresentCount();
 }
 
-function saveMinutes(){
+async function saveMinutes(){
   const date = document.getElementById('mDate').value;
   const title = document.getElementById('mTitle').value.trim();
   const membersPresent = collectPresent();
   const agenda = collectAgenda();
   const session = KatiniAuth.getCurrentUser();
 
-  const result = KatiniAuth.addMinutes({
+  const result = await KatiniAuth.addMinutes({
     meetingDate: date,
     title: title,
     membersPresent: membersPresent,
@@ -683,22 +692,22 @@ function generatePdf(){
   setTimeout(() => window.print(), 80);
 }
 
-function printSaved(id){
-  const rec = KatiniAuth.getMinutesById(id);
+async function printSaved(id){
+  const rec = await KatiniAuth.getMinutesById(id);
   if(!rec) return;
   fillPrintArea(rec);
   setTimeout(() => window.print(), 80);
 }
 
-function removeSaved(id){
-  KatiniAuth.deleteMinutes(id);
+async function removeSaved(id){
+  await KatiniAuth.deleteMinutes(id);
   renderSavedList();
   showToast('Minutes deleted');
 }
 
-function renderSavedList(){
+async function renderSavedList(){
   const wrap = document.getElementById('savedList');
-  const list = KatiniAuth.getMinutes();
+  const list = await KatiniAuth.getMinutes();
   if(list.length === 0){
     wrap.innerHTML = '<div class="empty-state">No minutes saved yet.</div>';
     return;
@@ -718,10 +727,7 @@ function renderSavedList(){
   }).join('');
 }
 
-loadMembers();
-renderPresentList();
 addAgendaItem();
-renderSavedList();
 document.getElementById('mDate').valueAsDate = new Date();
 </script>
 </body>

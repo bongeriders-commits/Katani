@@ -12,6 +12,10 @@
 <meta name="apple-mobile-web-app-title" content="Katani Stage">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script src="auth.js"></script>
 <style>
 :root{
@@ -689,11 +693,12 @@ footer.app-footer{
 
 <script>
 window.addEventListener('load', () => {
-  setTimeout(() => {
+  setTimeout(async () => {
     document.getElementById('splash').classList.add('hide');
 
     // If already logged in, skip the gate and go straight to the right space.
-    const session = window.KatiniAuth ? window.KatiniAuth.getSession() : null;
+    await window.KatiniAuth.ready;
+    const session = window.KatiniAuth.getSession();
     if (session && (session.role === 'admin' || session.role === 'member')) {
       window.KatiniAuth.routeToHome();
       return;
@@ -705,14 +710,17 @@ window.addEventListener('load', () => {
   }, 1800);
 });
 
-function handleGateLogin(e){
+async function handleGateLogin(e){
   e.preventDefault();
   const email = document.getElementById('gateEmail').value;
   const password = document.getElementById('gatePassword').value;
   const errBox = document.getElementById('gateError');
   errBox.classList.remove('show');
 
-  const result = window.KatiniAuth.login(email, password);
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  if (submitBtn) submitBtn.disabled = true;
+  const result = await window.KatiniAuth.login(email, password);
+  if (submitBtn) submitBtn.disabled = false;
   if(!result.success){
     errBox.textContent = result.message;
     errBox.classList.add('show');

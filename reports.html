@@ -12,6 +12,10 @@
 <meta name="apple-mobile-web-app-title" content="Katani Stage">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script src="auth.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -268,23 +272,25 @@ header.topbar{
 <link rel="stylesheet" href="desktop.css">
 </head>
 <body>
-<script>KatiniAuth.requireRole(['admin','member']);</script>
 <script>
+let reportsCurrentUser = null;
 // Members get a read-only Reports view: no admin bottom-nav, no export/generate controls.
-(function(){
-  var user = KatiniAuth.getCurrentUser();
+KatiniAuth.requireRole(['admin','member']).then(function(user){
+  reportsCurrentUser = user;
   var isMember = !user || user.role !== 'admin';
-  document.addEventListener('DOMContentLoaded', function(){
-    if (isMember) {
-      var adminNav = document.getElementById('adminBottomNav');
-      var memberNav = document.getElementById('memberBottomNav');
-      var exportWrap = document.getElementById('exportWrap');
-      if (adminNav) adminNav.style.display = 'none';
-      if (memberNav) memberNav.style.display = '';
-      if (exportWrap) exportWrap.style.display = 'none';
-    }
-  });
-})();
+  if (isMember) {
+    var adminNav = document.getElementById('adminBottomNav');
+    var memberNav = document.getElementById('memberBottomNav');
+    var exportWrap = document.getElementById('exportWrap');
+    if (adminNav) adminNav.style.display = 'none';
+    if (memberNav) memberNav.style.display = '';
+    if (exportWrap) exportWrap.style.display = 'none';
+  }
+  if (user) {
+    renderSummaryStats();
+    renderTrendChart();
+  }
+});
 </script>
 
 <div id="app">
@@ -583,13 +589,13 @@ function formatKsh(n){
   return 'KSh ' + Math.round(n || 0).toLocaleString('en-KE');
 }
 
-function renderSummaryStats(){
-  const users = KatiniAuth.getUsers().filter(u => u.role === 'member');
+async function renderSummaryStats(){
+  const users = (await KatiniAuth.getUsers()).filter(u => u.role === 'member');
   const active = users.filter(u => (u.status || 'active') === 'active');
   document.getElementById('rp-total-members').textContent = users.length;
   document.getElementById('rp-active-members').textContent = 'Active: ' + active.length;
 
-  const txns = KatiniAuth.getCollections();
+  const txns = await KatiniAuth.getCollections();
   const now = new Date();
   const todayStr = now.toISOString().slice(0,10);
   const monthStr = todayStr.slice(0,7);
@@ -608,7 +614,7 @@ function renderSummaryStats(){
     monthStart.toLocaleDateString('en-GB', opts) + ' \u2013 ' + now.toLocaleDateString('en-GB', opts) + ' ' + now.getFullYear();
 
   // Pending payments (real, from KatiniAuth.getPaymentSummary)
-  const summary = KatiniAuth.getPaymentSummary(now);
+  const summary = await KatiniAuth.getPaymentSummary(now);
   document.getElementById('rp-pending-count').textContent = summary.pending.length + summary.defaulters.length;
   document.getElementById('rp-pending-sub').textContent = summary.defaulters.length + ' defaulter' + (summary.defaulters.length === 1 ? '' : 's');
 
@@ -673,8 +679,8 @@ function renderDonut(byType, total){
     '<circle cx="90" cy="90" r="' + r + '" fill="none" stroke="#eef1f5" stroke-width="26"/>' + arcs;
 }
 
-function renderTopCollectors(monthStr){
-  const top = KatiniAuth.getTopCollectors(5, monthStr);
+async function renderTopCollectors(monthStr){
+  const top = await KatiniAuth.getTopCollectors(5, monthStr);
   const body = document.getElementById('collectorsBody');
   if(!top.length){
     body.innerHTML = '<div style="text-align:center;padding:40px 10px;color:#8c96a5;font-size:13px;">No collection data yet.</div>';
@@ -701,8 +707,6 @@ function escapeHtml(s){
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-renderSummaryStats();
-
 /* -------- Collections Trend chart (two series, real data, choosable range) -------- */
 const TREND_RANGE_OPTIONS = [18, 7, 30];
 let trendRangeIdx = 0;
@@ -712,14 +716,14 @@ function cycleTrendRange(){
   renderTrendChart();
 }
 
-function renderTrendChart(){
+async function renderTrendChart(){
   const days = TREND_RANGE_OPTIONS[trendRangeIdx];
   document.getElementById('trendRangeLabel').textContent = 'Last ' + days + ' days';
 
   const today = new Date();
-  const thisPeriod = KatiniAuth.getDailyTotals(days, today);
+  const thisPeriod = await KatiniAuth.getDailyTotals(days, today);
   const priorEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() - days);
-  const lastPeriod = KatiniAuth.getDailyTotals(days, priorEnd);
+  const lastPeriod = await KatiniAuth.getDailyTotals(days, priorEnd);
 
   const thisMonth = thisPeriod.values;
   const lastMonth = lastPeriod.values;
@@ -793,8 +797,6 @@ function formatAxisValTrend(v){
   return String(v);
 }
 
-renderTrendChart();
-
 /* -------- Export menu + real PDF / Excel report generation -------- */
 function toggleExportMenu(e){
   e.stopPropagation();
@@ -802,24 +804,24 @@ function toggleExportMenu(e){
 }
 document.addEventListener('click', () => document.getElementById('exportMenu').classList.remove('show'));
 
-function gatherReportData(){
-  const users = KatiniAuth.getUsers().filter(u => u.role === 'member');
-  const txns = KatiniAuth.getCollections();
+async function gatherReportData(){
+  const users = (await KatiniAuth.getUsers()).filter(u => u.role === 'member');
+  const txns = await KatiniAuth.getCollections();
   const now = new Date();
-  const summary = KatiniAuth.getPaymentSummary(now);
+  const summary = await KatiniAuth.getPaymentSummary(now);
   const byType = { contribution: 0, registration: 0, fine: 0, other: 0 };
   txns.forEach(t => { byType[t.type] = (byType[t.type] || 0) + t.amount; });
   const totalAll = txns.reduce((s,t) => s + t.amount, 0);
-  const topCollectors = KatiniAuth.getTopCollectors(10, now.toISOString().slice(0,7));
+  const topCollectors = await KatiniAuth.getTopCollectors(10, now.toISOString().slice(0,7));
   return { users, txns, now, summary, byType, totalAll, topCollectors };
 }
 
-function exportReportPDF(){
+async function exportReportPDF(){
   document.getElementById('exportMenu').classList.remove('show');
   if(typeof window.jspdf === 'undefined'){ showToast('PDF library failed to load'); return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  const data = gatherReportData();
+  const data = await gatherReportData();
   const dateStr = data.now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
 
   let y = 18;
@@ -881,10 +883,10 @@ function exportReportPDF(){
   showToast('PDF report downloaded');
 }
 
-function exportReportExcel(){
+async function exportReportExcel(){
   document.getElementById('exportMenu').classList.remove('show');
   if(typeof window.XLSX === 'undefined'){ showToast('Excel library failed to load'); return; }
-  const data = gatherReportData();
+  const data = await gatherReportData();
   const wb = XLSX.utils.book_new();
 
   const summarySheet = XLSX.utils.aoa_to_sheet([

@@ -12,6 +12,10 @@
 <meta name="apple-mobile-web-app-title" content="Katani Stage">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script src="auth.js"></script>
 <style>
 :root{
@@ -317,7 +321,7 @@ header.topbar{
 <link rel="stylesheet" href="desktop.css">
 </head>
 <body>
-<script>KatiniAuth.requireRole(['admin']);</script>
+<script>KatiniAuth.requireRole(['admin']).then(u => { if(u) refreshCollections(); });</script>
 
 <div id="app">
 
@@ -582,8 +586,8 @@ function formatKsh(n){
 /* -------- Data (backed by KatiniAuth / localStorage) -------- */
 let txns = [];
 
-function loadTxns(){
-  txns = KatiniAuth.getCollections();
+async function loadTxns(){
+  txns = await KatiniAuth.getCollections();
 }
 
 function renderSummary(){
@@ -611,18 +615,19 @@ function renderTxns(list){
     wrap.innerHTML = '<div style="text-align:center;padding:40px 10px;color:var(--muted, #8c96a5);font-size:13px;">No collections recorded yet.</div>';
     return;
   }
+  const esc = KatiniAuth.escapeHtml;
   wrap.innerHTML = list.map(t => {
-    const primary = t.type === 'contribution' ? (t.memberName || 'Member') : (t.source || TYPE_LABELS[t.type]);
+    const primary = esc(t.type === 'contribution' ? (t.memberName || 'Member') : (t.source || TYPE_LABELS[t.type]));
     return `
     <div class="txn-card" onclick="openViewTxn('${t.id}')">
       <div class="txn-icon ${t.type}">${TYPE_ICONS[t.type] || TYPE_ICONS.other}</div>
       <div class="txn-info">
         <h4>${primary}</h4>
-        <div class="txn-id">Ref: ${t.id}</div>
+        <div class="txn-id">Ref: ${esc(t.id)}</div>
         <div class="txn-sub">
           <span>${TYPE_LABELS[t.type] || 'Other'}</span>
-          <span>${t.method}</span>
-          <span>${t.date}</span>
+          <span>${esc(t.method)}</span>
+          <span>${esc(t.date)}</span>
         </div>
       </div>
       <div class="txn-right">
@@ -658,23 +663,24 @@ function filterTxns(){
   document.getElementById('pgInfo').textContent = `Showing ${list.length} of ${txns.length} records`;
 }
 
-function refreshCollections(){
-  loadTxns();
+async function refreshCollections(){
+  await loadTxns();
   renderSummary();
   filterTxns();
 }
 
 /* -------- Record Payment modal -------- */
-function loadMemberOptions(){
-  const users = KatiniAuth.getUsers().filter(u => u.role === 'member');
+async function loadMemberOptions(){
+  const users = (await KatiniAuth.getUsers()).filter(u => u.role === 'member');
   const sel = document.getElementById('rp-member');
+  const esc = KatiniAuth.escapeHtml;
   sel.innerHTML = users.length
-    ? users.map(u => `<option value="${u.memberId}" data-name="${u.name}">${u.name} (${u.memberId})</option>`).join('')
+    ? users.map(u => `<option value="${esc(u.memberId)}" data-uid="${esc(u.uid)}" data-name="${esc(u.name)}">${esc(u.name)} (${esc(u.memberId)})</option>`).join('')
     : '<option value="">No members registered yet</option>';
 }
 
-function openRecordPayment(){
-  loadMemberOptions();
+async function openRecordPayment(){
+  await loadMemberOptions();
   document.getElementById('rp-date').value = new Date().toISOString().slice(0,10);
   document.getElementById('recordPaymentOverlay').classList.add('open');
 }
@@ -723,7 +729,7 @@ function setCollectionType(el){
   }
 }
 
-function saveCollection(){
+async function saveCollection(){
   const type = document.querySelector('.type-btn.active').dataset.type;
   const amount = document.getElementById('rp-amount').value;
   const err = document.getElementById('rp-error');
@@ -746,12 +752,13 @@ function saveCollection(){
       return;
     }
     payload.memberId = opt.value;
+    payload.memberUid = opt.dataset.uid;
     payload.memberName = opt.dataset.name;
   } else {
     payload.source = document.getElementById('rp-source').value.trim();
   }
 
-  const result = KatiniAuth.addCollection(payload);
+  const result = await KatiniAuth.addCollection(payload);
   if(!result.success){
     err.textContent = result.message;
     err.classList.add('show');
@@ -781,7 +788,6 @@ function closeViewTxn(){
   document.getElementById('viewTxnOverlay').classList.remove('open');
 }
 
-refreshCollections();
 if(new URLSearchParams(window.location.search).get('type')){
   const t = new URLSearchParams(window.location.search).get('type');
   openRecordPayment();

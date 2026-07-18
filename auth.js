@@ -40,6 +40,16 @@
     return 'KMS-' + Math.floor(100000 + Math.random() * 899999);
   }
 
+  // SECURITY: shared escaper. Member names, announcement text, notes, etc.
+  // are all user-supplied and get rendered via innerHTML across the app —
+  // anything interpolated into innerHTML without this is a stored-XSS risk.
+  function escapeHtml(str) {
+    return String(str === undefined || str === null ? '' : str)
+      .replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+  }
+
   // ---- Registration -------------------------------------------------
   function registerMember(data) {
     var users = getUsers();
@@ -50,11 +60,19 @@
     if (users.some(function (u) { return u.email.toLowerCase() === email; })) {
       return { success: false, message: 'An account with this email already exists. Please log in instead.' };
     }
+    // SECURITY: public self-registration must never grant admin. Without this
+    // check, anyone who knew (or guessed) one of the reserved committee
+    // addresses could register themselves as a full administrator, since
+    // role used to be assigned automatically off the ADMIN_EMAILS list here.
+    // Admin accounts may only be created by an existing admin via createAdmin().
+    if (isAdminEmail(email)) {
+      return { success: false, message: 'This email is reserved for committee use. Please contact an administrator.' };
+    }
     var user = {
       name: data.name || 'New Member',
       email: email,
       password: data.password,
-      role: isAdminEmail(email) ? 'admin' : 'member',
+      role: 'member',
       phone: data.phone || '',
       altPhone: data.altPhone || '',
       memberId: nextMemberId(),
@@ -80,8 +98,14 @@
     };
     users.push(user);
     saveUsers(users);
-    setSession(user);
-    return { success: true, user: user };
+    // BUG FIX: a session used to be created unconditionally here, which meant
+    // a member registering while "Membership Approval Mode" is on could still
+    // log straight into the Members Space before an admin approved them.
+    // Only start a session for members who are immediately active.
+    if (user.status === 'active') {
+      setSession(user);
+    }
+    return { success: true, user: user, pendingApproval: user.status === 'pending' };
   }
 
   // ---- Admin-added member (does NOT log the admin in as the new member) ----
@@ -98,7 +122,7 @@
       name: data.name || 'New Member',
       email: email,
       password: data.password || Math.random().toString(36).slice(-8),
-      role: isAdminEmail(email) ? 'admin' : 'member',
+      role: 'member',
       phone: data.phone || '',
       altPhone: data.altPhone || '',
       memberId: nextMemberId(),
@@ -137,6 +161,9 @@
     }
     if (user.password !== password) {
       return { success: false, message: 'Incorrect password. Please try again.' };
+    }
+    if (user.role === 'member' && user.status === 'pending') {
+      return { success: false, message: 'Your registration is still awaiting committee approval.' };
     }
     // Email sensor: re-checks the admin list every login so role changes apply instantly.
     user.role = isAdminEmail(user.email) ? 'admin' : (user.role === 'admin' ? 'admin' : 'member');
@@ -180,7 +207,16 @@
       window.location.href = 'index.html';
       return null;
     }
-    return getCurrentUser();
+    var user = getCurrentUser();
+    // Defense in depth: a stale session (e.g. a member who was later
+    // rejected/suspended, or approval is still pending) should not keep
+    // access just because a session object exists in localStorage.
+    if (!user || (user.role === 'member' && user.status && user.status !== 'active')) {
+      logout();
+      window.location.href = 'index.html';
+      return null;
+    }
+    return user;
   }
 
   seed();
@@ -654,6 +690,7 @@
     seed: seed,
     getUsers: getUsers,
     isAdminEmail: isAdminEmail,
+    escapeHtml: escapeHtml,
     registerMember: registerMember,
     addMember: addMember,
     login: login,

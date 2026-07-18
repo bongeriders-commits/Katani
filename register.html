@@ -12,6 +12,10 @@
 <meta name="apple-mobile-web-app-title" content="Katani Stage">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script src="auth.js"></script>
 <style>
 :root{
@@ -821,11 +825,14 @@ function populateReview(){
   set('rv-address', document.getElementById('address').value);
 }
 
-function submitRegistration(){
+async function submitRegistration(){
   const relSel = document.getElementById('kinRelation');
   const kinRelationText = relSel.options[relSel.selectedIndex] ? relSel.options[relSel.selectedIndex].text : '';
 
-  const result = KatiniAuth.registerMember({
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting...'; }
+
+  const result = await KatiniAuth.registerMember({
     name: document.getElementById('fullName').value.trim(),
     email: document.getElementById('email').value.trim(),
     password: document.getElementById('password').value,
@@ -846,6 +853,8 @@ function submitRegistration(){
       phone: document.getElementById('kinPhone').value.trim()
     }
   });
+
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Registration'; }
 
   if(!result.success){
     goToStep(3);

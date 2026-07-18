@@ -12,6 +12,10 @@
 <meta name="apple-mobile-web-app-title" content="Katani Stage">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script src="auth.js"></script>
 <style>
 :root{
@@ -336,8 +340,11 @@ header.topbar{
 <body>
 <script>
 (function(){
-  var s = window.KatiniAuth && KatiniAuth.getSession();
-  if(!s || s.role !== 'admin'){ window.location.href = 'index.html'; }
+  // NOTE: Firebase Auth resolves asynchronously, so the instant, synchronous
+  // "bounce unauthenticated users" check that used to live here can no
+  // longer work (getSession() is always null on first paint, even for a
+  // signed-in user, until onAuthStateChanged fires). The real guard is the
+  // `await KatiniAuth.requireRole(['admin'])` call further down this page.
 })();
 </script>
 
@@ -792,18 +799,23 @@ header.topbar{
 
 <script>
 // Auth guard: only administrators may view this dashboard.
-const currentAdmin = KatiniAuth.requireRole(['admin']);
+let currentAdmin = null;
 
-if(currentAdmin){
-  const firstName = currentAdmin.name.split(' ')[0];
-  document.getElementById('welcomeName').textContent = firstName;
-  document.getElementById('ap-name').textContent = currentAdmin.name;
-  document.getElementById('ap-initials').textContent = currentAdmin.name.charAt(0).toUpperCase();
-  document.getElementById('ap-email').textContent = currentAdmin.email;
-  document.getElementById('ap-phone').textContent = currentAdmin.phone || '—';
-  document.getElementById('ap-id').textContent = currentAdmin.memberId || '—';
-  document.getElementById('ap-since').textContent = currentAdmin.memberSince || '—';
-}
+(async function init(){
+  currentAdmin = await KatiniAuth.requireRole(['admin']);
+  if(currentAdmin){
+    const firstName = currentAdmin.name.split(' ')[0];
+    document.getElementById('welcomeName').textContent = firstName;
+    document.getElementById('ap-name').textContent = currentAdmin.name;
+    document.getElementById('ap-initials').textContent = currentAdmin.name.charAt(0).toUpperCase();
+    document.getElementById('ap-email').textContent = currentAdmin.email;
+    document.getElementById('ap-phone').textContent = currentAdmin.phone || '—';
+    document.getElementById('ap-id').textContent = currentAdmin.memberId || '—';
+    document.getElementById('ap-since').textContent = currentAdmin.memberSince || '—';
+    loadDashboardStats();
+    renderOverviewChart();
+  }
+})();
 
 function openProfilePanel(){
   document.getElementById('profileOverlay').classList.add('open');
@@ -817,14 +829,14 @@ function openMenu(){
 function closeMenu(){
   document.getElementById('menuOverlay').classList.remove('open');
 }
-function handleAdminLogout(){
-  KatiniAuth.logout();
+async function handleAdminLogout(){
+  await KatiniAuth.logout();
   window.location.href = 'index.html';
 }
 
 /* -------- Group Settings (feeds Group Overview + Next Payment Due on the member portal) -------- */
-function openGroupSettings(){
-  const s = KatiniAuth.getSettings();
+async function openGroupSettings(){
+  const s = await KatiniAuth.getSettings();
   document.getElementById('set-foundingYear').value = s.foundingYear;
   document.getElementById('set-monthlyDue').value = s.monthlyDue;
   document.getElementById('set-dueDay').value = s.dueDay;
@@ -841,11 +853,11 @@ function openGroupSettings(){
   document.getElementById('set-notifyPaymentReceived').checked = !!s.notifyPaymentReceived;
   document.getElementById('set-notifyFineIssued').checked = !!s.notifyFineIssued;
 
-  renderAdminList();
+  await renderAdminList();
   document.getElementById('addAdminForm').classList.remove('open');
   document.getElementById('createAdminBtn').style.display = 'none';
 
-  const pendingCount = KatiniAuth.getPendingMembers().length;
+  const pendingCount = (await KatiniAuth.getPendingMembers()).length;
   const pill = document.getElementById('pendingCountPill');
   if(pendingCount > 0){ pill.style.display = 'inline'; pill.textContent = ' (' + pendingCount + ')'; }
   else { pill.style.display = 'none'; }
@@ -855,8 +867,8 @@ function openGroupSettings(){
 function closeGroupSettings(){
   document.getElementById('settingsOverlay').classList.remove('open');
 }
-function saveGroupSettings(){
-  KatiniAuth.saveSettings({
+async function saveGroupSettings(){
+  await KatiniAuth.saveSettings({
     foundingYear: document.getElementById('set-foundingYear').value,
     monthlyDue: document.getElementById('set-monthlyDue').value,
     dueDay: document.getElementById('set-dueDay').value,
@@ -878,21 +890,22 @@ function saveGroupSettings(){
 }
 
 /* -------- 1 & 2. Admin Access: create admins, promote/demote -------- */
-function renderAdminList(){
-  const admins = KatiniAuth.getAdmins();
+async function renderAdminList(){
+  const admins = await KatiniAuth.getAdmins();
   const wrap = document.getElementById('adminListCard');
   const myEmail = (currentAdmin && currentAdmin.email) || '';
   if(admins.length === 0){
     wrap.innerHTML = '<div style="padding:16px;text-align:center;color:#8c96a5;font-size:12.5px;">No admins yet.</div>';
     return;
   }
+  const esc = KatiniAuth.escapeHtml;
   wrap.innerHTML = admins.map(a => `
     <div class="admin-list-row">
       <div>
-        <div class="al-name">${a.name}${a.email === myEmail ? ' (You)' : ''}</div>
-        <div class="al-email">${a.email}</div>
+        <div class="al-name">${esc(a.name)}${a.email === myEmail ? ' (You)' : ''}</div>
+        <div class="al-email">${esc(a.email)}</div>
       </div>
-      ${a.email === myEmail ? '' : `<button onclick="demoteAdmin('${a.email}')">Make Member</button>`}
+      ${a.email === myEmail ? '' : `<button onclick="demoteAdmin('${esc(a.uid)}', '${esc(a.email)}')">Make Member</button>`}
     </div>
   `).join('');
 }
@@ -903,11 +916,11 @@ function toggleAddAdminForm(){
   form.classList.toggle('open', nowOpen);
   btn.style.display = nowOpen ? 'flex' : 'none';
 }
-function submitCreateAdmin(){
+async function submitCreateAdmin(){
   const name = document.getElementById('new-admin-name').value.trim();
   const email = document.getElementById('new-admin-email').value.trim();
   const phone = document.getElementById('new-admin-phone').value.trim();
-  const result = KatiniAuth.createAdmin({ name, email, phone });
+  const result = await KatiniAuth.createAdmin({ name, email, phone });
   if(!result.success){
     showToast(result.message);
     return;
@@ -919,9 +932,9 @@ function submitCreateAdmin(){
   toggleAddAdminForm();
   renderAdminList();
 }
-function demoteAdmin(email){
+async function demoteAdmin(uid, email){
   if(!confirm('Remove admin access for ' + email + '? They will become a regular member.')) return;
-  const result = KatiniAuth.setUserRole(email, 'member');
+  const result = await KatiniAuth.setUserRole(uid, 'member');
   if(result.success){
     showToast('Admin access removed');
     renderAdminList();
@@ -939,10 +952,10 @@ function openSendAnnouncement(){
 function closeSendAnnouncement(){
   document.getElementById('announcementOverlay').classList.remove('open');
 }
-function submitSendAnnouncement(){
+async function submitSendAnnouncement(){
   const title = document.getElementById('ann-title').value;
   const message = document.getElementById('ann-message').value;
-  const result = KatiniAuth.sendAnnouncement({
+  const result = await KatiniAuth.sendAnnouncement({
     title: title,
     message: message,
     sentBy: currentAdmin ? currentAdmin.email : '',
@@ -957,46 +970,47 @@ function submitSendAnnouncement(){
 }
 
 /* -------- 7. Membership Approval: review pending registrations -------- */
-function openPendingApprovals(){
-  renderPendingApprovals();
+async function openPendingApprovals(){
+  await renderPendingApprovals();
   document.getElementById('pendingOverlay').classList.add('open');
 }
 function closePendingApprovals(){
   document.getElementById('pendingOverlay').classList.remove('open');
 }
-function renderPendingApprovals(){
-  const pending = KatiniAuth.getPendingMembers();
+async function renderPendingApprovals(){
+  const pending = await KatiniAuth.getPendingMembers();
   const wrap = document.getElementById('pendingList');
   if(pending.length === 0){
     wrap.innerHTML = '<div style="padding:40px 16px;text-align:center;color:#8c96a5;font-size:12.5px;">No pending registrations.</div>';
     return;
   }
+  const esc = KatiniAuth.escapeHtml;
   wrap.innerHTML = pending.map(m => `
     <div class="pending-row">
-      <div class="pr-name">${m.name}</div>
-      <div class="pr-meta">${m.email} &bull; ${m.phone || 'No phone'}</div>
+      <div class="pr-name">${esc(m.name)}</div>
+      <div class="pr-meta">${esc(m.email)} &bull; ${esc(m.phone || 'No phone')}</div>
       <div class="pr-actions">
-        <button class="pr-approve" onclick="handleApprove('${m.memberId}')">Approve</button>
-        <button class="pr-reject" onclick="handleReject('${m.memberId}')">Reject</button>
+        <button class="pr-approve" onclick="handleApprove('${esc(m.uid)}')">Approve</button>
+        <button class="pr-reject" onclick="handleReject('${esc(m.uid)}')">Reject</button>
       </div>
     </div>
   `).join('');
 }
-function handleApprove(memberId){
-  const result = KatiniAuth.approveMember(memberId);
+async function handleApprove(uid){
+  const result = await KatiniAuth.approveMember(uid);
   if(result.success){ showToast('Member approved'); renderPendingApprovals(); loadDashboardStats(); }
   else { showToast(result.message); }
 }
-function handleReject(memberId){
+async function handleReject(uid){
   if(!confirm('Reject and remove this registration?')) return;
-  const result = KatiniAuth.rejectMember(memberId);
+  const result = await KatiniAuth.rejectMember(uid);
   if(result.success){ showToast('Registration rejected'); renderPendingApprovals(); loadDashboardStats(); }
   else { showToast(result.message); }
 }
 
 /* -------- 8. Backup / Export Data -------- */
-function downloadBackup(){
-  const data = KatiniAuth.exportAllData();
+async function downloadBackup(){
+  const data = await KatiniAuth.exportAllData();
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1010,12 +1024,10 @@ function downloadBackup(){
 }
 
 /* -------- 9. Reset / Clear All Data -------- */
-function handleResetData(){
-  if(!confirm('This permanently deletes ALL members, collections and settings on this device. This cannot be undone. Continue?')) return;
-  if(!confirm('Are you absolutely sure? Consider using Backup / Export Data first.')) return;
-  KatiniAuth.resetAllData();
-  showToast('All data cleared');
-  window.location.href = 'index.html';
+async function handleResetData(){
+  if(!confirm('This would permanently delete ALL members, collections and settings. Continue?')) return;
+  const result = await KatiniAuth.resetAllData();
+  showToast(result.message);
 }
 
 /* -------- Dashboard stats (members + collections) -------- */
@@ -1023,13 +1035,13 @@ function formatKsh(n){
   return 'KSh ' + Math.round(n || 0).toLocaleString('en-KE');
 }
 
-function loadDashboardStats(){
-  const users = KatiniAuth.getUsers().filter(u => u.role === 'member');
+async function loadDashboardStats(){
+  const users = (await KatiniAuth.getUsers()).filter(u => u.role === 'member');
   const active = users.filter(u => (u.status || 'active') === 'active');
   document.getElementById('stat-total-members').textContent = users.length;
   document.getElementById('stat-active-members').textContent = 'Active: ' + active.length;
 
-  const txns = KatiniAuth.getCollections();
+  const txns = await KatiniAuth.getCollections();
   const now = new Date();
   const todayStr = now.toISOString().slice(0,10);
   const monthStr = todayStr.slice(0,7);
@@ -1058,7 +1070,7 @@ function loadDashboardStats(){
   }
 
   // Paid / Pending / Defaulters (from real contribution records)
-  const summary = KatiniAuth.getPaymentSummary(now);
+  const summary = await KatiniAuth.getPaymentSummary(now);
   document.getElementById('stat-pending-count').textContent = summary.pending.length + summary.defaulters.length;
 
   const pct = n => summary.total ? Math.round((n / summary.total) * 100) + '% of members' : '\u2014';
@@ -1069,7 +1081,6 @@ function loadDashboardStats(){
   document.getElementById('sum-default-num').textContent = summary.defaulters.length;
   document.getElementById('sum-default-pct').textContent = pct(summary.defaulters.length);
 }
-loadDashboardStats();
 
 let toastTimer;
 function showToast(msg){
@@ -1094,9 +1105,9 @@ function cycleOverviewRange(){
   renderOverviewChart();
 }
 
-function renderOverviewChart(){
+async function renderOverviewChart(){
   const days = OVERVIEW_RANGE_OPTIONS[overviewRangeIdx];
-  const { labels, values, dates } = KatiniAuth.getDailyTotals(days);
+  const { labels, values, dates } = await KatiniAuth.getDailyTotals(days);
 
   document.getElementById('overviewRangeLabel').textContent =
     days === 18 ? formatDateRangeLabel(dates) : 'Last ' + days + ' days';
@@ -1164,8 +1175,6 @@ function formatDateRangeLabel(dates){
   const opts = { day: '2-digit', month: 'short' };
   return first.toLocaleDateString('en-GB', opts) + ' \u2013 ' + last.toLocaleDateString('en-GB', opts) + ' ' + last.getFullYear();
 }
-
-renderOverviewChart();
 </script>
 <script>
 if ('serviceWorker' in navigator) {

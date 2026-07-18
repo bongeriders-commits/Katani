@@ -12,6 +12,10 @@
 <meta name="apple-mobile-web-app-title" content="Katani Stage">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script src="auth.js"></script>
 <style>
 :root{
@@ -283,6 +287,7 @@ function renderNotifications(list){
     wrap.innerHTML = '<div style="text-align:center;padding:40px 10px;color:var(--muted);font-size:13px;">No notifications in this category.</div>';
     return;
   }
+  const esc = KatiniAuth.escapeHtml;
   wrap.innerHTML = list.map(n => `
     <div class="notif-card" data-id="${n.id}" onclick="markRead(${n.id})">
       <div class="notif-icon ${n.color}">
@@ -290,11 +295,11 @@ function renderNotifications(list){
         ${n.badge === 'check' ? '<span class="mini-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>' : ''}
       </div>
       <div class="notif-body">
-        <h4>${n.title}</h4>
-        <p>${n.body}</p>
+        <h4>${esc(n.title)}</h4>
+        <p>${esc(n.body)}</p>
         <div class="notif-time">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          ${n.time}
+          ${esc(n.time)}
         </div>
       </div>
       <div class="notif-right">
