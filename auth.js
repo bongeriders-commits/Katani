@@ -1,43 +1,58 @@
 /* ===================================================================
-   Katani Main Stage — Auth (demo / front-end prototype)
+   Katani Main Stage — Auth & Data (Firebase Authentication + Cloud Firestore)
    -------------------------------------------------------------------
-   This is a CLIENT-SIDE demo of member login + role routing, built to
-   show how the login gate / admin vs member flow should behave.
-   It stores members in localStorage and is NOT secure — a real
-   deployment must move registration, login and the "email sensor"
-   (role lookup) to a proper backend with hashed passwords.
+   Every KatiniAuth.* call reads/writes real Firebase Auth + Firestore
+   (project configured in firebase-config.js). Data model matches
+   firestore.rules exactly:
+     /users/{uid}          one doc per member/admin, doc id == Auth uid
+     /collections/{id}     payment / fee / fine records (admin-entered)
+     /minutes/{id}         meeting minutes (admin-only)
+     /announcements/{id}   admin -> members broadcasts, with readBy[]
+     /settings/group       single group-settings document
+
+   All functions are async and return Promises (or plain values for the
+   handful of purely synchronous cache reads noted below) — every page
+   already awaits these calls.
 =================================================================== */
 (function (window) {
-  var USERS_KEY = 'kms_users';
-  var SESSION_KEY = 'kms_session';
+  var cfg = window.FIREBASE_CONFIG;
+  var app = firebase.initializeApp(cfg);
+  // A second, independent Firebase App instance is used whenever an
+  // admin creates ANOTHER account (a member via "Add Member", or a new
+  // admin via "Create Admin"). Firebase Auth's client SDK signs in as
+  // whichever account it just created — without a second app, that
+  // would silently kick the acting admin out of their own session.
+  var secondaryApp = firebase.initializeApp(cfg, 'Secondary');
 
-  // Emails in this list are automatically recognised as committee /
-  // administrator accounts the moment they log in or register —
-  // this is the "email sensor" that decides admin vs member routing.
-  var ADMIN_EMAILS = [
-    'admin@katanimainstage.co.ke',
-    'chairman@katanimainstage.co.ke',
-    'treasurer@katanimainstage.co.ke'
-  ];
+  var auth = app.auth();
+  var secondaryAuth = secondaryApp.auth();
+  var db = app.firestore();
 
-  function seed() {
-    if (!localStorage.getItem(USERS_KEY)) {
-      localStorage.setItem(USERS_KEY, JSON.stringify([]));
-    }
-  }
+  var usersCol = db.collection('users');
+  var collectionsCol = db.collection('collections');
+  var minutesCol = db.collection('minutes');
+  var announcementsCol = db.collection('announcements');
+  var settingsDocRef = db.collection('settings').doc('group');
 
-  function getUsers() {
-    try { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
-    catch (e) { return []; }
-  }
-  function saveUsers(list) { localStorage.setItem(USERS_KEY, JSON.stringify(list)); }
+  var RESERVED_ADMIN_EMAILS = (window.RESERVED_ADMIN_EMAILS || []).map(function (e) {
+    return String(e).trim().toLowerCase();
+  });
 
   function isAdminEmail(email) {
-    return ADMIN_EMAILS.indexOf(String(email).trim().toLowerCase()) !== -1;
+    return RESERVED_ADMIN_EMAILS.indexOf(String(email).trim().toLowerCase()) !== -1;
   }
 
   function nextMemberId() {
     return 'KMS-' + Math.floor(100000 + Math.random() * 899999);
+  }
+  function nextCollectionId() {
+    return 'TXN-' + Date.now().toString(36).toUpperCase().slice(-6) + Math.floor(10 + Math.random() * 89);
+  }
+  function nextMinutesId() {
+    return 'MIN-' + Date.now().toString(36).toUpperCase().slice(-6) + Math.floor(10 + Math.random() * 89);
+  }
+  function nextAnnouncementId() {
+    return 'ANN-' + Date.now().toString(36).toUpperCase().slice(-6) + Math.floor(10 + Math.random() * 89);
   }
 
   // SECURITY: shared escaper. Member names, announcement text, notes, etc.
@@ -50,195 +65,246 @@
       });
   }
 
-  // ---- Registration -------------------------------------------------
-  function registerMember(data) {
-    var users = getUsers();
-    var email = String(data.email || '').trim().toLowerCase();
-    if (!email || !data.password) {
-      return { success: false, message: 'Email and password are required.' };
-    }
-    if (users.some(function (u) { return u.email.toLowerCase() === email; })) {
-      return { success: false, message: 'An account with this email already exists. Please log in instead.' };
-    }
-    // SECURITY: public self-registration must never grant admin. Without this
-    // check, anyone who knew (or guessed) one of the reserved committee
-    // addresses could register themselves as a full administrator, since
-    // role used to be assigned automatically off the ADMIN_EMAILS list here.
-    // Admin accounts may only be created by an existing admin via createAdmin().
-    if (isAdminEmail(email)) {
-      return { success: false, message: 'This email is reserved for committee use. Please contact an administrator.' };
-    }
-    var user = {
-      name: data.name || 'New Member',
-      email: email,
-      password: data.password,
-      role: 'member',
-      phone: data.phone || '',
-      altPhone: data.altPhone || '',
-      memberId: nextMemberId(),
-      memberSince: data.memberSince || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      stage: data.stage || 'Katani Main Stage',
-      status: data.status || (getSettings().requireApproval ? 'pending' : 'active'),
-      dob: data.dob || '',
-      gender: data.gender || '',
-      nationalId: data.nationalId || '',
-      residence: data.address || data.residence || '',
-      photo: data.photo || '',
-      motorcycle: {
-        plate: (data.motorcycle && data.motorcycle.plate) || data.plate || '',
-        model: (data.motorcycle && data.motorcycle.model) || data.bikeModel || '',
-        color: (data.motorcycle && data.motorcycle.color) || data.bikeColor || '',
-        chassis: (data.motorcycle && data.motorcycle.chassis) || data.chassisNo || ''
-      },
-      nextOfKin: {
-        name: (data.nextOfKin && data.nextOfKin.name) || data.kinName || '',
-        relationship: (data.nextOfKin && data.nextOfKin.relationship) || data.kinRelation || '',
-        phone: (data.nextOfKin && data.nextOfKin.phone) || data.kinPhone || ''
-      }
+  function firebaseErrorMessage(e) {
+    var code = e && e.code;
+    var map = {
+      'auth/email-already-in-use': 'An account with this email already exists. Please log in instead.',
+      'auth/invalid-email': 'Please enter a valid email address.',
+      'auth/weak-password': 'Password should be at least 6 characters.',
+      'auth/wrong-password': 'Incorrect password. Please try again.',
+      'auth/user-not-found': 'No registered member found with this email. Please Join Now to register.',
+      'auth/invalid-credential': 'Incorrect email or password. Please try again.',
+      'auth/too-many-requests': 'Too many attempts. Please wait a moment and try again.',
+      'auth/network-request-failed': 'Network error — check your connection and try again.',
+      'permission-denied': 'You do not have permission to do that.'
     };
-    users.push(user);
-    saveUsers(users);
-    // BUG FIX: a session used to be created unconditionally here, which meant
-    // a member registering while "Membership Approval Mode" is on could still
-    // log straight into the Members Space before an admin approved them.
-    // Only start a session for members who are immediately active.
-    if (user.status === 'active') {
-      setSession(user);
-    }
-    return { success: true, user: user, pendingApproval: user.status === 'pending' };
+    return (code && map[code]) || (e && e.message) || 'Something went wrong. Please try again.';
   }
 
-  // ---- Admin-added member (does NOT log the admin in as the new member) ----
-  function addMember(data) {
-    var users = getUsers();
-    var email = String(data.email || '').trim().toLowerCase();
-    if (!email) {
-      return { success: false, message: 'Email is required.' };
-    }
-    if (users.some(function (u) { return u.email.toLowerCase() === email; })) {
-      return { success: false, message: 'A member with this email already exists.' };
-    }
-    var user = {
-      name: data.name || 'New Member',
-      email: email,
-      password: data.password || Math.random().toString(36).slice(-8),
-      role: 'member',
-      phone: data.phone || '',
-      altPhone: data.altPhone || '',
-      memberId: nextMemberId(),
-      memberSince: data.memberSince || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      stage: data.stage || 'Katani Main Stage',
-      status: data.status || 'active',
-      dob: data.dob || '',
-      gender: data.gender || '',
-      nationalId: data.nationalId || '',
-      residence: data.residence || '',
-      photo: data.photo || '',
-      motorcycle: {
-        plate: (data.motorcycle && data.motorcycle.plate) || '',
-        model: (data.motorcycle && data.motorcycle.model) || '',
-        color: (data.motorcycle && data.motorcycle.color) || '',
-        chassis: (data.motorcycle && data.motorcycle.chassis) || ''
-      },
-      nextOfKin: {
-        name: (data.nextOfKin && data.nextOfKin.name) || '',
-        relationship: (data.nextOfKin && data.nextOfKin.relationship) || '',
-        phone: (data.nextOfKin && data.nextOfKin.phone) || ''
-      }
+  function docToUser(docSnap) {
+    return Object.assign({ uid: docSnap.id }, docSnap.data());
+  }
+
+  // ---- In-memory session cache -----------------------------------------
+  // `ready` resolves once Firebase has restored (or confirmed there is no)
+  // persisted login session for this browser, so pages that do
+  // `await KatiniAuth.ready` before calling the synchronous getSession()
+  // never see a false "logged out" flash on reload.
+  var cachedUser = null;
+  var readyResolved = false;
+  var resolveReady;
+  var readyPromise = new Promise(function (res) { resolveReady = res; });
+
+  auth.onAuthStateChanged(function (fbUser) {
+    var finish = function () {
+      if (!readyResolved) { readyResolved = true; resolveReady(); }
     };
-    users.push(user);
-    saveUsers(users);
-    return { success: true, user: user };
-  }
-
-  // ---- Login / session -----------------------------------------------
-  function login(email, password) {
-    var users = getUsers();
-    var email_l = String(email).trim().toLowerCase();
-    var user = users.find(function (u) { return u.email.toLowerCase() === email_l; });
-    if (!user) {
-      return { success: false, message: 'No registered member found with this email. Please Join Now to register.' };
+    if (!fbUser) {
+      cachedUser = null;
+      finish();
+      return;
     }
-    if (user.password !== password) {
-      return { success: false, message: 'Incorrect password. Please try again.' };
-    }
-    if (user.role === 'member' && user.status === 'pending') {
-      return { success: false, message: 'Your registration is still awaiting committee approval.' };
-    }
-    // Email sensor: re-checks the admin list every login so role changes apply instantly.
-    user.role = isAdminEmail(user.email) ? 'admin' : (user.role === 'admin' ? 'admin' : 'member');
-    saveUsers(users);
-    setSession(user);
-    return { success: true, user: user };
-  }
-
-  function setSession(user) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ email: user.email, role: user.role, ts: Date.now() }));
-  }
-
-  function logout() {
-    localStorage.removeItem(SESSION_KEY);
-  }
+    usersCol.doc(fbUser.uid).get().then(function (snap) {
+      cachedUser = snap.exists ? docToUser(snap) : null;
+    }).catch(function () {
+      cachedUser = null;
+    }).then(finish);
+  });
 
   function getSession() {
-    try { return JSON.parse(localStorage.getItem(SESSION_KEY)); }
-    catch (e) { return null; }
+    if (!cachedUser) return null;
+    return { email: cachedUser.email, role: cachedUser.role, uid: cachedUser.uid };
   }
 
   function getCurrentUser() {
-    var s = getSession();
-    if (!s) return null;
-    var users = getUsers();
-    return users.find(function (u) { return u.email === s.email; }) || null;
+    return cachedUser;
   }
 
-  // Redirects to the correct home page for the logged-in role.
-  function routeToHome() {
+  async function logout() {
+    cachedUser = null;
+    try { await auth.signOut(); } catch (e) { /* ignore */ }
+  }
+
+  async function routeToHome() {
+    await readyPromise;
     var s = getSession();
     if (!s) { window.location.href = 'index.html'; return; }
     window.location.href = s.role === 'admin' ? 'admin-dashboard.html' : 'members-portal.html';
   }
 
   // Guards a page: pass an array of allowed roles, e.g. ['admin'] or ['admin','member'].
-  // Redirects to the login gate if there is no valid session for this page.
-  // NOTE: several pages call this as `KatiniAuth.requireRole(...).then(...)`,
-  // so it must return a real Promise (hence `async`) even though everything
-  // inside it is synchronous localStorage access.
+  // Always re-fetches the caller's profile fresh from Firestore (not just the
+  // cache) so an admin suspending/rejecting someone takes effect immediately,
+  // even if that member still has the page open in another tab.
   async function requireRole(roles) {
-    var s = getSession();
-    if (!s || roles.indexOf(s.role) === -1) {
+    await readyPromise;
+    var fbUser = auth.currentUser;
+    if (!fbUser) {
       window.location.href = 'index.html';
       return null;
     }
-    var user = getCurrentUser();
-    // Defense in depth: a stale session (e.g. a member who was later
-    // rejected/suspended, or approval is still pending) should not keep
-    // access just because a session object exists in localStorage.
-    if (!user || (user.role === 'member' && user.status && user.status !== 'active')) {
-      logout();
+    var user = null;
+    try {
+      var snap = await usersCol.doc(fbUser.uid).get();
+      user = snap.exists ? docToUser(snap) : null;
+    } catch (e) { user = null; }
+    cachedUser = user;
+    if (!user || roles.indexOf(user.role) === -1) {
+      window.location.href = 'index.html';
+      return null;
+    }
+    if (user.role === 'member' && user.status && user.status !== 'active') {
+      await logout();
       window.location.href = 'index.html';
       return null;
     }
     return user;
   }
 
-  seed();
+  // ---- Registration ------------------------------------------------------
+  async function registerMember(data) {
+    var email = String(data.email || '').trim().toLowerCase();
+    if (!email || !data.password) {
+      return { success: false, message: 'Email and password are required.' };
+    }
+    // SECURITY: public self-registration must never grant admin. Without this
+    // check, anyone who knew (or guessed) one of the reserved committee
+    // addresses could register with it. Admin accounts may only be created
+    // by an existing admin via createAdmin().
+    if (isAdminEmail(email)) {
+      return { success: false, message: 'This email is reserved for committee use. Please contact an administrator.' };
+    }
+    var settings = await getSettings();
+    var status = data.status || (settings.requireApproval ? 'pending' : 'active');
+    try {
+      var cred = await auth.createUserWithEmailAndPassword(email, data.password);
+      var uid = cred.user.uid;
+      var user = {
+        name: data.name || 'New Member',
+        email: email,
+        role: 'member',
+        phone: data.phone || '',
+        altPhone: data.altPhone || '',
+        memberId: nextMemberId(),
+        memberSince: data.memberSince || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        stage: data.stage || 'Katani Main Stage',
+        status: status,
+        dob: data.dob || '',
+        gender: data.gender || '',
+        nationalId: data.nationalId || '',
+        residence: data.address || data.residence || '',
+        photo: data.photo || '',
+        motorcycle: {
+          plate: (data.motorcycle && data.motorcycle.plate) || data.plate || '',
+          model: (data.motorcycle && data.motorcycle.model) || data.bikeModel || '',
+          color: (data.motorcycle && data.motorcycle.color) || data.bikeColor || '',
+          chassis: (data.motorcycle && data.motorcycle.chassis) || data.chassisNo || ''
+        },
+        nextOfKin: {
+          name: (data.nextOfKin && data.nextOfKin.name) || data.kinName || '',
+          relationship: (data.nextOfKin && data.nextOfKin.relationship) || data.kinRelation || '',
+          phone: (data.nextOfKin && data.nextOfKin.phone) || data.kinPhone || ''
+        }
+      };
+      await usersCol.doc(uid).set(user);
+      var full = Object.assign({ uid: uid }, user);
+      // BUG FIX (kept from the old version): a member registering while
+      // "Membership Approval Mode" is on should NOT be left signed in —
+      // otherwise they could reach the Members Space before approval.
+      if (status === 'active') {
+        cachedUser = full;
+      } else {
+        await auth.signOut();
+        cachedUser = null;
+      }
+      return { success: true, user: full, pendingApproval: status === 'pending' };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
+  }
+
+  // ---- Admin-added member (does NOT log the admin in as the new member) ----
+  async function addMember(data) {
+    var email = String(data.email || '').trim().toLowerCase();
+    if (!email) return { success: false, message: 'Email is required.' };
+    var password = data.password || Math.random().toString(36).slice(-8);
+    try {
+      var cred = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+      var uid = cred.user.uid;
+      var user = {
+        name: data.name || 'New Member',
+        email: email,
+        role: 'member',
+        phone: data.phone || '',
+        altPhone: data.altPhone || '',
+        memberId: nextMemberId(),
+        memberSince: data.memberSince || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        stage: data.stage || 'Katani Main Stage',
+        status: data.status || 'active',
+        dob: data.dob || '',
+        gender: data.gender || '',
+        nationalId: data.nationalId || '',
+        residence: data.residence || '',
+        photo: data.photo || '',
+        motorcycle: {
+          plate: (data.motorcycle && data.motorcycle.plate) || '',
+          model: (data.motorcycle && data.motorcycle.model) || '',
+          color: (data.motorcycle && data.motorcycle.color) || '',
+          chassis: (data.motorcycle && data.motorcycle.chassis) || ''
+        },
+        nextOfKin: {
+          name: (data.nextOfKin && data.nextOfKin.name) || '',
+          relationship: (data.nextOfKin && data.nextOfKin.relationship) || '',
+          phone: (data.nextOfKin && data.nextOfKin.phone) || ''
+        }
+      };
+      // Written via the PRIMARY app's Firestore instance, so this create is
+      // authorized by the acting admin's own session (isAdmin() in the
+      // rules) — not by the brand-new secondary-app account.
+      await usersCol.doc(uid).set(user);
+      await secondaryAuth.signOut();
+      return { success: true, user: Object.assign({ uid: uid }, user) };
+    } catch (e) {
+      try { await secondaryAuth.signOut(); } catch (e2) { /* ignore */ }
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
+  }
+
+  // ---- Login -------------------------------------------------------------
+  async function login(email, password) {
+    var emailL = String(email).trim().toLowerCase();
+    try {
+      var cred = await auth.signInWithEmailAndPassword(emailL, password);
+      var uid = cred.user.uid;
+      var snap = await usersCol.doc(uid).get();
+      if (!snap.exists) {
+        await auth.signOut();
+        return { success: false, message: 'Your account is not fully set up. Please contact an administrator.' };
+      }
+      var user = docToUser(snap);
+      if (user.role === 'member' && user.status === 'pending') {
+        await auth.signOut();
+        return { success: false, message: 'Your registration is still awaiting committee approval.' };
+      }
+      if (user.role === 'member' && user.status && user.status !== 'active') {
+        await auth.signOut();
+        return { success: false, message: 'Your account is not active. Please contact an administrator.' };
+      }
+      // NOTE: role can only ever be changed by an existing admin (see
+      // Firestore rules — users cannot self-edit `role`). A reserved
+      // admin email must be promoted once via the Admin Dashboard's
+      // "Create Admin" flow or by an existing admin; it will not
+      // auto-promote itself on login.
+      cachedUser = user;
+      return { success: true, user: user };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
+  }
 
   // ---- Collections & Payments (member contributions, registration fees, fines, other income) ----
-  var COLLECTIONS_KEY = 'kms_collections';
-
-  function getCollections() {
-    try { return JSON.parse(localStorage.getItem(COLLECTIONS_KEY)) || []; }
-    catch (e) { return []; }
-  }
-  function saveCollections(list) { localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(list)); }
-
-  function nextCollectionId() {
-    return 'TXN-' + Date.now().toString(36).toUpperCase().slice(-6) + Math.floor(10 + Math.random() * 89);
-  }
-
   // type: 'contribution' | 'registration' | 'fine' | 'other'
-  function addCollection(data) {
+  async function addCollection(data) {
     var amount = Number(data.amount);
     if (!amount || amount <= 0) {
       return { success: false, message: 'Enter a valid amount greater than zero.' };
@@ -250,11 +316,11 @@
     if (type !== 'contribution' && !String(data.source || '').trim()) {
       return { success: false, message: 'Enter a description for this collection.' };
     }
-    var list = getCollections();
     var record = {
       id: nextCollectionId(),
       type: type,
       memberId: data.memberId || '',
+      memberUid: data.memberUid || '',
       memberName: data.memberName || '',
       source: data.source || '',
       amount: amount,
@@ -264,43 +330,49 @@
       note: data.note || '',
       createdAt: Date.now()
     };
-    list.unshift(record);
-    saveCollections(list);
-    return { success: true, record: record };
+    try {
+      await collectionsCol.doc(record.id).set(record);
+      return { success: true, record: record };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
+  }
+
+  async function getCollections() {
+    try {
+      var snap = await collectionsCol.orderBy('createdAt', 'desc').get();
+      return snap.docs.map(function (d) { return d.data(); });
+    } catch (e) { return []; }
   }
 
   // Returns only the collections belonging to the currently logged-in member.
-  function getMyCollections() {
+  async function getMyCollections() {
     var user = getCurrentUser();
     if (!user) return [];
-    return getCollections().filter(function (t) { return t.memberId === user.memberId; });
+    try {
+      var snap = await collectionsCol.where('memberUid', '==', user.uid).get();
+      var list = snap.docs.map(function (d) { return d.data(); });
+      list.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+      return list;
+    } catch (e) { return []; }
   }
 
   // ---- Meeting Minutes ----
-  var MINUTES_KEY = 'kms_minutes';
-
-  function getMinutes() {
-    var list;
-    try { list = JSON.parse(localStorage.getItem(MINUTES_KEY)) || []; }
-    catch (e) { list = []; }
-    list.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
-    return list;
-  }
-  function saveMinutesList(list) { localStorage.setItem(MINUTES_KEY, JSON.stringify(list)); }
-
-  function nextMinutesId() {
-    return 'MIN-' + Date.now().toString(36).toUpperCase().slice(-6) + Math.floor(10 + Math.random() * 89);
+  async function getMinutes() {
+    try {
+      var snap = await minutesCol.orderBy('createdAt', 'desc').get();
+      return snap.docs.map(function (d) { return d.data(); });
+    } catch (e) { return []; }
   }
 
   // data: { meetingDate, title, membersPresent: [{memberId,name}], agenda: [{title,details}], recordedBy }
-  function addMinutes(data) {
+  async function addMinutes(data) {
     if (!data.meetingDate) {
       return { success: false, message: 'Enter the date of the meeting.' };
     }
     if (!data.title || !String(data.title).trim()) {
       return { success: false, message: 'Enter a title for the meeting.' };
     }
-    var list = getMinutes();
     var record = {
       id: nextMinutesId(),
       meetingDate: data.meetingDate,
@@ -310,44 +382,44 @@
       recordedBy: data.recordedBy || '',
       createdAt: Date.now()
     };
-    list.unshift(record);
-    saveMinutesList(list);
-    return { success: true, record: record };
+    try {
+      await minutesCol.doc(record.id).set(record);
+      return { success: true, record: record };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
   }
 
-  function getMinutesById(id) {
-    return getMinutes().find(function (m) { return m.id === id; }) || null;
+  async function getMinutesById(id) {
+    try {
+      var snap = await minutesCol.doc(id).get();
+      return snap.exists ? snap.data() : null;
+    } catch (e) { return null; }
   }
 
-  function deleteMinutes(id) {
-    var list = getMinutes().filter(function (m) { return m.id !== id; });
-    saveMinutesList(list);
-    return { success: true };
+  async function deleteMinutes(id) {
+    try {
+      await minutesCol.doc(id).delete();
+      return { success: true };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
   }
 
   // ---- Announcements (admin -> members broadcast, with per-member read tracking) ----
-  var ANNOUNCEMENTS_KEY = 'kms_announcements';
-
-  function getAnnouncements() {
-    var list;
-    try { list = JSON.parse(localStorage.getItem(ANNOUNCEMENTS_KEY)) || []; }
-    catch (e) { list = []; }
-    list.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
-    return list;
-  }
-  function saveAnnouncements(list) { localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(list)); }
-
-  function nextAnnouncementId() {
-    return 'ANN-' + Date.now().toString(36).toUpperCase().slice(-6) + Math.floor(10 + Math.random() * 89);
+  async function getAnnouncements() {
+    try {
+      var snap = await announcementsCol.orderBy('createdAt', 'desc').get();
+      return snap.docs.map(function (d) { return d.data(); });
+    } catch (e) { return []; }
   }
 
   // Sends (creates) a new announcement. data: { title, message, sentBy (email), sentByName }
-  function sendAnnouncement(data) {
+  async function sendAnnouncement(data) {
     var title = String(data.title || '').trim();
     var message = String(data.message || '').trim();
     if (!title) return { success: false, message: 'Enter an announcement title.' };
     if (!message) return { success: false, message: 'Enter the announcement message.' };
-    var list = getAnnouncements();
     var record = {
       id: nextAnnouncementId(),
       title: title,
@@ -358,47 +430,46 @@
       createdAt: Date.now(),
       readBy: []
     };
-    list.unshift(record);
-    saveAnnouncements(list);
-    return { success: true, announcement: record };
-  }
-
-  // Unread count for a given member/admin email (announcements they have not opened yet).
-  function getUnreadAnnouncementCount(email) {
-    var email_l = String(email || '').trim().toLowerCase();
-    if (!email_l) return 0;
-    return getAnnouncements().filter(function (a) {
-      return (a.readBy || []).indexOf(email_l) === -1;
-    }).length;
-  }
-
-  function markAnnouncementRead(id, email) {
-    var email_l = String(email || '').trim().toLowerCase();
-    if (!email_l) return;
-    var list = getAnnouncements();
-    var a = list.find(function (x) { return x.id === id; });
-    if (a && (a.readBy || []).indexOf(email_l) === -1) {
-      a.readBy = (a.readBy || []).concat([email_l]);
-      saveAnnouncements(list);
+    try {
+      await announcementsCol.doc(record.id).set(record);
+      return { success: true, announcement: record };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
     }
   }
 
-  function markAllAnnouncementsRead(email) {
-    var email_l = String(email || '').trim().toLowerCase();
-    if (!email_l) return;
-    var list = getAnnouncements();
-    var changed = false;
-    list.forEach(function (a) {
-      if ((a.readBy || []).indexOf(email_l) === -1) {
-        a.readBy = (a.readBy || []).concat([email_l]);
-        changed = true;
-      }
-    });
-    if (changed) saveAnnouncements(list);
+  // Unread count for a given member/admin email (announcements they have not opened yet).
+  async function getUnreadAnnouncementCount(email) {
+    var emailL = String(email || '').trim().toLowerCase();
+    if (!emailL) return 0;
+    var list = await getAnnouncements();
+    return list.filter(function (a) { return (a.readBy || []).indexOf(emailL) === -1; }).length;
+  }
+
+  async function markAnnouncementRead(id, email) {
+    var emailL = String(email || '').trim().toLowerCase();
+    if (!emailL) return;
+    try {
+      await announcementsCol.doc(id).update({ readBy: firebase.firestore.FieldValue.arrayUnion(emailL) });
+    } catch (e) { /* ignore */ }
+  }
+
+  async function markAllAnnouncementsRead(email) {
+    var emailL = String(email || '').trim().toLowerCase();
+    if (!emailL) return;
+    var list = await getAnnouncements();
+    var unread = list.filter(function (a) { return (a.readBy || []).indexOf(emailL) === -1; });
+    if (!unread.length) return;
+    try {
+      var batch = db.batch();
+      unread.forEach(function (a) {
+        batch.update(announcementsCol.doc(a.id), { readBy: firebase.firestore.FieldValue.arrayUnion(emailL) });
+      });
+      await batch.commit();
+    } catch (e) { /* ignore */ }
   }
 
   // ---- Shared analytics helpers (payment status, leaderboard, trends) ----
-
   function ymd(d) { return d.toISOString().slice(0, 10); }
   function monthOf(dateStr) { return (dateStr || '').slice(0, 7); }
 
@@ -409,20 +480,27 @@
     return isNaN(d.getTime()) ? null : d;
   }
 
+  async function getUsers() {
+    try {
+      var snap = await usersCol.get();
+      return snap.docs.map(docToUser);
+    } catch (e) { return []; }
+  }
+
   // Classifies each active member as paid / pending / defaulter for the given
   // reference date's calendar month, based on 'contribution' collections:
   //   paid      - has a contribution recorded this month
   //   pending   - no contribution yet this month, but paid last month
   //               (or joined this month, so not yet due)
   //   defaulter - no contribution this month AND none last month either
-  function getPaymentSummary(refDate) {
+  async function getPaymentSummary(refDate) {
     refDate = refDate || new Date();
     var thisMonth = monthOf(ymd(refDate));
     var lastMonthDate = new Date(refDate.getFullYear(), refDate.getMonth() - 1, 1);
     var lastMonth = monthOf(ymd(lastMonthDate));
 
-    var users = getUsers().filter(function (u) { return u.role === 'member' && (u.status || 'active') === 'active'; });
-    var txns = getCollections().filter(function (t) { return t.type === 'contribution'; });
+    var users = (await getUsers()).filter(function (u) { return u.role === 'member' && (u.status || 'active') === 'active'; });
+    var txns = (await getCollections()).filter(function (t) { return t.type === 'contribution'; });
 
     var paidThisMonth = {}, paidLastMonth = {};
     txns.forEach(function (t) {
@@ -444,15 +522,15 @@
   }
 
   // Top contributors within a given month (defaults to current month).
-  function getTopCollectors(limit, monthStr) {
+  async function getTopCollectors(limit, monthStr) {
     limit = limit || 5;
     monthStr = monthStr || monthOf(ymd(new Date()));
-    var users = getUsers();
+    var users = await getUsers();
     var byId = {};
     users.forEach(function (u) { byId[u.memberId] = u; });
 
     var totals = {};
-    getCollections().forEach(function (t) {
+    (await getCollections()).forEach(function (t) {
       if (t.type !== 'contribution' || monthOf(t.date) !== monthStr || !t.memberId) return;
       if (!totals[t.memberId]) totals[t.memberId] = { memberId: t.memberId, memberName: t.memberName || (byId[t.memberId] && byId[t.memberId].name) || 'Member', total: 0, count: 0 };
       totals[t.memberId].total += t.amount;
@@ -466,10 +544,10 @@
 
   // Daily collection totals for the last `days` days ending today (inclusive).
   // Returns { labels: ['16 Jul', ...], values: [1200, 0, ...], dates: ['2026-07-01', ...] }
-  function getDailyTotals(days, endDate) {
+  async function getDailyTotals(days, endDate) {
     days = days || 18;
     endDate = endDate || new Date();
-    var txns = getCollections();
+    var txns = await getCollections();
     var byDate = {};
     txns.forEach(function (t) { byDate[t.date] = (byDate[t.date] || 0) + t.amount; });
 
@@ -485,7 +563,6 @@
   }
 
   // ---- Group Settings (admin-editable, drives Group Overview + Payment Due + more) ----
-  var SETTINGS_KEY = 'kms_settings';
   var DEFAULT_SETTINGS = {
     // Contributions & fines
     foundingYear: 2015,   // used to compute "Years of Unity"
@@ -510,14 +587,15 @@
     notifyFineIssued: true
   };
 
-  function getSettings() {
+  async function getSettings() {
     try {
-      var s = JSON.parse(localStorage.getItem(SETTINGS_KEY));
-      return Object.assign({}, DEFAULT_SETTINGS, s || {});
+      var snap = await settingsDocRef.get();
+      return Object.assign({}, DEFAULT_SETTINGS, snap.exists ? snap.data() : {});
     } catch (e) { return Object.assign({}, DEFAULT_SETTINGS); }
   }
-  function saveSettings(data) {
-    var current = getSettings();
+
+  async function saveSettings(data) {
+    var current = await getSettings();
     var num = function (v, fallback) { var n = Number(v); return isNaN(n) ? fallback : n; };
     var str = function (v, fallback) { return (v === undefined || v === null) ? fallback : String(v); };
     var bool = function (v, fallback) { return (v === undefined) ? fallback : !!v; };
@@ -539,17 +617,17 @@
       notifyPaymentReceived: bool(data.notifyPaymentReceived, current.notifyPaymentReceived),
       notifyFineIssued: bool(data.notifyFineIssued, current.notifyFineIssued)
     };
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged));
+    await settingsDocRef.set(merged);
     return merged;
   }
 
   // ---- Computed: Group Overview stats (Registered Members, Active Riders, Payment Compliance, Years of Unity) ----
-  function getGroupStats(refDate) {
-    var settings = getSettings();
-    var members = getUsers().filter(function (u) { return u.role === 'member'; });
+  async function getGroupStats(refDate) {
+    var settings = await getSettings();
+    var members = (await getUsers()).filter(function (u) { return u.role === 'member'; });
     var active = members.filter(function (u) { return (u.status || 'active') === 'active'; });
 
-    var summary = getPaymentSummary(refDate);
+    var summary = await getPaymentSummary(refDate);
     var compliance = summary.total ? Math.round((summary.paid.length / summary.total) * 100) : 0;
 
     return {
@@ -561,11 +639,11 @@
   }
 
   // ---- Computed: one member's payment summary (Total Paid, Pending, Total Due, Fines) ----
-  function getMemberPaymentSummary(memberId) {
-    var settings = getSettings();
+  async function getMemberPaymentSummary(memberId) {
+    var settings = await getSettings();
     var monthStr = monthOf(ymd(new Date()));
     var totalPaid = 0, paidThisMonth = 0, fines = 0;
-    getCollections().forEach(function (t) {
+    (await getCollections()).forEach(function (t) {
       if (t.memberId !== memberId) return;
       if (t.type === 'contribution') {
         totalPaid += t.amount;
@@ -580,9 +658,9 @@
   }
 
   // ---- Computed: next payment due date + status for one member ----
-  function getNextPaymentDue(memberId) {
-    var settings = getSettings();
-    var summary = getMemberPaymentSummary(memberId);
+  async function getNextPaymentDue(memberId) {
+    var settings = await getSettings();
+    var summary = await getMemberPaymentSummary(memberId);
     var now = new Date();
     var upToDate = summary.pending <= 0;
     var dueDate = upToDate
@@ -599,9 +677,9 @@
   }
 
   // ---- Computed: a member's contributions grouped by day (for the Payment History popup) ----
-  function getMemberPaymentsByDay(memberId) {
+  async function getMemberPaymentsByDay(memberId) {
     var byDay = {};
-    getCollections().forEach(function (t) {
+    (await getCollections()).forEach(function (t) {
       if (t.type !== 'contribution' || t.memberId !== memberId) return;
       var d = t.date || 'Unknown date';
       if (!byDay[d]) byDay[d] = { amount: 0, count: 0 };
@@ -614,93 +692,135 @@
   }
 
   // ---- Admin Access: create admins & change roles (Group Settings items 1 & 2) ----
-  function createAdmin(data) {
-    var users = getUsers();
+  async function createAdmin(data) {
     var email = String(data.email || '').trim().toLowerCase();
     if (!email) return { success: false, message: 'Email is required.' };
     if (!data.name || !String(data.name).trim()) return { success: false, message: 'Name is required.' };
-    if (users.some(function (u) { return u.email.toLowerCase() === email; })) {
-      return { success: false, message: 'A user with this email already exists.' };
-    }
     var tempPassword = data.password || Math.random().toString(36).slice(-8);
-    var user = {
-      name: data.name.trim(),
-      email: email,
-      password: tempPassword,
-      role: 'admin',
-      phone: data.phone || '',
-      altPhone: '',
-      memberId: nextMemberId(),
-      memberSince: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      stage: getSettings().groupName,
-      status: 'active',
-      dob: '', gender: '', nationalId: '', residence: '', photo: '',
-      motorcycle: { plate: '', model: '', color: '', chassis: '' },
-      nextOfKin: { name: '', relationship: '', phone: '' }
-    };
-    users.push(user);
-    saveUsers(users);
-    return { success: true, user: user, tempPassword: tempPassword };
+    try {
+      var cred = await secondaryAuth.createUserWithEmailAndPassword(email, tempPassword);
+      var uid = cred.user.uid;
+      var settings = await getSettings();
+      var user = {
+        name: data.name.trim(),
+        email: email,
+        role: 'admin',
+        phone: data.phone || '',
+        altPhone: '',
+        memberId: nextMemberId(),
+        memberSince: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        stage: settings.groupName,
+        status: 'active',
+        dob: '', gender: '', nationalId: '', residence: '', photo: '',
+        motorcycle: { plate: '', model: '', color: '', chassis: '' },
+        nextOfKin: { name: '', relationship: '', phone: '' }
+      };
+      await usersCol.doc(uid).set(user);
+      await secondaryAuth.signOut();
+      return { success: true, user: Object.assign({ uid: uid }, user), tempPassword: tempPassword };
+    } catch (e) {
+      try { await secondaryAuth.signOut(); } catch (e2) { /* ignore */ }
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
   }
 
-  function setUserRole(email, role) {
-    var users = getUsers();
-    var email_l = String(email).trim().toLowerCase();
-    var user = users.find(function (u) { return u.email.toLowerCase() === email_l; });
-    if (!user) return { success: false, message: 'User not found.' };
-    user.role = (role === 'admin') ? 'admin' : 'member';
-    saveUsers(users);
-    return { success: true, user: user };
+  // setUserRole is called with the target user's uid (see admin-dashboard.html).
+  async function setUserRole(uid, role) {
+    try {
+      var ref = usersCol.doc(uid);
+      var snap = await ref.get();
+      if (!snap.exists) return { success: false, message: 'User not found.' };
+      var newRole = (role === 'admin') ? 'admin' : 'member';
+      await ref.update({ role: newRole });
+      return { success: true, user: Object.assign({ uid: uid }, snap.data(), { role: newRole }) };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
   }
 
-  function getAdmins() {
-    return getUsers().filter(function (u) { return u.role === 'admin'; });
+  async function getAdmins() {
+    try {
+      var snap = await usersCol.where('role', '==', 'admin').get();
+      return snap.docs.map(docToUser);
+    } catch (e) { return []; }
   }
 
   // ---- Pending Registrations: approve/reject when Membership Approval Mode is on ----
-  function getPendingMembers() {
-    return getUsers().filter(function (u) { return u.role === 'member' && u.status === 'pending'; });
+  async function getPendingMembers() {
+    try {
+      var snap = await usersCol.where('role', '==', 'member').where('status', '==', 'pending').get();
+      return snap.docs.map(docToUser);
+    } catch (e) { return []; }
   }
-  function approveMember(memberId) {
-    var users = getUsers();
-    var user = users.find(function (u) { return u.memberId === memberId; });
-    if (!user) return { success: false, message: 'Member not found.' };
-    user.status = 'active';
-    saveUsers(users);
-    return { success: true, user: user };
+
+  // approveMember / rejectMember are called with the target member's uid
+  // (see admin-dashboard.html's handleApprove/handleReject).
+  async function approveMember(uid) {
+    try {
+      var ref = usersCol.doc(uid);
+      var snap = await ref.get();
+      if (!snap.exists) return { success: false, message: 'Member not found.' };
+      await ref.update({ status: 'active' });
+      return { success: true, user: Object.assign({ uid: uid }, snap.data(), { status: 'active' }) };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
   }
-  function rejectMember(memberId) {
-    var users = getUsers();
-    var idx = users.findIndex(function (u) { return u.memberId === memberId; });
-    if (idx === -1) return { success: false, message: 'Member not found.' };
-    var removed = users.splice(idx, 1)[0];
-    saveUsers(users);
-    return { success: true, user: removed };
+
+  async function rejectMember(uid) {
+    try {
+      var ref = usersCol.doc(uid);
+      var snap = await ref.get();
+      if (!snap.exists) return { success: false, message: 'Member not found.' };
+      var removed = Object.assign({ uid: uid }, snap.data());
+      // NOTE: this removes their Firestore profile (so they disappear from
+      // the directory and can no longer log in — login() rejects any Auth
+      // account with no matching /users/{uid} doc). Deleting the underlying
+      // Firebase Authentication account itself requires the Admin SDK /
+      // Firebase console and can't be done from client-side JS.
+      await ref.delete();
+      return { success: true, user: removed };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
   }
 
   // ---- Backup / Export & Reset (Group Settings items 8 & 9) ----
-  function exportAllData() {
+  async function exportAllData() {
     return {
       exportedAt: new Date().toISOString(),
-      settings: getSettings(),
-      users: getUsers().map(function (u) { var c = Object.assign({}, u); delete c.password; return c; }),
-      collections: getCollections()
+      settings: await getSettings(),
+      users: await getUsers(),
+      collections: await getCollections()
     };
   }
-  function resetAllData() {
-    localStorage.removeItem(USERS_KEY);
-    localStorage.removeItem(COLLECTIONS_KEY);
-    localStorage.removeItem(SETTINGS_KEY);
-    localStorage.removeItem(SESSION_KEY);
-    seed();
-    return { success: true };
+
+  async function resetAllData() {
+    try {
+      var cols = [usersCol, collectionsCol, minutesCol, announcementsCol];
+      for (var i = 0; i < cols.length; i++) {
+        var snap = await cols[i].get();
+        if (snap.empty) continue;
+        var batch = db.batch();
+        snap.docs.forEach(function (d) { batch.delete(d.ref); });
+        await batch.commit();
+      }
+      try { await settingsDocRef.delete(); } catch (e) { /* ignore */ }
+      await logout();
+      return {
+        success: true,
+        message: 'All member, collection, minutes and announcement records were deleted. Note: this cannot delete the underlying Firebase Authentication accounts — remove those from the Firebase console if you want those emails to be reusable.'
+      };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
   }
 
   window.KatiniAuth = {
-    seed: seed,
-    getUsers: getUsers,
+    ready: readyPromise,
     isAdminEmail: isAdminEmail,
     escapeHtml: escapeHtml,
+    getUsers: getUsers,
     registerMember: registerMember,
     addMember: addMember,
     login: login,

@@ -583,7 +583,7 @@ function formatKsh(n){
   return 'KSh ' + Math.round(n).toLocaleString('en-KE');
 }
 
-/* -------- Data (backed by KatiniAuth / localStorage) -------- */
+/* -------- Data (backed by KatiniAuth / Firestore) -------- */
 let txns = [];
 
 async function loadTxns(){
