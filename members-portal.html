@@ -20,6 +20,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
   --navy:#0d2140;
@@ -88,31 +89,53 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
 .member-badge svg{width:16px;height:16px;}
 .hero-quote{color:var(--text-light);font-size:13px;font-style:italic;margin-top:10px;}
 
-/* ---------- Member ID card ---------- */
+/* ---------- Member ID card (Kenyan national-ID style) ---------- */
+.id-card-wrap{margin:20px 20px 0;}
 .id-card{
-  position:relative;z-index:3;margin:20px 20px 0;background:var(--navy-card);border-radius:16px;
-  padding:18px;display:flex;gap:14px;box-shadow:0 14px 30px rgba(10,20,40,0.4);
-  border:1px solid rgba(255,255,255,0.06);
+  position:relative;z-index:3;background:#fff;border-radius:14px;overflow:hidden;
+  box-shadow:0 14px 30px rgba(10,20,40,0.35);border:1px solid var(--border);cursor:pointer;
 }
-.id-left{flex:1;min-width:0;}
-.id-row{display:flex;align-items:center;gap:8px;margin-bottom:2px;}
-.id-row svg{width:15px;height:15px;color:var(--gold);}
-.id-row span{color:var(--text-light);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;}
-.id-num{color:#fff;font-size:20px;font-weight:800;letter-spacing:0.5px;margin:2px 0 12px;}
-.id-since-row{display:flex;align-items:center;gap:8px;}
-.id-since-row svg{width:15px;height:15px;color:var(--text-light);flex-shrink:0;}
-.id-since-row div p{color:var(--text-light);font-size:10.5px;}
-.id-since-row div h5{color:#fff;font-size:12.5px;font-weight:700;}
-.id-right{
-  width:96px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;
+.id-card-head{
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);
+  padding:12px 14px;display:flex;align-items:center;gap:10px;position:relative;
 }
-.qr-box{
-  width:88px;height:88px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;
-  padding:6px;
+.id-card-head::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:linear-gradient(90deg,var(--gold),var(--green),var(--gold));
+}
+.id-card-logo{
+  width:34px;height:34px;border-radius:8px;background:#fff;flex-shrink:0;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+.id-card-logo img{width:100%;height:100%;object-fit:cover;}
+.id-card-headtext{flex:1;min-width:0;}
+.id-card-headtext h4{color:#fff;font-size:13px;font-weight:800;letter-spacing:0.3px;line-height:1.2;}
+.id-card-headtext p{color:var(--gold);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-top:2px;}
+.id-card-body{display:flex;gap:12px;padding:14px;background:#fdfdfc;}
+.id-photo{
+  width:78px;height:92px;border-radius:6px;background:var(--navy);color:var(--gold);font-weight:800;
+  font-size:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  border:2px solid var(--navy-card);box-shadow:0 2px 6px rgba(13,33,64,0.2);
+}
+.id-photo img{width:100%;height:100%;object-fit:cover;}
+.id-fields{flex:1;min-width:0;}
+.id-name{color:var(--navy-dark);font-size:14.5px;font-weight:800;line-height:1.15;margin-bottom:6px;word-break:break-word;}
+.id-field-row{margin-bottom:5px;}
+.id-field-row .fl{color:var(--muted);font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;display:block;}
+.id-field-row .fv{color:var(--navy-dark);font-size:12px;font-weight:700;}
+.id-card-strip{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--gray-bg);
+  border-top:1px dashed var(--border);
+}
+.id-qr-box{
+  width:56px;height:56px;background:#fff;border:1px solid var(--border);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;padding:4px;flex-shrink:0;
 }
 #qrcode{width:100%;height:100%;}
 #qrcode img{width:100%!important;height:100%!important;}
-.id-right p{color:var(--text-light);font-size:10px;text-align:center;font-weight:600;}
+.id-card-strip-text{flex:1;min-width:0;}
+.id-card-strip-text .serial{color:var(--navy-dark);font-size:10.5px;font-weight:800;letter-spacing:0.5px;}
+.id-card-strip-text .tapnote{color:var(--muted);font-size:9.5px;margin-top:1px;}
 
 /* ---------- Balance card ---------- */
 .balance-card{
@@ -710,24 +733,40 @@ body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <div class="id-card" id="idCardAnchor" onclick="downloadId()" style="margin:0;">
-      <div class="id-left">
-        <div class="id-row">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <span>Member ID</span>
-        </div>
-        <div class="id-num" id="memberIdNum">&mdash;</div>
-        <div class="id-since-row">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          <div>
-            <p>Member Since</p>
-            <h5>&mdash;</h5>
+    <div class="id-card-wrap">
+      <div class="id-card" id="idCardAnchor" onclick="downloadId()">
+        <div class="id-card-head">
+          <div class="id-card-logo"><img src="icon-192.png" alt="Katani Main Stage logo"></div>
+          <div class="id-card-headtext">
+            <h4>KATANI MAIN STAGE</h4>
+            <p id="idCardStageName">Boda Boda Self Help Group</p>
           </div>
         </div>
-      </div>
-      <div class="id-right">
-        <div class="qr-box"><div id="qrcode"></div></div>
-        <p>Tap to download ID</p>
+        <div class="id-card-body">
+          <div class="id-photo" id="idCardPhoto">&nbsp;</div>
+          <div class="id-fields">
+            <div class="id-name" id="idCardName">&mdash;</div>
+            <div class="id-field-row">
+              <span class="fl">Member No.</span>
+              <span class="fv" id="idCardMemberNo">&mdash;</span>
+            </div>
+            <div class="id-field-row">
+              <span class="fl">Stage No.</span>
+              <span class="fv" id="idCardStageNo">&mdash;</span>
+            </div>
+            <div class="id-field-row">
+              <span class="fl">Member Since</span>
+              <span class="fv" id="idCardSince">&mdash;</span>
+            </div>
+          </div>
+        </div>
+        <div class="id-card-strip">
+          <div class="id-qr-box"><div id="qrcode"></div></div>
+          <div class="id-card-strip-text">
+            <div class="serial" id="idCardSerial">&mdash;</div>
+            <div class="tapnote">Tap card to download</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -796,7 +835,6 @@ function formatKsh(n){
   };
 
   document.getElementById('memberName').textContent = memberData.name;
-  document.getElementById('memberIdNum').textContent = memberData.memberId;
   refreshAnnouncementBadges();
 
   /* -------- Balance & transaction history (own contributions) -------- */
@@ -829,6 +867,7 @@ function formatKsh(n){
 
   /* -------- Group Overview (admin-set founding year + real member/collection data) -------- */
   const groupSettings = await KatiniAuth.getSettings();
+  populateIdCard(groupSettings);
   document.getElementById('groupMotto').textContent = '"' + groupSettings.motto + '"';
 
   const phoneDigits = (groupSettings.officePhone || '').replace(/\s+/g, '');
@@ -865,22 +904,6 @@ function formatKsh(n){
     statusText.textContent = 'You are all up to date';
   } else {
     statusText.textContent = formatKsh(due.amount) + ' due by ' + due.label;
-  }
-
-  // Generate QR code encoding the member ID (falls back gracefully if the CDN script fails to load)
-  try{
-    if(window.QRCode){
-      new QRCode(document.getElementById("qrcode"), {
-        text: memberData.memberId,
-        width: 76,
-        height: 76,
-        colorDark: "#0d2140",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    }
-  }catch(e){
-    document.getElementById('qrcode').innerHTML = '<div style="font-size:9px;text-align:center;color:#0d2140;padding:8px;">QR unavailable offline</div>';
   }
 
   } catch (err) {
@@ -977,6 +1000,41 @@ function openIdCard(){
 }
 function closeIdCard(){
   document.getElementById('idCardOverlay').classList.remove('open');
+}
+
+// Fills in the Kenyan-ID-style member card once member + group-settings
+// data is available, including the passport photo captured at
+// registration/Add Member time (memberData.photo) and the stage name /
+// stage registration number set by the admin in Settings.
+function populateIdCard(groupSettings){
+  const photoBox = document.getElementById('idCardPhoto');
+  photoBox.innerHTML = memberData.photo
+    ? `<img src="${KatiniAuth.escapeHtml(memberData.photo)}" alt="${KatiniAuth.escapeHtml(memberData.name)}">`
+    : initials(memberData.name);
+
+  document.getElementById('idCardName').textContent = memberData.name;
+  document.getElementById('idCardMemberNo').textContent = memberData.memberId;
+  document.getElementById('idCardSince').textContent = memberData.memberSince;
+  document.getElementById('idCardStageName').textContent = (groupSettings && groupSettings.idStageName) || memberData.stage;
+  document.getElementById('idCardStageNo').textContent = (groupSettings && groupSettings.idStageNumber) || '—';
+  document.getElementById('idCardSerial').textContent = 'KMS/' + memberData.memberId;
+
+  const qrBox = document.getElementById('qrcode');
+  qrBox.innerHTML = '';
+  try{
+    if(window.QRCode){
+      new QRCode(qrBox, {
+        text: memberData.memberId,
+        width: 48,
+        height: 48,
+        colorDark: "#0d2140",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+  }catch(e){
+    qrBox.innerHTML = '<div style="font-size:7px;text-align:center;color:#0d2140;">QR unavailable</div>';
+  }
 }
 function openContact(){
   document.getElementById('contactOverlay').classList.add('open');
@@ -1092,8 +1150,23 @@ function showToast(msg){
 }
 
 function downloadId(){
+  if(!window.html2canvas){
+    showToast('Download tool is still loading — please try again in a moment.');
+    return;
+  }
   showToast('Preparing your Member ID card...');
-  // Placeholder: wire this to html2canvas or a server-rendered ID card image later.
+  const card = document.getElementById('idCardAnchor');
+  html2canvas(card, { scale: 3, backgroundColor: '#ffffff', useCORS: true }).then(function(canvas){
+    const link = document.createElement('a');
+    link.download = 'katani-id-' + (memberData.memberId || 'card') + '.png';
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('ID card downloaded');
+  }).catch(function(){
+    showToast('Could not generate the ID card image — please try again.');
+  });
 }
 
 /* -------- Payment history PDF receipt/statement -------- */
