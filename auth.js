@@ -266,6 +266,13 @@
     return { success: true, record: record };
   }
 
+  // Returns only the collections belonging to the currently logged-in member.
+  function getMyCollections() {
+    var user = getCurrentUser();
+    if (!user) return [];
+    return getCollections().filter(function (t) { return t.memberId === user.memberId; });
+  }
+
   // ---- Meeting Minutes ----
   var MINUTES_KEY = 'kms_minutes';
 
@@ -700,6 +707,7 @@
     routeToHome: routeToHome,
     requireRole: requireRole,
     getCollections: getCollections,
+    getMyCollections: getMyCollections,
     addCollection: addCollection,
     getMinutes: getMinutes,
     addMinutes: addMinutes,
