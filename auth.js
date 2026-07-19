@@ -32,6 +32,7 @@
   var collectionsCol = db.collection('collections');
   var minutesCol = db.collection('minutes');
   var announcementsCol = db.collection('announcements');
+  var documentsCol = db.collection('documents');
   var settingsDocRef = db.collection('settings').doc('group');
 
   var RESERVED_ADMIN_EMAILS = (window.RESERVED_ADMIN_EMAILS || []).map(function (e) {
@@ -53,6 +54,9 @@
   }
   function nextAnnouncementId() {
     return 'ANN-' + Date.now().toString(36).toUpperCase().slice(-6) + Math.floor(10 + Math.random() * 89);
+  }
+  function nextDocumentId() {
+    return 'DOC-' + Date.now().toString(36).toUpperCase().slice(-6) + Math.floor(10 + Math.random() * 89);
   }
 
   // SECURITY: shared escaper. Member names, announcement text, notes, etc.
@@ -1146,7 +1150,86 @@
     });
   }
 
-  // ---- Admin Access: create admins & change roles (Group Settings items 1 & 2) ----
+  // ---- Group Documents (Certificate / License / Constitution / Fiscal Plans) ----
+  // No Firebase Storage here on purpose — Storage now requires linking a
+  // billing card even for $0 actual usage, which isn't an option for this
+  // group. Instead each PDF is base64-encoded and stored directly on its
+  // /documents/{id} Firestore doc (see firestore.rules for read/write
+  // access). Firestore caps a single document at ~1MiB, and base64 inflates
+  // a file by ~1.37x, so the practical raw-file ceiling is well under 1MB.
+  var DOCUMENT_CATEGORIES = ['certificate', 'license', 'constitution', 'fiscal_plan'];
+  var MAX_DOCUMENT_BYTES = 700 * 1024; // ~700KB raw -> ~960KB base64, safely under Firestore's 1MiB doc limit
+
+  function fileToBase64(file, onProgress) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onprogress = function (evt) {
+        if (typeof onProgress === 'function' && evt.lengthComputable) {
+          onProgress(Math.round((evt.loaded / evt.total) * 100));
+        }
+      };
+      reader.onerror = function () { reject(reader.error); };
+      reader.onload = function () {
+        // reader.result is a data URL ("data:application/pdf;base64,...."),
+        // which is exactly the string the UI needs for its download links.
+        resolve(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function uploadGroupDocument(category, file, onProgress) {
+    if (DOCUMENT_CATEGORIES.indexOf(category) === -1) {
+      return { success: false, message: 'Unknown document category.' };
+    }
+    if (!file || file.type !== 'application/pdf') {
+      return { success: false, message: 'Only PDF files are allowed.' };
+    }
+    if (file.size > MAX_DOCUMENT_BYTES) {
+      return { success: false, message: 'File is too large — please keep PDFs under ' + Math.round(MAX_DOCUMENT_BYTES / 1024) + 'KB (try compressing it first).' };
+    }
+    var user = getCurrentUser();
+    if (!user) {
+      return { success: false, message: 'You must be signed in.' };
+    }
+    try {
+      var dataUrl = await fileToBase64(file, onProgress);
+      var id = nextDocumentId();
+      var record = {
+        id: id,
+        category: category,
+        title: file.name,
+        fileName: String(file.name).replace(/[^a-zA-Z0-9_.-]/g, '_').slice(-120),
+        url: dataUrl,
+        size: file.size,
+        uploadedByUid: user.uid,
+        uploadedByName: user.name || 'Committee',
+        uploadedAt: Date.now()
+      };
+      await documentsCol.doc(id).set(record);
+      return { success: true, record: record };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
+  }
+
+  async function getGroupDocuments() {
+    try {
+      var snap = await documentsCol.orderBy('uploadedAt', 'desc').get();
+      return snap.docs.map(function (d) { return d.data(); });
+    } catch (e) { return []; }
+  }
+
+  async function deleteGroupDocument(doc) {
+    try {
+      await documentsCol.doc(doc.id).delete();
+      return { success: true };
+    } catch (e) {
+      return { success: false, message: firebaseErrorMessage(e) };
+    }
+  }
+
+
   // accountType: 'admin' (default) | 'secretary' | 'treasurer'. Secretary/Treasurer
   // accounts stay ordinary members (role 'member') so they keep showing up in the
   // Members Directory and can log in and view their own profile like any other
@@ -1353,6 +1436,9 @@
     getMemberPaymentSummary: getMemberPaymentSummary,
     getNextPaymentDue: getNextPaymentDue,
     getMemberPaymentsByDay: getMemberPaymentsByDay,
+    uploadGroupDocument: uploadGroupDocument,
+    getGroupDocuments: getGroupDocuments,
+    deleteGroupDocument: deleteGroupDocument,
     createAdmin: createAdmin,
     setUserRole: setUserRole,
     setCommitteeRole: setCommitteeRole,

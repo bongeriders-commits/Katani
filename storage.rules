@@ -1,0 +1,48 @@
+rules_version = '2';
+
+/* ===================================================================
+   Katani Main Stage — Firebase Storage Security Rules
+   -------------------------------------------------------------------
+   Only one path is used today:
+     /group-documents/{category}/{fileName}
+       PDFs uploaded from the Group Documents page (certificate,
+       license, constitution, fiscal plans). Metadata for each file
+       lives in Firestore at /documents/{id} — see firestore.rules.
+
+   Role checks read the requester's OWN Firestore /users/{uid} doc via
+   the cross-service firestore.get() function, mirroring the same
+   isAdmin()/isSecretary() logic used in firestore.rules.
+=================================================================== */
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function myProfile() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
+    }
+    function isAdmin() {
+      return isSignedIn() && myProfile().role == 'admin';
+    }
+    function isSecretary() {
+      return isSignedIn() && myProfile().role == 'member' && myProfile().get('committeeRole', '') == 'secretary';
+    }
+
+    match /group-documents/{category}/{fileName} {
+      // Any signed-in member/admin can view/download official group documents.
+      allow read: if isSignedIn();
+      // Only admin or Secretary can upload/replace/delete, and only PDFs
+      // under 15MB (matches the client-side check in auth.js).
+      allow write: if (isAdmin() || isSecretary())
+                   && request.resource.contentType == 'application/pdf'
+                   && request.resource.size < 15 * 1024 * 1024;
+      allow delete: if isAdmin() || isSecretary();
+    }
+
+    // Deny everything else by default.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

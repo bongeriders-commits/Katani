@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Group Documents - Katani Main Stage</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d2140">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Katani Stage">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="auth.js"></script>
+<style>
+:root{
+  --navy:#0d2140;
+  --navy-dark:#0a1830;
+  --navy-card:#11294f;
+  --gold:#f5a623;
+  --green:#2e7d32;
+  --green-light:#43a047;
+  --red:#c0392b;
+  --blue:#1565c0;
+  --purple:#6a3fc0;
+  --gray-bg:#f4f6f9;
+  --text-light:#c9d3e0;
+  --border:#e3e7ee;
+  --muted:#6b7685;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:'Segoe UI',Roboto,-apple-system,BlinkMacSystemFont,sans-serif;}
+html,body{height:100%;}
+body{background:#1a1a1a;color:#1a1a1a;overflow-x:hidden;}
+
+#app{
+  max-width:480px;margin:0 auto;background:var(--gray-bg);
+  min-height:100vh;position:relative;box-shadow:0 0 40px rgba(0,0,0,0.4);
+  padding-bottom:96px;
+}
+
+/* ---------- Header (shared) ---------- */
+header.topbar{
+  background:
+    linear-gradient(180deg, rgba(13,33,64,0.65) 0%, rgba(13,33,64,0.8) 70%, rgba(13,33,64,0.94) 100%),
+    url('hero-bg.jpg');
+  background-size:cover;background-position:center;
+  padding:16px 18px 44px;position:relative;
+}
+.hdr-row{display:flex;align-items:flex-start;gap:14px;}
+.icon-btn{
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.08);border:none;border-radius:10px;color:#fff;cursor:pointer;
+  flex-shrink:0;position:relative;
+}
+.icon-btn svg{width:20px;height:20px;}
+.logo-wrap{
+  width:74px;height:74px;border-radius:50%;overflow:hidden;border:3px solid #fff;
+  box-shadow:0 4px 14px rgba(0,0,0,0.35);flex-shrink:0;background:#fff;
+}
+.logo-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.hdr-text{flex:1;min-width:0;}
+.hdr-text h1{color:#fff;font-size:17.5px;font-weight:800;line-height:1.3;text-transform:uppercase;}
+.hdr-text h1 .accent{color:var(--gold);}
+.hdr-text .admin-tag{color:var(--gold);font-size:12.5px;font-weight:700;margin-top:3px;}
+
+/* ---------- Main content overlap card ---------- */
+.main-card{
+  background:#fff;border-radius:22px 22px 0 0;margin-top:-28px;position:relative;z-index:2;
+  padding:22px 18px 4px;
+}
+.page-head-row{margin-bottom:6px;}
+.page-head-left h2{font-size:21px;font-weight:800;color:var(--navy-dark);}
+.page-head-left p{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4;}
+
+/* ---------- Document category card ---------- */
+.doc-cat{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:14px;margin:16px 0;}
+.doc-cat-head{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.doc-cat-icon{
+  width:38px;height:38px;border-radius:11px;background:var(--navy);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.doc-cat-icon svg{width:18px;height:18px;color:var(--gold);}
+.doc-cat-title{flex:1;min-width:0;}
+.doc-cat-title h3{font-size:14px;font-weight:800;color:var(--navy-dark);}
+.doc-cat-title p{font-size:11px;color:var(--muted);margin-top:1px;}
+.btn-upload{
+  display:flex;align-items:center;gap:6px;background:var(--navy);color:#fff;border:none;border-radius:10px;
+  padding:8px 12px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;
+}
+.btn-upload svg{width:13px;height:13px;}
+.btn-upload:disabled{opacity:0.6;cursor:default;}
+
+.doc-list{margin-top:10px;}
+.doc-row{
+  display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid var(--border);
+}
+.doc-file-icon{
+  width:34px;height:34px;border-radius:9px;background:var(--gray-bg);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;color:var(--red);
+}
+.doc-file-icon svg{width:17px;height:17px;}
+.doc-info{flex:1;min-width:0;}
+.doc-info .df-name{font-size:12.5px;font-weight:700;color:var(--navy-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.doc-info .df-meta{font-size:10.5px;color:var(--muted);margin-top:2px;}
+.doc-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.doc-icon-btn{
+  width:30px;height:30px;border-radius:9px;border:1.5px solid var(--border);background:#fff;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--navy);text-decoration:none;
+}
+.doc-icon-btn svg{width:14px;height:14px;}
+.doc-icon-btn.danger{color:var(--red);}
+.doc-empty{padding:16px 4px;text-align:center;color:var(--muted);font-size:12px;}
+
+.doc-progress-row{padding:10px 4px;border-top:1px solid var(--border);}
+.doc-progress-row .dp-label{font-size:11.5px;color:var(--navy-dark);font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between;}
+.doc-progress-bar{height:6px;border-radius:6px;background:var(--gray-bg);overflow:hidden;}
+.doc-progress-fill{height:100%;background:var(--gold);width:0%;transition:width .2s ease;}
+
+/* ---------- Bottom nav (shared) ---------- */
+.bottom-nav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--navy);
+  display:grid;grid-template-columns:repeat(3,1fr);box-shadow:0 -4px 20px rgba(0,0,0,0.2);
+  padding:10px 0 max(10px, env(safe-area-inset-bottom));z-index:50;align-items:center;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;
+  cursor:pointer;color:var(--text-light);padding:6px 4px;font-size:9.5px;font-weight:700;border-radius:10px;
+}
+.nav-item svg{width:20px;height:20px;}
+.nav-item.active{color:var(--navy-dark);background:var(--gold);margin:0 4px;}
+
+/* Toast */
+#toast{
+  position:fixed;bottom:110px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--navy-dark);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;
+  z-index:400;opacity:0;transition:all .3s ease;pointer-events:none;box-shadow:0 8px 20px rgba(0,0,0,0.3);
+  max-width:400px;text-align:center;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+<link rel="stylesheet" href="desktop.css">
+</head>
+<body>
+
+<div id="app">
+
+  <header class="topbar">
+    <div class="hdr-row">
+      <button class="icon-btn" onclick="KatiniAuth.goDashboard()" aria-label="Back to dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <div class="logo-wrap">
+        <img src="icon-192.png" alt="Katani Main Stage">
+      </div>
+      <div class="hdr-text">
+        <h1>KATANI <span class="accent">MAIN STAGE</span><br>BODA SELF HELP GROUP</h1>
+        <div class="admin-tag">Group Documents</div>
+      </div>
+      <button class="icon-btn" onclick="location.href='notifications.html'" aria-label="Notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="main-card">
+
+    <div class="page-head-row">
+      <div class="page-head-left">
+        <h2>Group Documents</h2>
+        <p id="pageSubtitle">Official records for Katani Main Stage — view and download anytime.</p>
+      </div>
+    </div>
+
+    <div id="categoriesWrap"></div>
+
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-item" onclick="KatiniAuth.goDashboard()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15h6"/><path d="M9 11h1"/></svg>
+      Documents
+    </button>
+    <button class="nav-item" onclick="location.href='notifications.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Notifications
+    </button>
+  </nav>
+
+  <div id="toast"></div>
+
+</div>
+
+<script>
+const CATEGORIES = [
+  { key: 'certificate', label: 'Group Certificate', hint: 'Official registration certificate',
+    icon: '<path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6z"/><polyline points="9 12 11 14 15 10"/>' },
+  { key: 'license', label: 'Group License', hint: 'Operating / business license',
+    icon: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="12" r="2"/><path d="M15 9h3"/><path d="M15 13h3"/><path d="M6.5 17.5c.7-1.5 2-2 2.5-2s1.8.5 2.5 2"/>' },
+  { key: 'constitution', label: 'Group Constitution', hint: "The group's governing rules",
+    icon: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/>' },
+  { key: 'fiscal_plan', label: 'Fiscal Plans', hint: 'Budgets and financial plans',
+    icon: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>' }
+];
+
+let allDocs = [];
+let canManage = false;
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function formatBytes(n){
+  if(!n && n !== 0) return '';
+  if(n < 1024) return n + ' B';
+  if(n < 1024*1024) return (n/1024).toFixed(0) + ' KB';
+  return (n/(1024*1024)).toFixed(1) + ' MB';
+}
+function formatDate(ts){
+  if(!ts) return '';
+  return new Date(ts).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function renderCategories(){
+  const wrap = document.getElementById('categoriesWrap');
+  wrap.innerHTML = CATEGORIES.map(cat => {
+    const docs = allDocs.filter(d => d.category === cat.key);
+    const uploadBtn = canManage ? `
+      <button class="btn-upload" id="upbtn-${cat.key}" onclick="document.getElementById('file-${cat.key}').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Upload
+      </button>
+      <input type="file" accept="application/pdf,.pdf" id="file-${cat.key}" style="display:none" onchange="handleFileSelect(event,'${cat.key}')">
+    ` : '';
+
+    const rows = docs.length === 0
+      ? '<div class="doc-empty" id="empty-'+cat.key+'">No file uploaded yet.</div>'
+      : docs.map(d => `
+        <div class="doc-row" data-id="${d.id}">
+          <div class="doc-file-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="doc-info">
+            <div class="df-name">${KatiniAuth.escapeHtml(d.title)}</div>
+            <div class="df-meta">${formatDate(d.uploadedAt)} &middot; ${formatBytes(d.size)} &middot; ${KatiniAuth.escapeHtml(d.uploadedByName || '')}</div>
+          </div>
+          <div class="doc-actions">
+            <a class="doc-icon-btn" href="${d.url}" target="_blank" rel="noopener" download="${KatiniAuth.escapeHtml(d.fileName)}" aria-label="Download">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </a>
+            ${canManage ? `
+            <button class="doc-icon-btn danger" onclick="removeDocument('${d.id}')" aria-label="Delete">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+    return `
+      <div class="doc-cat" id="cat-${cat.key}">
+        <div class="doc-cat-head">
+          <div class="doc-cat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${cat.icon}</svg>
+          </div>
+          <div class="doc-cat-title">
+            <h3>${cat.label}</h3>
+            <p>${cat.hint}</p>
+          </div>
+          ${uploadBtn}
+        </div>
+        <div class="doc-list" id="list-${cat.key}">${rows}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function refreshDocuments(){
+  allDocs = await KatiniAuth.getGroupDocuments();
+  renderCategories();
+}
+
+async function handleFileSelect(evt, category){
+  const file = evt.target.files[0];
+  evt.target.value = '';
+  if(!file) return;
+
+  if(file.type !== 'application/pdf'){
+    showToast('Only PDF files are allowed.');
+    return;
+  }
+  if(file.size > 700 * 1024){
+    showToast('File is too large — please keep PDFs under 700KB (try compressing it first).');
+    return;
+  }
+
+  const listEl = document.getElementById('list-' + category);
+  const emptyEl = document.getElementById('empty-' + category);
+  if(emptyEl) emptyEl.remove();
+  const upBtn = document.getElementById('upbtn-' + category);
+  if(upBtn) upBtn.disabled = true;
+
+  const progRow = document.createElement('div');
+  progRow.className = 'doc-progress-row';
+  progRow.innerHTML = `
+    <div class="dp-label"><span>${KatiniAuth.escapeHtml(file.name)}</span><span id="pct-${category}">0%</span></div>
+    <div class="doc-progress-bar"><div class="doc-progress-fill" id="fill-${category}"></div></div>
+  `;
+  listEl.prepend(progRow);
+
+  const result = await KatiniAuth.uploadGroupDocument(category, file, pct => {
+    const fill = document.getElementById('fill-' + category);
+    const pctLabel = document.getElementById('pct-' + category);
+    if(fill) fill.style.width = pct + '%';
+    if(pctLabel) pctLabel.textContent = pct + '%';
+  });
+
+  if(upBtn) upBtn.disabled = false;
+  progRow.remove();
+
+  if(!result.success){
+    showToast(result.message || 'Upload failed.');
+    renderCategories();
+    return;
+  }
+  showToast('Document uploaded.');
+  await refreshDocuments();
+}
+
+async function removeDocument(id){
+  const doc = allDocs.find(d => d.id === id);
+  if(!doc) return;
+  if(!confirm('Delete "' + doc.title + '"? This cannot be undone.')) return;
+  const result = await KatiniAuth.deleteGroupDocument(doc);
+  if(!result.success){
+    showToast(result.message || 'Could not delete document.');
+    return;
+  }
+  showToast('Document deleted.');
+  await refreshDocuments();
+}
+
+KatiniAuth.requireRole(['admin', 'member']).then(async user => {
+  if(!user) return;
+  canManage = user.role === 'admin' || user.committeeRole === 'secretary';
+  document.getElementById('pageSubtitle').textContent = canManage
+    ? 'Upload and manage the group\u2019s official PDFs (max 700KB each). Every member can view and download them.'
+    : 'Official records for Katani Main Stage \u2014 view and download anytime.';
+  renderCategories();
+  await refreshDocuments();
+});
+</script>
+</body>
+</html>

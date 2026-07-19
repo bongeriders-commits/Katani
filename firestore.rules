@@ -12,6 +12,13 @@ rules_version = '2';
      /announcements/{id}   admin -> members broadcasts, with a `readBy` array
                             of uids that each member is allowed to append
                             themselves to (and nothing else on the doc).
+     /documents/{id}       Group Documents (certificate, license, constitution,
+                            fiscal plans) — each doc holds its own PDF as a
+                            base64 data URL (no Firebase Storage — that now
+                            requires a linked billing card, so files live
+                            directly in Firestore instead, capped at ~700KB
+                            raw per file to stay under Firestore's 1MiB
+                            per-document limit).
      /settings/group       single document holding group-wide settings.
 
    The role check reads the requester's OWN /users/{uid} doc — this is the
@@ -125,6 +132,16 @@ service cloud.firestore {
       allow create: if isAdmin() || isSecretary();
       allow delete: if isAdmin();
       allow update: if isAdmin() || isSecretary() || (isSignedIn() && onlyChanges(['readBy']));
+    }
+
+    // ---- group documents (certificate / license / constitution / fiscal plans) ----
+    match /documents/{id} {
+      // Every signed-in member/admin can see and download the group's
+      // official documents — matches the Group Documents page, which is
+      // read-only for plain members.
+      allow read: if isSignedIn();
+      // Only admin or Secretary can upload/replace/remove documents.
+      allow create, update, delete: if isAdmin() || isSecretary();
     }
 
     // ---- group settings --------------------------------------------------

@@ -90,6 +90,22 @@ Vercel already gives you) and a phone with a fingerprint/Face sensor. If a
 member's phone doesn't support it, the prompt is simply skipped and they
 keep using password/email-link login as normal.
 
+## 8. Group Documents (no extra setup needed)
+The **Group Documents** page (`group-documents.html`) lets Admin/Secretary
+upload the group's certificate, license, constitution, and fiscal plans as
+PDFs, and lets every member view/download them. Files are stored as base64
+data directly inside their Firestore document — deliberately **not**
+Firebase Storage, since Storage now requires linking a billing card even
+for zero actual usage. Nothing beyond the Firestore rules you already
+deployed in step 5 is needed.
+
+The tradeoff: each PDF is capped at **~700KB** (Firestore caps a single
+document at ~1MiB, and base64 inflates a file by about 1.37x). If a file
+is too big, compress it first — free tools like
+[iLovePDF](https://www.ilovepdf.com/compress_pdf) or
+[Smallpdf](https://smallpdf.com/compress-pdf) usually get scanned
+certificates/constitutions well under that limit.
+
 ## What changed vs. the old localStorage version
 - Passwords are no longer stored anywhere in your data — Firebase Auth
   hashes and owns them entirely. `exportAllData()` no longer includes a
